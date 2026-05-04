@@ -1,0 +1,33 @@
+# dependencies
+/node_modules
+.pnpm-store
+
+# build
+/build
+/dist
+.next
+out
+
+# env
+.env*
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# misc
+.DS_Store
+*.pem
+
+# vercel
+.vercel
+
+# ide
+.vscode/
+.idea/
+
+# database (se usar local)
+db/*.sqlite
+db/*.db

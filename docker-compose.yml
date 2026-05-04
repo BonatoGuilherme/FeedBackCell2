@@ -1,0 +1,129 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: feedbackcell-mysql
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+
+    ports:
+      - "3307:3306"
+
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/db/feedbackcell.sql:/docker-entrypoint-initdb.d/init.sql
+
+    networks:
+      - feedbackcell-network
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    container_name: feedbackcell-backend
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      NODE_ENV: production
+      DB_HOST: feedbackcell-mysql
+      DB_PORT: 3306
+
+    ports:
+      - "5000:5000"
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+    networks:
+      - feedbackcell-network
+
+    command: >
+      sh -c "
+      echo '⏳ Waiting for MySQL...' &&
+      until nc -z feedbackcell-mysql 3306;
+      do
+        sleep 2;
+      done &&
+      echo '✅ MySQL is up!' &&
+      node server.js
+      "
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/api/auth/verify || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:5000 
+
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:5000 
+
+    container_name: feedbackcell-frontend
+    restart: unless-stopped
+
+    ports:
+      - "3000:3000"
+
+    depends_on:
+      backend:
+        condition: service_healthy
+
+    networks:
+      - feedbackcell-network
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  feedbackcell-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+
