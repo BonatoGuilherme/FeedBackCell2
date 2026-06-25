@@ -1,6 +1,9 @@
 # Use a imagem Node.js oficial
 FROM node:20-alpine
 
+# Instala curl para healthcheck e outras ferramentas
+RUN apk add --no-cache curl netcat-openbsd
+
 # Define o diretório de trabalho
 WORKDIR /app
 

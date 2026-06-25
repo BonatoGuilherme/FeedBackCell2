@@ -1,4 +1,4 @@
-const { pool } = require("../server");
+const { pool } = require("../db/connection");
 
 const comentarioModel = {
   // Buscar todos os comentários de um celular

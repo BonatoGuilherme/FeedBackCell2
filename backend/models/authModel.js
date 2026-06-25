@@ -1,4 +1,4 @@
-const { pool } = require("../server.js");
+const { pool } = require("../db/connection.js");
 
 const authModel = {
   // Buscar usuário por email
