@@ -1,26 +1,19 @@
-# Use a imagem Node.js oficial
+# Use a imagem Node.js oficial, que já é bem leve
 FROM node:20-alpine
 
-# Instala curl para healthcheck e outras ferramentas
+ENV NODE_ENV=production
+
+# Instala ferramentas de runtime usadas pelo healthcheck e pelo wait do container
 RUN apk add --no-cache curl netcat-openbsd
 
-# Define o diretório de trabalho
 WORKDIR /app
 
-# Copia package.json e pnpm-lock.yaml
 COPY package.json pnpm-lock.yaml ./
 
-# Instala pnpm globalmente
-RUN npm install -g pnpm
+RUN npm install -g pnpm && pnpm install --frozen-lockfile --prod
 
-# Instala as dependências
-RUN pnpm install --frozen-lockfile
-
-# Copia o código da aplicação
 COPY . .
 
-# Expõe a porta 5000
 EXPOSE 5000
 
-# Comando para rodar o servidor
 CMD ["node", "server.js"]

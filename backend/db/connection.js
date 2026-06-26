@@ -20,7 +20,7 @@ pool.getConnection((err, conn) => {
   if (err) {
     console.error("Erro ao conectar ao MySQL:", err.message);
   } else {
-    console.log("✅ Conectado ao MySQL com sucesso!");
+    console.log("Conectado ao MySQL com sucesso!");
     conn.release(); 
   }
 });

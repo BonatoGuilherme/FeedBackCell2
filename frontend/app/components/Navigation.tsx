@@ -7,11 +7,11 @@ export default function Navigation() {
   const pathname = usePathname();
 
   const links = [
-    { href: '/', label: '🏠 Home' },
-    { href: '/catalog', label: '📚 Catálogo' },
-    { href: '/items/new', label: '➕ Novo Item' },
-    { href: '/login', label: '🔐 Login' },
-    { href: '/register', label: '📝 Registrar' },
+    { href: '/', label: 'Home' },
+    { href: '/catalog', label: 'Catálogo' },
+    { href: '/items/new', label: 'Novo Item' },
+    { href: '/login', label: 'Login' },
+    { href: '/register', label: 'Registrar' },
   ];
 
   return (

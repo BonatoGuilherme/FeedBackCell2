@@ -5,7 +5,7 @@ export function useApi() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const request = useCallback(async (method: 'GET' | 'POST' | 'PUT' | 'DELETE', endpoint: string, data?: any) => {
+  const request = useCallback(async (method: 'GET' | 'POST' | 'PUT' | 'DELETE', endpoint: string, data?: unknown) => {
     setLoading(true);
     setError(null);
 
