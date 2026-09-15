@@ -76,7 +76,7 @@ export default function RegisterPage() {
     <AuthPageShell
       title="Criar Conta"
       subtitle="Junte-se à comunidade FeedBackCELL"
-      securityText="🔒 Seus dados são processados com segurança"
+      securityText="Seus dados são processados com segurança"
     >
       <form className="space-y-5" onSubmit={handleRegister}>
               {/* Erro geral */}
