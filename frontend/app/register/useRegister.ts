@@ -1,7 +1,7 @@
-import { useRouter } from "next/router";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, type FormEvent } from "react";
 
-export default function RegisterPage() {
+export default function useRegister() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -12,7 +12,6 @@ export default function RegisterPage() {
     email: false,
     senha: false,
   });
-  const [senhaStrength] = useState(0);
   const router = useRouter();
 
   const validateField = (field: string, value: string) => {
@@ -30,7 +29,7 @@ export default function RegisterPage() {
     return isValid;
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErro("");
 
@@ -66,8 +65,9 @@ export default function RegisterPage() {
     } finally {
       setLoading(false);
     }
-  }
-   return {
+  };
+
+  return {
     email,
     setEmail,
     senha,
@@ -75,6 +75,7 @@ export default function RegisterPage() {
     erro,
     loading,
     validations,
+    validateField,
     handleRegister,
     nome,
     setNome,

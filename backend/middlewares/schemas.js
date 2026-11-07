@@ -3,16 +3,16 @@ const Joi = require("joi");
 // Schemas de validação para Celulares
 const celularSchema = {
   create: Joi.object({
-    marca: Joi.string().min(2).max(50).required(),
+    marca: Joi.string().min(2).max(100).required(),
     modelo: Joi.string().min(2).max(100).required(),
-    preco: Joi.number().positive().required(),
+    preco: Joi.number().positive().max(99999999.99).required(),
     descricao: Joi.string().max(500).optional(),
   }),
 
   update: Joi.object({
-    marca: Joi.string().min(2).max(50).required(),
+    marca: Joi.string().min(2).max(100).required(),
     modelo: Joi.string().min(2).max(100).required(),
-    preco: Joi.number().positive().required(),
+    preco: Joi.number().positive().max(99999999.99).required(),
     descricao: Joi.string().max(500).optional(),
   }),
 };

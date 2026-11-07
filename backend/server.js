@@ -16,6 +16,7 @@ const usuariosRoutes = require("./routes/usuariosRoutes");
 const comentariosRoutes = require("./routes/comentariosRoutes");
 const limiter = require("./middlewares/rateLimitMiddleware");
 const errorHandler = require("./middlewares/errorHandler");
+const migrateCelulares = require("./db/migrateCelulares");
 
 // MIDDLEWARES
 configMiddlewares(app);
@@ -37,8 +38,17 @@ app.use(errorHandler);
 
 // INICIALIZAÇÃO DO SERVIDOR
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
+
+async function startServer() {
+  await migrateCelulares();
+  app.listen(PORT, () => {
+    console.log(`Servidor rodando em http://localhost:${PORT}`);
+  });
+}
+
+startServer().catch((error) => {
+  console.error("Erro ao aplicar migrações do banco:", error);
+  process.exitCode = 1;
 });
 
 module.exports = { app };

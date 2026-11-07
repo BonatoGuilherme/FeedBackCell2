@@ -6,7 +6,12 @@ const celularModel = {
     try {
       const offset = (page - 1) * limit;
       const [results] = await pool.query(
-        "SELECT * FROM Celulares ORDER BY dataCriacao DESC LIMIT ? OFFSET ?",
+        `SELECT idcelular, idusuario, Marca AS marca, Modelo AS modelo,
+                Preco AS preco, Imagem AS imagem, Descricao AS descricao,
+                \`Like\` AS likes, Deslike AS dislikes, dataCriacao
+         FROM Celulares
+         ORDER BY dataCriacao DESC
+         LIMIT ? OFFSET ?`,
         [limit, offset]
       );
       return results;
@@ -31,7 +36,11 @@ const celularModel = {
   getById: async (id) => {
     try {
       const [results] = await pool.query(
-        "SELECT * FROM Celulares WHERE idcelular = ?",
+        `SELECT idcelular, idusuario, Marca AS marca, Modelo AS modelo,
+                Preco AS preco, Imagem AS imagem, Descricao AS descricao,
+                \`Like\` AS likes, Deslike AS dislikes, dataCriacao
+         FROM Celulares
+         WHERE idcelular = ?`,
         [id]
       );
       return results[0] || null;
@@ -44,7 +53,9 @@ const celularModel = {
   create: async (marca, modelo, preco, descricao, idusuario) => {
     try {
       const [results] = await pool.query(
-        "INSERT INTO Celulares (marca, modelo, preco, descricao, idusuario, dataCriacao) VALUES (?, ?, ?, ?, ?, NOW())",
+        `INSERT INTO Celulares
+          (Marca, Modelo, Preco, Descricao, idusuario, dataCriacao)
+         VALUES (?, ?, ?, ?, ?, NOW())`,
         [marca, modelo, preco, descricao, idusuario]
       );
       return {
@@ -64,7 +75,9 @@ const celularModel = {
   update: async (id, marca, modelo, preco, descricao) => {
     try {
       await pool.query(
-        "UPDATE Celulares SET marca = ?, modelo = ?, preco = ?, descricao = ? WHERE idcelular = ?",
+        `UPDATE Celulares
+         SET Marca = ?, Modelo = ?, Preco = ?, Descricao = ?
+         WHERE idcelular = ?`,
         [marca, modelo, preco, descricao, id]
       );
       return {
@@ -96,7 +109,12 @@ const celularModel = {
   getByUserId: async (idusuario) => {
     try {
       const [results] = await pool.query(
-        "SELECT * FROM Celulares WHERE idusuario = ? ORDER BY dataCriacao DESC",
+        `SELECT idcelular, idusuario, Marca AS marca, Modelo AS modelo,
+                Preco AS preco, Imagem AS imagem, Descricao AS descricao,
+                \`Like\` AS likes, Deslike AS dislikes, dataCriacao
+         FROM Celulares
+         WHERE idusuario = ?
+         ORDER BY dataCriacao DESC`,
         [idusuario]
       );
       return results;
