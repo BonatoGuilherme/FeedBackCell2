@@ -14,6 +14,18 @@ const usuarioModel = {
     }
   },
 
+  getPasswordHash: async (id) => {
+    try {
+      const [results] = await pool.query(
+        "SELECT Senha FROM Usuarios WHERE idusuario = ?",
+        [id]
+      );
+      return results[0]?.Senha || null;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // Atualizar perfil do usuário
   updateProfile: async (id, nome, email) => {
     try {

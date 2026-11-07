@@ -10,7 +10,7 @@ const celularModel = {
                 Preco AS preco, Imagem AS imagem, Descricao AS descricao,
                 \`Like\` AS likes, Deslike AS dislikes, dataCriacao
          FROM Celulares
-         ORDER BY dataCriacao DESC
+         ORDER BY dataCriacao DESC, idcelular DESC
          LIMIT ? OFFSET ?`,
         [limit, offset]
       );
@@ -114,7 +114,7 @@ const celularModel = {
                 \`Like\` AS likes, Deslike AS dislikes, dataCriacao
          FROM Celulares
          WHERE idusuario = ?
-         ORDER BY dataCriacao DESC`,
+         ORDER BY dataCriacao DESC, idcelular DESC`,
         [idusuario]
       );
       return results;

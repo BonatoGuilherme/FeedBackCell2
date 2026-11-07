@@ -1,6 +1,5 @@
 const bcrypt = require("bcryptjs");
 const usuarioModel = require("../models/usuarioModel");
-const { pool } = require("../db/connection");
 require("dotenv").config();
 
 const usuarioController = {
@@ -92,17 +91,13 @@ const usuarioController = {
       }
 
       // Busca usuário e valida senha atual
-      const [results] = await pool.query(
-        "SELECT Senha FROM Usuarios WHERE idusuario = ?",
-        [idusuario]
-      );
-      const userWithPassword = results[0];
+      const senhaAtualHash = await usuarioModel.getPasswordHash(idusuario);
 
-      if (!userWithPassword) {
+      if (!senhaAtualHash) {
         return res.status(404).json({ erro: "Usuário não encontrado" });
       }
 
-      const senhaValida = await bcrypt.compare(senhaAtual, userWithPassword.Senha);
+      const senhaValida = await bcrypt.compare(senhaAtual, senhaAtualHash);
       if (!senhaValida) {
         return res.status(401).json({ erro: "Senha atual incorreta" });
       }
@@ -139,17 +134,13 @@ const usuarioController = {
       }
 
       // Busca usuário e valida senha
-      const [results] = await pool.query(
-        "SELECT Senha FROM Usuarios WHERE idusuario = ?",
-        [idusuario]
-      );
-      const userWithPassword = results[0];
+      const senhaHash = await usuarioModel.getPasswordHash(idusuario);
 
-      if (!userWithPassword) {
+      if (!senhaHash) {
         return res.status(404).json({ erro: "Usuário não encontrado" });
       }
 
-      const senhaValida = await bcrypt.compare(senha, userWithPassword.Senha);
+      const senhaValida = await bcrypt.compare(senha, senhaHash);
       if (!senhaValida) {
         return res.status(401).json({ erro: "Senha incorreta" });
       }
