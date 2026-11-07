@@ -10,7 +10,7 @@ const comentarioModel = {
          FROM Comentarios c 
          JOIN Usuarios u ON c.idusuario = u.idusuario 
          WHERE c.idcelular = ? 
-         ORDER BY c.dataCriacao DESC 
+         ORDER BY c.dataCriacao DESC, c.idcomentario DESC
          LIMIT ? OFFSET ?`,
         [idcelular, limit, offset]
       );
@@ -81,7 +81,9 @@ const comentarioModel = {
   getByUserId: async (idusuario) => {
     try {
       const [results] = await pool.query(
-        "SELECT * FROM Comentarios WHERE idusuario = ? ORDER BY dataCriacao DESC",
+        `SELECT * FROM Comentarios
+         WHERE idusuario = ?
+         ORDER BY dataCriacao DESC, idcomentario DESC`,
         [idusuario]
       );
       return results;

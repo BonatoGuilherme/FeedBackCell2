@@ -36,15 +36,17 @@ O frontend atualmente possui telas de login, cadastro, catálogo e criação de 
 
 ### Executar o projeto
 
+Na primeira execução, copie `.env.example` para `.env` e substitua as senhas e chaves de exemplo por valores fortes. Não compartilhe nem versione o arquivo `.env`.
+
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
 ### Serviços
 
-* Frontend → http://localhost:3000
-* Backend → http://localhost:5000
-* Banco de dados → localhost:3307
+* Aplicação (frontend e API pelo proxy) → http://localhost:3000
+* API → http://localhost:3000/api
+* Banco de dados → localhost:3307, vinculado somente à interface local do host
 
 ---
 
@@ -55,7 +57,7 @@ docker compose up -d
 ├── frontend/            # Next.js (App Router + TypeScript)
 ├── backend/             # Express API + MySQL
 ├── docker-compose.yml   # Orquestração dos serviços
-├── .env                 # Template de variáveis de ambiente
+├── .env.example         # Modelo de variáveis; copiar para .env
 └── README.md
 ```
 
@@ -85,7 +87,7 @@ As rotas do backend expostas pelo servidor Express são organizadas atualmente d
 | PUT | `/usuarios/perfil` | Atualizar perfil do usuário atual | Sim |
 | PUT | `/usuarios/senha` | Atualizar senha do usuário atual | Sim |
 | DELETE | `/usuarios/conta` | Deletar conta do usuário atual | Sim |
-| GET | `/usuarios` | Listar todos os usuários (fluxo restrito ao admin) | Sim |
+| GET | `/usuarios` | Listar todos os usuários (restrito aos IDs em `ADMIN_USER_IDS`) | Sim |
 
 ---
 
@@ -94,18 +96,37 @@ As rotas do backend expostas pelo servidor Express são organizadas atualmente d
 ### Comandos principais
 
 ```bash
-# Iniciar containers
-docker compose up -d
+# Iniciar a aplicação
+docker compose up -d --build
 
-# Parar containers
+# Escalar frontend e API no mesmo servidor
+docker compose up -d --scale frontend=2 --scale backend=3
+
+# Parar os containers sem apagar os dados ou backups
 docker compose down
 
-# Reconstruir containers
-docker compose up -d --build
+# Conferir status e prontidão
+docker compose ps
+curl http://localhost:3000/readyz
 
 # Ver logs
 docker compose logs -f
 ```
+
+O Nginx encaminha `/` ao frontend e `/api/*` à API, atualizando a descoberta DNS das réplicas do Compose. O backend usa Redis para compartilhar os contadores do rate limit entre réplicas. Para manter a aplicação no mesmo host, não publique as portas do frontend ou backend diretamente.
+
+As migrações rodam uma vez no serviço `migrate` antes da API, evitando que várias réplicas alterem o schema simultaneamente. Os índices compostos acompanham as consultas de listagem e substituem índices simples redundantes que já existiam. O `EXPLAIN` no banco atual encontrou apenas 1 celular e 0 comentários; portanto, os índices correspondem aos filtros/ordenações usados, mas esses dados ainda não permitem alegar ganho de desempenho medido.
+
+O serviço `backup` cria um dump comprimido e verifica o arquivo ao iniciar e a cada intervalo configurado. As cópias ficam no volume `feedbackcellnextjs_mysql_backups`; para listar ou copiar um arquivo para o host:
+
+```bash
+docker compose exec backup ls -lh /backups
+docker compose cp backup:/backups/<arquivo>.sql.gz .
+```
+
+Uma cópia no mesmo servidor protege contra erros de container, mas não contra perda do disco ou do host. Copie os arquivos para armazenamento externo e teste a restauração. `docker compose down` preserva os volumes; **não use `docker compose down -v`**, pois isso apaga o banco e os backups.
+
+O Compose prepara balanceamento local e escala horizontal dentro de um único host, não alta disponibilidade: o host, o MySQL e o Redis continuam sendo pontos únicos de falha. O proxy escuta HTTP; termine TLS em um proxy/load balancer externo confiável e ajuste `TRUST_PROXY` ao número de proxies confiáveis antes de expor a aplicação à Internet.
 
 ---
 
@@ -117,22 +138,30 @@ docker compose logs -f
 DB_HOST=mysql
 DB_PORT=3306
 DB_USER=root
-DB_PASSWORD=root
-DB_NAME=feedbackcell
+DB_PASSWORD=replace-with-a-long-random-password
+DB_NAME=feedbackcell_db
 NODE_ENV=development
 PORT=5000
-JWT_SECRET=sua_chave_secreta_muito_longa_com_32_caracteres_minimo_para_seguranca
+JWT_SECRET=replace-with-a-random-secret-of-at-least-32-characters
 JWT_EXPIRATION=24h
-BCRYPT_ROUNDS=10
+BCRYPT_ROUNDS=12
 RATE_LIMIT=100
+RATE_LIMIT_WINDOW_MS=60000
+TRUST_PROXY=1
+ADMIN_USER_IDS=
+BACKUP_INTERVAL_SECONDS=86400
+BACKUP_RETENTION_DAYS=30
 ```
+
+Use `.env.example` como referência para a configuração do Compose. `ADMIN_USER_IDS` aceita IDs de usuário separados por vírgula; deixe-o vazio até escolher explicitamente os administradores. Sem IDs, a rota `/usuarios` responde HTTP 503; usuários autenticados fora da lista recebem HTTP 403. `RATE_LIMIT_REDIS_URL` é configurada pelo Compose para apontar ao Redis interno.
 
 ### Frontend (`.env.local`)
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:5000
-CORS_ORIGIN=http://localhost:3000
+NEXT_PUBLIC_API_URL=/api
 ```
+
+`NEXT_PUBLIC_API_URL` é incorporada ao bundle durante o build do Next.js. No Compose, `/api` mantém frontend e API na mesma origem; ao executar o frontend fora do Docker, use a URL local correspondente à API.
 
 ---
 
@@ -141,22 +170,24 @@ CORS_ORIGIN=http://localhost:3000
 * **Frontend:** Next.js, TypeScript
 * **Backend:** Node.js, Express
 * **Banco de dados:** MySQL
-* **Infraestrutura:** Docker, Docker Compose
+* **Infraestrutura:** Docker Compose, Nginx, Redis
 
 ---
 
 ## 🛠 Desenvolvimento
 
-Os containers suportam live reload em desenvolvimento, mas a API e o frontend devem ser reconstruídos quando a imagem Docker ou as dependências forem alteradas.
+Após alterar imagens ou dependências, reconstrua os serviços com `docker compose up -d --build`. Execute os testes do backend no PowerShell:
 
-```bash
-docker compose up -d --build
+```powershell
+Set-Location backend
+pnpm test
 ```
 
 ---
 
 ## 🗺 Roadmap / Próximos Passos
 
+- [x] Adicionar teste automatizado para idempotência e validação das migrações de índices.
 - [ ] Adicionar testes automatizados para controllers, models e rotas.
 - [ ] Alinhar as rotas de comentários com as expectativas de parâmetros do frontend e do controller.
 - [ ] Adicionar um fluxo completo do frontend para comentários e gerenciamento de recursos do usuário autenticado.
@@ -180,8 +211,6 @@ docker compose up -d --build
 
 Este projeto está em desenvolvimento ativo. Ele já possui uma infraestrutura Docker funcional, autenticação JWT, CRUD de celulares, endpoints de perfil do usuário e endpoints de comentários no backend; porém, a configuração atual de comentários precisa ser normalizada para manter o caminho da rota e os nomes dos parâmetros do controller consistentes.
 
-O repositório também ainda precisa de testes automatizados e de uma cobertura maior do frontend para todos os recursos protegidos da API.
+O repositório ainda precisa de cobertura de testes mais ampla para controllers, rotas e recursos protegidos do frontend. O Compose balanceia réplicas no mesmo host; não substitui redundância entre hosts nem backups externos.
 
 ---
-
-

@@ -3,8 +3,7 @@ FROM node:20-alpine
 
 ENV NODE_ENV=production
 
-# Instala ferramentas de runtime usadas pelo healthcheck e pelo wait do container
-RUN apk add --no-cache curl netcat-openbsd
+RUN apk add --no-cache curl
 
 WORKDIR /app
 

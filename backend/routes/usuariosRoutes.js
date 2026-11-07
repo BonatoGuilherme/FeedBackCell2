@@ -1,6 +1,7 @@
 const express = require("express");
 const usuarioController = require("../controllers/usuariosController");
 const authMiddleware = require("../middlewares/authMiddleware");
+const requireAdmin = require("../middlewares/requireAdmin");
 
 const router = express.Router();
 
@@ -11,6 +12,6 @@ router.put("/senha", authMiddleware, usuarioController.updatePassword);
 router.delete("/conta", authMiddleware, usuarioController.deleteAccount);
 
 // Admin only
-router.get("/", authMiddleware, usuarioController.getAll);
+router.get("/", authMiddleware, requireAdmin, usuarioController.getAll);
 
 module.exports = router;
