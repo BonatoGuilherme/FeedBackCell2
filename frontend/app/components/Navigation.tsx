@@ -12,6 +12,7 @@ export default function Navigation() {
   const links = [
     { href: "/", label: "Visão geral", icon: "home" as const },
     { href: "/catalog", label: "Catálogo", icon: "catalog" as const },
+    { href: "/comments", label: "Comentários", icon: "catalog" as const },
     { href: "/items/new", label: "Adicionar celular", icon: "plus" as const },
   ];
 

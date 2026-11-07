@@ -1,36 +1,45 @@
 const comentarioModel = require("../models/comentarioModel");
 const celularModel = require("../models/celularModel");
+const { MAX_PAGE_SIZE, parsePagination } = require("../utils/pagination");
+
+function parseId(value) {
+  const id = Number(value);
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
+}
 
 const comentarioController = {
   // GET - Listar comentários de um celular
   getByIdCelular: async (req, res) => {
     try {
       const { idcelular } = req.params;
-      const page = parseInt(req.query.page) || 1;
-      const limit = parseInt(req.query.limit) || 10;
+      const pagination = parsePagination(req.query);
+      const celularId = parseId(idcelular);
 
-      if (!idcelular || isNaN(idcelular)) {
+      if (celularId === null) {
         return res.status(400).json({ erro: "ID do celular inválido" });
       }
 
-      if (page < 1 || limit < 1) {
+      if (!pagination) {
         return res
           .status(400)
-          .json({ erro: "Página e limite devem ser maiores que 0" });
+          .json({
+            erro: `Página e limite devem ser inteiros positivos; limite máximo: ${MAX_PAGE_SIZE}`,
+          });
       }
 
+      const { page, limit } = pagination;
       // Verifica se celular existe
-      const celular = await celularModel.getById(idcelular);
+      const celular = await celularModel.getById(celularId);
       if (!celular) {
         return res.status(404).json({ erro: "Celular não encontrado" });
       }
 
       const comentarios = await comentarioModel.getByIdCelular(
-        idcelular,
+        celularId,
         page,
         limit,
       );
-      const total = await comentarioModel.getCountByIdCelular(idcelular);
+      const total = await comentarioModel.getCountByIdCelular(celularId);
       const totalPages = Math.ceil(total / limit);
 
       return res.status(200).json({
@@ -56,9 +65,10 @@ const comentarioController = {
       const { idcelular } = req.params;
       const { texto } = req.body;
       const idusuario = req.userId;
+      const celularId = parseId(idcelular);
 
       // Validação
-      if (!idcelular || isNaN(idcelular)) {
+      if (celularId === null) {
         return res.status(400).json({ erro: "ID do celular inválido" });
       }
 
@@ -79,13 +89,13 @@ const comentarioController = {
       }
 
       // Verifica se celular existe
-      const celular = await celularModel.getById(idcelular);
+      const celular = await celularModel.getById(celularId);
       if (!celular) {
         return res.status(404).json({ erro: "Celular não encontrado" });
       }
 
       const comentario = await comentarioModel.create(
-        idcelular,
+        celularId,
         idusuario,
         texto.trim(),
       );
@@ -107,25 +117,34 @@ const comentarioController = {
     try {
       const { idcelular, idcomentario } = req.params;
       const idusuario = req.userId;
+      const celularId = parseId(idcelular);
+      const comentarioId = parseId(idcomentario);
 
-      if (!idcomentario || isNaN(idcomentario)) {
+      if (celularId === null) {
+        return res.status(400).json({ erro: "ID do celular inválido" });
+      }
+      if (comentarioId === null) {
         return res.status(400).json({ erro: "ID do comentário inválido" });
       }
 
       // Verifica se comentário existe
-      const comentario = await comentarioModel.getById(idcomentario);
+      const comentario = await comentarioModel.getById(comentarioId);
       if (!comentario) {
         return res.status(404).json({ erro: "Comentário não encontrado" });
       }
 
+      if (Number(comentario.idcelular) !== celularId) {
+        return res.status(404).json({ erro: "Comentário não encontrado" });
+      }
+
       // Verifica propriedade
-      if (comentario.idusuario !== idusuario) {
+      if (Number(comentario.idusuario) !== Number(idusuario)) {
         return res.status(403).json({
           erro: "Você não tem permissão para deletar este comentário",
         });
       }
 
-      await comentarioModel.delete(idcomentario);
+      await comentarioModel.delete(comentarioId);
 
       return res.status(200).json({
         mensagem: "Comentário deletado com sucesso",
