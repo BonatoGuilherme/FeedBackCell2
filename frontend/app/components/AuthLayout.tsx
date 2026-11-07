@@ -1,31 +1,51 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import Navigation from './Navigation';
+import { useEffect, useSyncExternalStore } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import Navigation from "./Navigation";
+import {
+  getServerSessionSnapshot,
+  getSessionSnapshot,
+  subscribeToSession,
+} from "@/src/lib/session";
 
-const publicPaths = ['/login', '/register'];
+const publicPaths = ["/login", "/register"];
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const isAuthenticated = typeof window !== 'undefined'
-    ? Boolean(window.localStorage.getItem('token'))
-    : false;
+  const isPublicPage = publicPaths.includes(pathname);
+  const hasSession = useSyncExternalStore(
+    subscribeToSession,
+    getSessionSnapshot,
+    getServerSessionSnapshot,
+  );
 
   useEffect(() => {
-    if (!publicPaths.includes(pathname) && !isAuthenticated) {
-      router.replace('/login');
+    if (!isPublicPage && !hasSession) {
+      router.replace("/login");
     }
-  }, [pathname, router, isAuthenticated]);
+  }, [hasSession, isPublicPage, pathname, router]);
 
-  const showNavigation = isAuthenticated && !publicPaths.includes(pathname);
-  const isPublicPage = publicPaths.includes(pathname);
+  if (isPublicPage) {
+    return <main className="auth-main">{children}</main>;
+  }
+
+  if (hasSession !== true) {
+    return (
+      <main className="app-loading-screen" role="status">
+        <span className="app-loading-screen__mark" aria-hidden="true">
+          F
+        </span>
+        <span>Verificando sessão…</span>
+      </main>
+    );
+  }
 
   return (
     <>
-      {showNavigation && <Navigation />}
-      <main className={isPublicPage ? 'auth-main' : 'main-content'}>{children}</main>
+      <Navigation />
+      <main className="main-content">{children}</main>
     </>
   );
 }

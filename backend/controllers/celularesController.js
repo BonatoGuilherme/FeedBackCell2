@@ -1,5 +1,7 @@
 const celularModel = require("../models/celularModel");
 
+const MAX_PRECO_CELULAR = 99999999.99;
+
 const celularController = {
   // GET - Listar todos os celulares
   getAll: async (req, res) => {
@@ -64,21 +66,35 @@ const celularController = {
       const idusuario = req.userId;
 
       // Validação
-      if (!marca || !modelo || preco === undefined) {
+      if (
+        typeof marca !== "string" ||
+        typeof modelo !== "string" ||
+        preco === undefined
+      ) {
         return res.status(400).json({
           erro: "Marca, modelo e preço são obrigatórios",
         });
       }
 
-      if (typeof preco !== "number" || preco < 0) {
+      if (
+        typeof preco !== "number" ||
+        !Number.isFinite(preco) ||
+        preco <= 0 ||
+        preco > MAX_PRECO_CELULAR
+      ) {
         return res
           .status(400)
-          .json({ erro: "Preço deve ser um número positivo" });
+          .json({ erro: "Preço deve ser positivo e não pode ultrapassar R$ 99.999.999,99" });
       }
 
-      if (marca.trim().length < 2 || modelo.trim().length < 2) {
+      if (
+        marca.trim().length < 2 ||
+        marca.trim().length > 100 ||
+        modelo.trim().length < 2 ||
+        modelo.trim().length > 100
+      ) {
         return res.status(400).json({
-          erro: "Marca e modelo devem ter pelo menos 2 caracteres",
+          erro: "Marca e modelo devem ter entre 2 e 100 caracteres",
         });
       }
 
@@ -127,16 +143,36 @@ const celularController = {
       }
 
       // Validação
-      if (!marca || !modelo || preco === undefined) {
+      if (
+        typeof marca !== "string" ||
+        typeof modelo !== "string" ||
+        preco === undefined
+      ) {
         return res.status(400).json({
           erro: "Marca, modelo e preço são obrigatórios",
         });
       }
 
-      if (typeof preco !== "number" || preco < 0) {
+      if (
+        typeof preco !== "number" ||
+        !Number.isFinite(preco) ||
+        preco <= 0 ||
+        preco > MAX_PRECO_CELULAR
+      ) {
         return res
           .status(400)
-          .json({ erro: "Preço deve ser um número positivo" });
+          .json({ erro: "Preço deve ser positivo e não pode ultrapassar R$ 99.999.999,99" });
+      }
+
+      if (
+        marca.trim().length < 2 ||
+        marca.trim().length > 100 ||
+        modelo.trim().length < 2 ||
+        modelo.trim().length > 100
+      ) {
+        return res.status(400).json({
+          erro: "Marca e modelo devem ter entre 2 e 100 caracteres",
+        });
       }
 
       const celularAtualizado = await celularModel.update(

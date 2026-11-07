@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { notifySessionChange } from "@/src/lib/session";
 
 export function useLogin() {
   const [email, setEmail] = useState("");
@@ -51,6 +52,7 @@ export function useLogin() {
       }
 
       localStorage.setItem("token", data.token);
+      notifySessionChange();
       router.push("/catalog");
     } catch (error: unknown) {
       setErro(error instanceof Error ? error.message : "Erro inesperado");

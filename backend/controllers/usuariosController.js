@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const usuarioModel = require("../models/usuarioModel");
-const { pool } = require("../server");
+const { pool } = require("../db/connection");
 require("dotenv").config();
 
 const usuarioController = {

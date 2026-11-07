@@ -17,7 +17,9 @@ CREATE TABLE IF NOT EXISTS `Usuarios` (
 CREATE TABLE IF NOT EXISTS `Celulares` (
   `idcelular` INT NOT NULL AUTO_INCREMENT,
   `idusuario` INT NOT NULL,
+  `Marca` VARCHAR(100) NOT NULL DEFAULT 'Não informada',
   `Modelo` VARCHAR(100) NOT NULL,
+  `Preco` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `Imagem` VARCHAR(500),
   `Descricao` TEXT,
   `Like` INT DEFAULT 0,
