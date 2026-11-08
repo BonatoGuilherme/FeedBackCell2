@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Plus, X } from "lucide-react";
-import { notifySessionChange } from "@/src/lib/session";
+import { expireSession } from "@/src/lib/session";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -52,8 +52,7 @@ export default function Navigation() {
   }, [open]);
 
   function handleLogout() {
-    window.localStorage.removeItem("token");
-    notifySessionChange();
+    expireSession();
     router.replace("/login");
   }
 

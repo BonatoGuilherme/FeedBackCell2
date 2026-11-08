@@ -15,6 +15,7 @@ import {
   validarFoto,
 } from "@/src/lib/celulares";
 import { PhotoPicker, type PickedPhoto } from "@/components/ui/photo-picker";
+import { getToken } from "@/src/lib/session";
 
 const currency = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -41,7 +42,7 @@ export default function NewPhoneForm() {
     event.preventDefault();
     setErro("");
 
-    const token = window.localStorage.getItem("token");
+    const token = getToken();
     if (!token) {
       setErro("Sua sessão expirou. Entre novamente para cadastrar um celular.");
       return;
