@@ -22,6 +22,15 @@
 			<artifactId>spring-boot-starter-jdbc</artifactId>
 		</dependency>
 		<dependency>
+			<!-- schema do MySQL versionado em src/main/resources/db/migration -->
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-flyway</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-mysql</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-kafka</artifactId>
 		</dependency>
@@ -58,12 +67,14 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
 			<plugin>
-				<!-- testes nunca leem o .env real nem tentam falar com Kafka -->
+				<!-- testes nunca leem o .env real nem tentam falar com Kafka ou migrar o MySQL
+				     (os repositórios são simulados) -->
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<systemPropertyVariables>
 						<APP_ENV_FILE>target/sem-env</APP_ENV_FILE>
 						<KAFKA_ENABLED>false</KAFKA_ENABLED>
+						<FLYWAY_ENABLED>false</FLYWAY_ENABLED>
 						<RATE_LIMIT_REDIS_URL></RATE_LIMIT_REDIS_URL>
 						<APP_ENV>test</APP_ENV>
 					</systemPropertyVariables>

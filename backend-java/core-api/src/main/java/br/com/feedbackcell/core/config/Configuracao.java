@@ -5,16 +5,20 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
- * Variáveis de ambiente validadas na inicialização, com as mesmas regras do backend Node
- * (TRUST_PROXY, ADMIN_USER_IDS, RATE_LIMIT*, DB_POOL_SIZE falham cedo se inválidas).
+ * Variáveis de ambiente validadas na inicialização, com as mesmas regras do antigo backend Node
+ * (TRUST_PROXY, ADMIN_USER_IDS, RATE_LIMIT*, DB_POOL_SIZE falham cedo se inválidas) e, em
+ * produção, JWT_SECRET com pelo menos 32 caracteres.
  */
 @Component
 public class Configuracao {
 
+    private static final Logger LOG = LoggerFactory.getLogger(Configuracao.class);
     private static final Pattern ID_POSITIVO = Pattern.compile("^[1-9]\\d*$");
 
     private final boolean producao;
@@ -58,6 +62,23 @@ public class Configuracao {
         if (producao && this.redisUrl == null) {
             throw new IllegalStateException("RATE_LIMIT_REDIS_URL is required in production");
         }
+        validarSegredoJwt(producao, jwtSecret);
+    }
+
+    public static final int MIN_JWT_SECRET = 32;
+
+    /**
+     * Em produção o app não sobe com JWT_SECRET vazio ou curto (HS256 com segredo fraco é
+     * quebrável por força bruta). Fora de produção só avisa: login/rotas autenticadas falham.
+     */
+    static void validarSegredoJwt(boolean producao, String segredo) {
+        boolean fraco = segredo == null || segredo.isBlank() || segredo.length() < MIN_JWT_SECRET;
+        if (!fraco) return;
+        if (producao) {
+            throw new IllegalStateException(
+                    "JWT_SECRET is required in production and must have at least " + MIN_JWT_SECRET + " characters");
+        }
+        LOG.warn("JWT_SECRET vazio ou com menos de {} caracteres; use um segredo forte em produção", MIN_JWT_SECRET);
     }
 
     /** Como parseInt(BCRYPT_ROUNDS) || 10 do Node, limitado ao intervalo que o bcrypt aceita. */

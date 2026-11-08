@@ -1,5 +1,6 @@
 package br.com.feedbackcell.core;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -15,10 +16,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import br.com.feedbackcell.core.auth.Jwt;
 import br.com.feedbackcell.core.auth.Senhas;
+import br.com.feedbackcell.core.celulares.ImagensController;
 import br.com.feedbackcell.core.dados.CelularRepositorio;
 import br.com.feedbackcell.core.dados.ComentarioRepositorio;
 import br.com.feedbackcell.core.dados.ImagemRepositorio;
@@ -30,6 +33,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -46,6 +50,7 @@ class ApiTest {
     @Autowired MockMvc mvc;
     @Autowired Jwt jwt;
     @Autowired Senhas senhas;
+    @Autowired ApplicationContext contexto;
 
     @MockitoBean CelularRepositorio celulares;
     @MockitoBean ImagemRepositorio imagens;
@@ -180,6 +185,50 @@ class ApiTest {
                         .content("{\"marca\":\"Apple\",\"modelo\":\"iPhone\",\"preco\":1}"))
                 .andExpect(status().isForbidden())
                 .andExpect(content().json("{\"erro\":\"Você não tem permissão para atualizar este celular\"}", true));
+    }
+
+    /** Contrato do front: idcelular sempre número, mesmo com id de rota "007" (o Node ecoava a string). */
+    @Test
+    void atualizarCelularDevolveIdcelularNumerico() throws Exception {
+        when(celulares.porId(7)).thenReturn(celular(7, 3));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/celulares/007")
+                        .header("Authorization", bearer(3)).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"marca\":\"Apple\",\"modelo\":\"iPhone 15\",\"preco\":1}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.celular.idcelular").value(7))
+                .andExpect(jsonPath("$.celular.idcelular").isNumber());
+        verify(celulares).atualizar(eq(7L), eq("Apple"), eq("iPhone 15"), any(), eq(""), isNull(), isNull());
+    }
+
+    @Test
+    void criarComentarioDevolveIdcelularNumerico() throws Exception {
+        when(celulares.porId(5)).thenReturn(celular(5, 9));
+        when(comentarios.criar(5L, 3L, "Muito bom")).thenReturn(11L);
+        mvc.perform(post("/comentarios/5").header("Authorization", bearer(3)).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"texto\":\" Muito bom \"}"))
+                .andExpect(status().isCreated())
+                .andExpect(content().json("""
+                        {"mensagem":"Comentário criado com sucesso",
+                         "comentario":{"idcomentario":11,"idcelular":5,"idusuario":3,"texto":"Muito bom"}}""", true))
+                .andExpect(jsonPath("$.comentario.idcelular").isNumber());
+    }
+
+    @Test
+    void fotoAcimaDe5MbDa413() throws Exception {
+        byte[] grande = new byte[ImagensController.MAX_IMAGEM_BYTES + 1];
+        grande[0] = (byte) 0xff;
+        grande[1] = (byte) 0xd8;
+        grande[2] = (byte) 0xff;
+        mvc.perform(post("/celulares/1/imagens").header("Authorization", bearer(3))
+                        .contentType(MediaType.IMAGE_JPEG).content(grande))
+                .andExpect(status().isPayloadTooLarge())
+                .andExpect(content().json("{\"erro\":\"Cada foto pode ter no máximo 5 MB\"}", true));
+        verifyNoInteractions(imagens);
+    }
+
+    @Test
+    void flywayDesligadoNosTestes() {
+        assertThat(contexto.getBeanNamesForType(org.flywaydb.core.Flyway.class)).isEmpty();
     }
 
     @Test
