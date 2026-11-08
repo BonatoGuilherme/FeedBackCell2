@@ -8,22 +8,27 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 /**
  * Regra de negócio do evento feedbackcell.celular.criado: busca o que o celular precisa e monta
  * a resposta de feedbackcell.celular.especificacoes (com nulls quando nada é encontrado).
+ *
+ * <p>O consumo usa {@code failure-strategy=ignore} e o core-api só recebe uma resposta por celular,
+ * então uma falha temporária (rede, timeout, 5xx) viraria especificações NULL para sempre: por isso
+ * repete a busca uma vez, só do que ainda falta, depois de {@code eventos.espera-repeticao}.
  */
 @ApplicationScoped
 public class ProcessadorCelularCriado {
 
     private static final Logger LOG = Logger.getLogger(ProcessadorCelularCriado.class);
-    private static final int MAX_TEXTO = 300;
 
     /** Mensagem a publicar: chave = idcelular, valor = JSON. */
     public record Resposta(String chave, String valor) {
@@ -31,10 +36,13 @@ public class ProcessadorCelularCriado {
 
     private final EspecificacoesService service;
     private final ObjectMapper json;
+    private final Duration espera;
 
-    public ProcessadorCelularCriado(EspecificacoesService service, ObjectMapper json) {
+    public ProcessadorCelularCriado(EspecificacoesService service, ObjectMapper json,
+                                    @ConfigProperty(name = "eventos.espera-repeticao", defaultValue = "2s") Duration espera) {
         this.service = service;
         this.json = json;
+        this.espera = espera;
     }
 
     /** Vazio quando o evento é inválido (sem idcelular): não há a quem responder. */
@@ -60,11 +68,22 @@ public class ProcessadorCelularCriado {
         Map<String, Object> especificacoes = null;
         String modelo3d = null;
         if ((precisaSpec || precisa3d) && EspecificacoesResource.validar(marca, modelo) == null) {
+            // sem precisar de especificações a busca é só do 3D (não gasta cota da MobileAPI)
             Resultado r = service.buscar(marca, modelo, !precisaSpec);
-            if (precisaSpec && r.aparelho() != null && r.aparelho().temEspecificacoes()) {
-                especificacoes = especificacoes(r.aparelho());
+            if (precisaSpec) especificacoes = especificacoes(r);
+            if (precisa3d) modelo3d = uid(r);
+            // repete uma vez só a fonte que falhou de forma temporária: cada consulta à MobileAPI gasta cota
+            boolean repetirSpec = especificacoes == null && precisaSpec && r.falhaTemporariaSpec();
+            boolean repetir3d = modelo3d == null && precisa3d && r.falhaTemporaria3d();
+            if ((repetirSpec || repetir3d) && dormir(idcelular, r)) {
+                r = service.buscar(marca, modelo, !repetirSpec);
+                if (repetirSpec) especificacoes = especificacoes(r);
+                if (modelo3d == null && precisa3d) modelo3d = uid(r);
             }
-            if (precisa3d && r.modelo3d() != null) modelo3d = r.modelo3d().uid();
+            if (precisaSpec && especificacoes == null) {
+                LOG.infof("Celular %d sem especificações: %s", idcelular,
+                        r.avisos().isEmpty() ? "nenhum aparelho com esse nome" : String.join(" ", r.avisos()));
+            }
         }
 
         Map<String, Object> saida = new LinkedHashMap<>();
@@ -79,33 +98,48 @@ public class ProcessadorCelularCriado {
         }
     }
 
+    private static Map<String, Object> especificacoes(Resultado r) {
+        return r.aparelho() != null && r.aparelho().temEspecificacoes() ? especificacoes(r.aparelho()) : null;
+    }
+
+    private static String uid(Resultado r) {
+        return r.modelo3d() == null ? null : r.modelo3d().uid();
+    }
+
+    private boolean dormir(long idcelular, Resultado r) {
+        LOG.warnf("Celular %d: falha temporária na busca (%s); tentando de novo", idcelular, String.join(" ", r.avisos()));
+        try {
+            Thread.sleep(espera);
+            return true;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
+    }
+
     private static String limpar(JsonNode n) {
         return n != null && n.isTextual() ? n.textValue().replaceAll("(?U)\\s+", " ").strip() : "";
     }
 
     /**
-     * Campos do especificacoesSchema do core-api (textos até 300). O crédito só acompanha
-     * a foto HD, que não é gravada pelo fluxo assíncrono, então fica de fora.
+     * Campos do Esquemas.ESPECIFICACOES do core-api (textos até 300; o Textos já corta cada campo
+     * em no máximo 300). O crédito só acompanha a foto HD, que não é gravada pelo fluxo assíncrono.
      */
     static Map<String, Object> especificacoes(Aparelho a) {
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("nome", corta(a.nome()));
-        m.put("fabricante", corta(a.fabricante()));
-        m.put("lancamento", corta(a.lancamento()));
-        m.put("tela", corta(a.tela()));
-        m.put("hardware", corta(a.hardware()));
-        m.put("armazenamento", corta(a.armazenamento()));
-        m.put("camera", corta(a.camera()));
-        m.put("bateria", corta(a.bateria()));
-        m.put("peso", corta(a.peso()));
-        m.put("espessura", corta(a.espessura()));
-        m.put("cores", corta(a.cores()));
+        m.put("nome", a.nome());
+        m.put("fabricante", a.fabricante());
+        m.put("lancamento", a.lancamento());
+        m.put("tela", a.tela());
+        m.put("hardware", a.hardware());
+        m.put("armazenamento", a.armazenamento());
+        m.put("camera", a.camera());
+        m.put("bateria", a.bateria());
+        m.put("peso", a.peso());
+        m.put("espessura", a.espessura());
+        m.put("cores", a.cores());
         m.put("creditoImagem", null);
         m.put("creditoImagemUrl", null);
         return m;
-    }
-
-    private static String corta(String s) {
-        return s == null || s.length() <= MAX_TEXTO ? s : s.substring(0, MAX_TEXTO);
     }
 }

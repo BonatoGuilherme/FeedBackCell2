@@ -1,5 +1,6 @@
 package br.com.feedbackcell.specs.busca;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 
 /** Formas do JSON devolvido por GET /especificacoes (iguais às do especificacoesService.js). */
@@ -45,7 +46,12 @@ public final class Modelos {
         }
     }
 
+    /**
+     * {@code falhaTemporariaSpec}/{@code falhaTemporaria3d} (fora do JSON): a MobileAPI/o Sketchfab
+     * falhou por rede, timeout ou 5xx e vale repetir.
+     */
     public record Resultado(String consulta, Aparelho aparelho, List<Aparelho> sugestoes, Modelo3d modelo3d,
-                            List<String> avisos) {
+                            List<String> avisos, @JsonIgnore boolean falhaTemporariaSpec,
+                            @JsonIgnore boolean falhaTemporaria3d) {
     }
 }
