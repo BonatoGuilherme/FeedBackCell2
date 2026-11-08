@@ -78,3 +78,39 @@ jobs:
         working-directory: frontend
       - run: pnpm run build
         working-directory: frontend
+
+  core-api:
+    name: core-api (Spring Boot) verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+          cache-dependency-path: backend-java/core-api/pom.xml
+      - run: chmod +x mvnw
+        working-directory: backend-java/core-api
+      - run: ./mvnw -B verify
+        working-directory: backend-java/core-api
+        env:
+          KAFKA_ENABLED: "false"
+
+  specs-service:
+    name: specs-service (Quarkus) verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+          cache-dependency-path: backend-java/specs-service/pom.xml
+      - run: chmod +x mvnw
+        working-directory: backend-java/specs-service
+      - run: ./mvnw -B verify
+        working-directory: backend-java/specs-service
+        env:
+          KAFKA_ENABLED: "false"
