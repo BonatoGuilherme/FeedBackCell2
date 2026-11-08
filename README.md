@@ -1,52 +1,56 @@
 # FeedBackCELL
 
 ![Docker](https://img.shields.io/badge/docker-ready-blue)
-![Node](https://img.shields.io/badge/node-20-green)
+![Java](https://img.shields.io/badge/java-21-orange)
+![Spring Boot](https://img.shields.io/badge/spring%20boot-core--api-green)
+![Quarkus](https://img.shields.io/badge/quarkus-specs--service-blue)
 ![Next.js](https://img.shields.io/badge/next.js-16-black)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
-Plataforma full-stack de feedback construída com **Next.js**, **Express** e **MySQL**, conteinerizada com **Docker**. O projeto permite que usuários cadastrados publiquem, gerenciem e explorem avaliações de celulares por meio de uma interface web e de uma API.
+Plataforma full-stack de feedback sobre celulares: frontend **Next.js**, API **Spring Boot** (core-api), serviço de especificações **Quarkus** (specs-service), **Kafka**, **MySQL** e **Redis**, tudo orquestrado com **Docker Compose** atrás de um proxy **Nginx**.
 
 ---
 
 ## 📖 Sobre
 
-FeedBackCELL é um projeto full-stack educacional voltado para criar um produto para coletar feedback e opiniões sobre celulares. A plataforma combina uma API Express, um banco de dados MySQL e um frontend Next.js em um fluxo de desenvolvimento baseado em Docker.
+FeedBackCELL é um projeto full-stack educacional para coletar avaliações e opiniões sobre celulares. Usuários cadastrados publicam celulares (com fotos e especificações preenchidas automaticamente), comentam e gerenciam seus próprios itens.
 
 ## ✨ Funcionalidades
 
-O backend implementa atualmente os seguintes comportamentos:
-
-- [x] Cadastro de usuários, login, simulação de logout e verificação de token pela API de autenticação.
-- [x] Criação, listagem, busca por ID, atualização, exclusão e checagem de propriedade para celulares.
-- [x] Endpoints privados para perfil do usuário autenticado, atualização de senha, exclusão de conta e listagem de usuários com validação de autenticação.
-- [x] Criação, listagem por celular, exclusão e listagem de comentários do usuário com validação de propriedade.
-- [x] Rate limiting global de requisições e validação de entrada na camada de API.
-
-O frontend atualmente possui telas de login, cadastro, catálogo e criação de itens conectadas à API por meio da variável de ambiente `NEXT_PUBLIC_API_URL`.
+- [x] Cadastro, login, logout no cliente e verificação de token JWT.
+- [x] CRUD de celulares com checagem de propriedade, paginação e fotos (até 5 MB cada).
+- [x] Especificações automáticas: ao criar um celular, o core-api publica um evento no Kafka; o specs-service busca as especificações e devolve outro evento que o core-api aplica no banco. Também há busca síncrona em `/celulares/especificacoes`.
+- [x] Comentários por celular e listagem dos comentários do usuário.
+- [x] Perfil, troca de senha, exclusão de conta e listagem de usuários restrita a administradores.
+- [x] Rate limiting compartilhado entre réplicas (Redis) e validação de entrada na API.
 
 ---
 
-## 🚀 Início Rápido
+## 🧱 Stack Tecnológica
 
-### Requisitos
+| Camada | Tecnologia |
+|--------|------------|
+| Frontend | Next.js 16, TypeScript |
+| API pública (`core-api`, :8080) | Java 21, Spring Boot, Flyway |
+| Especificações (`specs-service`, :8081, interno) | Java 21, Quarkus, SmallRye Reactive Messaging |
+| Mensageria | Apache Kafka 4 (KRaft, sem ZooKeeper) |
+| Banco de dados | MySQL 8.0 |
+| Rate limit | Redis 7.4 |
+| Proxy | Nginx 1.28 |
 
-* Docker Desktop
-* Node.js 20+ (opcional, para desenvolvimento local)
+### Fluxo
 
-### Executar o projeto
-
-Na primeira execução, copie `.env.example` para `.env` e substitua as senhas e chaves de exemplo por valores fortes. Não compartilhe nem versione o arquivo `.env`.
-
-```bash
-docker compose up -d --build
+```text
+navegador ──► proxy (nginx :80, publicado em APP_PORT)
+                ├── /          ──► frontend (Next.js :3000)
+                ├── /api/*     ──► core-api (:8080) ──► MySQL, Redis
+                └── /health, /readyz ──► core-api
+core-api ──► Kafka: feedbackcell.celular.criado ──► specs-service
+specs-service ──► Kafka: feedbackcell.celular.especificacoes ──► core-api
+core-api ──► HTTP interno ──► specs-service (busca síncrona, até 30 s)
 ```
 
-### Serviços
-
-* Aplicação (frontend e API pelo proxy) → http://localhost:3000
-* API → http://localhost:3000/api
-* Banco de dados → localhost:3307, vinculado somente à interface local do host
+O specs-service não publica portas nem passa pelo proxy. Os tópicos são criados pelo serviço `kafka-init` (auto-criação desligada no broker).
 
 ---
 
@@ -54,31 +58,77 @@ docker compose up -d --build
 
 ```text
 .
-├── frontend/            # Next.js (App Router + TypeScript)
-├── backend/             # Express API + MySQL
-├── docker-compose.yml   # Orquestração dos serviços
-├── .env.example         # Modelo de variáveis; copiar para .env
+├── frontend/                  # Next.js (App Router + TypeScript)
+├── backend-java/
+│   ├── core-api/              # Spring Boot: API pública + migrações Flyway
+│   └── specs-service/         # Quarkus: busca de especificações via Kafka/HTTP
+├── infra/
+│   ├── nginx/default.conf     # Proxy reverso (headers de segurança, gzip, timeouts)
+│   └── backup/                # Imagem e script de backup do MySQL
+├── docker-compose.yml         # Stack de produção (só o proxy publica porta)
+├── docker-compose.dev.yml     # Extra de dev: MySQL/Redis/Kafka em 127.0.0.1
+├── .env.example               # Modelo de variáveis; copiar para .env
 └── README.md
 ```
 
 ---
 
+## 🚀 Início Rápido
+
+### Requisitos
+
+* Docker Desktop (ou Docker Engine + Compose v2.24+)
+* Java 21 e Node.js 20+ com pnpm (opcional, para desenvolvimento fora do Docker)
+
+### Executar o projeto
+
+Copie `.env.example` para `.env` e substitua as senhas e chaves de exemplo por valores fortes. Não compartilhe nem versione o `.env`. O Compose recusa subir se `DB_USER`, `DB_PASSWORD`, `DB_NAME` ou `JWT_SECRET` estiverem vazios.
+
+```bash
+docker compose up -d --build
+```
+
+Na primeira subida o core-api cria o schema com Flyway; em bancos que já existiam (criados pelo antigo backend Node) o Flyway faz baseline e aplica só as migrações seguintes.
+
+### Serviços
+
+* Aplicação (frontend e API pelo proxy) → http://localhost:3000
+* API → http://localhost:3000/api
+* Saúde → http://localhost:3000/health (liveness) e http://localhost:3000/readyz (prontidão: banco, Redis)
+
+Em produção nenhum outro serviço fica acessível do host. Para desenvolvimento, `docker-compose.dev.yml` publica MySQL em `127.0.0.1:3307`, Redis em `127.0.0.1:6379` e Kafka em `127.0.0.1:29092`:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d mysql redis kafka kafka-init
+```
+
+O arquivo de dev não se chama `docker-compose.override.yml` de propósito: esse nome é carregado automaticamente e exporia o banco num `docker compose up` de produção.
+
+---
+
 ## 🔌 Endpoints da API
 
-As rotas do backend expostas pelo servidor Express são organizadas atualmente da seguinte forma:
+Pelo proxy, prefixe com `/api` (ex.: `POST /api/auth/login`). Direto no core-api (dev), use `http://localhost:8080`.
 
 | Método | Endpoint | Descrição | Autenticação |
 |--------|----------|-----------|--------------|
+| GET | `/health` | Liveness | Não |
+| GET | `/readyz` | Prontidão (MySQL e Redis) | Não |
 | POST | `/auth/register` | Cadastrar novo usuário | Não |
 | POST | `/auth/login` | Autenticar e retornar JWT | Não |
 | POST | `/auth/logout` | Resposta de logout no cliente | Não |
 | GET | `/auth/verify` | Verificar JWT e retornar usuário | Não |
 | GET | `/celulares` | Listar celulares com paginação | Não |
 | GET | `/celulares/:id` | Buscar celular por ID | Não |
-| POST | `/celulares` | Criar celular | Sim |
+| POST | `/celulares` | Criar celular (dispara a busca de especificações) | Sim |
 | PUT | `/celulares/:id` | Atualizar celular | Sim |
 | DELETE | `/celulares/:id` | Deletar celular | Sim |
 | GET | `/celulares/meus-itens` | Listar celulares do usuário autenticado | Sim |
+| GET | `/celulares/especificacoes?marca=&modelo=` | Buscar especificações (síncrono, até 30 s) | Sim |
+| GET | `/celulares/:id/imagens` | Listar fotos do celular | Não |
+| POST | `/celulares/:id/imagens` | Enviar foto (até 5 MB) | Sim |
+| DELETE | `/celulares/:id/imagens/:idimagem` | Remover foto | Sim |
+| GET | `/celulares/imagens/:idimagem` | Servir o arquivo da foto | Não |
 | GET | `/comentarios/:idcelular` | Listar comentários de um celular | Não |
 | POST | `/comentarios/:idcelular` | Criar comentário para um celular | Sim |
 | DELETE | `/comentarios/:idcelular/:idcomentario` | Deletar comentário específico | Sim |
@@ -87,145 +137,156 @@ As rotas do backend expostas pelo servidor Express são organizadas atualmente d
 | PUT | `/usuarios/perfil` | Atualizar perfil do usuário atual | Sim |
 | PUT | `/usuarios/senha` | Atualizar senha do usuário atual | Sim |
 | DELETE | `/usuarios/conta` | Deletar conta do usuário atual | Sim |
-| GET | `/usuarios` | Listar todos os usuários (restrito aos IDs em `ADMIN_USER_IDS`) | Sim |
+| GET | `/usuarios` | Listar todos os usuários (restrito a `ADMIN_USER_IDS`) | Sim |
 
----
-
-## 🐳 Docker
-
-### Comandos principais
-
-```bash
-# Iniciar a aplicação
-docker compose up -d --build
-
-# Escalar frontend e API no mesmo servidor
-docker compose up -d --scale frontend=2 --scale backend=3
-
-# Parar os containers sem apagar os dados ou backups
-docker compose down
-
-# Conferir status e prontidão
-docker compose ps
-curl http://localhost:3000/readyz
-
-# Ver logs
-docker compose logs -f
-```
-
-O Nginx encaminha `/` ao frontend e `/api/*` à API, atualizando a descoberta DNS das réplicas do Compose. O backend usa Redis para compartilhar os contadores do rate limit entre réplicas. Para manter a aplicação no mesmo host, não publique as portas do frontend ou backend diretamente.
-
-Cada réplica do backend abre um pool MySQL limitado por `DB_POOL_SIZE` (padrão: 10). O MySQL aceita até `DB_MAX_CONNECTIONS` conexões (padrão: 151). Dimensione as réplicas respeitando `réplicas do backend × DB_POOL_SIZE + conexões reservadas < DB_MAX_CONNECTIONS`; reserve conexões para migrações, backup, administração e margem operacional. Ajuste esses dois valores no `.env` antes de escalar.
-
-As migrações rodam uma vez no serviço `migrate` antes da API, evitando que várias réplicas alterem o schema simultaneamente. Os índices compostos acompanham as consultas de listagem e substituem índices simples redundantes que já existiam. O `EXPLAIN` no banco atual encontrou apenas 1 celular e 0 comentários; portanto, os índices correspondem aos filtros/ordenações usados, mas esses dados ainda não permitem alegar ganho de desempenho medido.
-
-O serviço `backup` cria um dump comprimido e verifica o arquivo ao iniciar e a cada intervalo configurado. As cópias ficam no volume `feedbackcellnextjs_mysql_backups`; para listar ou copiar um arquivo para o host:
-
-```bash
-docker compose exec backup ls -lh /backups
-docker compose cp backup:/backups/<arquivo>.sql.gz .
-```
-
-Uma cópia no mesmo servidor protege contra erros de container, mas não contra perda do disco ou do host. Copie os arquivos para armazenamento externo e teste a restauração. `docker compose down` preserva os volumes; **não use `docker compose down -v`**, pois isso apaga o banco e os backups.
-
-O Compose prepara balanceamento local e escala horizontal dentro de um único host, não alta disponibilidade: o host, o MySQL e o Redis continuam sendo pontos únicos de falha. O proxy escuta HTTP; termine TLS em um proxy/load balancer externo confiável e ajuste `TRUST_PROXY` ao número de proxies confiáveis antes de expor a aplicação à Internet.
+A coluna "Autenticação" resume o comportamento; a fonte de verdade são os controllers em `backend-java/core-api`.
 
 ---
 
 ## ⚙️ Variáveis de Ambiente
 
-### Backend (`.env`)
+### Raiz (`.env`, lido pelo Compose e pelo core-api)
 
 ```env
-DB_HOST=mysql
-DB_PORT=3306
+# Banco (obrigatórias)
 DB_USER=root
 DB_PASSWORD=replace-with-a-long-random-password
 DB_NAME=feedbackcell_db
 DB_POOL_SIZE=10
 DB_MAX_CONNECTIONS=151
-NODE_ENV=development
-PORT=5000
+
+# Autenticação (JWT_SECRET obrigatório, mínimo 32 caracteres)
 JWT_SECRET=replace-with-a-random-secret-of-at-least-32-characters
 JWT_EXPIRATION=24h
 BCRYPT_ROUNDS=12
+
+# API
+CORS_ORIGIN=http://localhost:3000
 RATE_LIMIT=100
 RATE_LIMIT_WINDOW_MS=60000
 TRUST_PROXY=1
 ADMIN_USER_IDS=
+
+# Kafka / especificações
+KAFKA_ENABLED=true
+KAFKA_TOPIC_PARTITIONS=3
+MOBILEAPI_KEY=
+
+# Proxy
+APP_BIND_ADDRESS=0.0.0.0
+APP_PORT=3000
+
+# Backup
 BACKUP_INTERVAL_SECONDS=86400
 BACKUP_RETENTION_DAYS=30
 ```
 
-Use `.env.example` como referência para a configuração do Compose. O backend sempre procura esse arquivo na raiz do repositório, independentemente do diretório de onde o comando foi executado; variáveis já definidas no ambiente têm prioridade. `ADMIN_USER_IDS` aceita IDs de usuário separados por vírgula; deixe-o vazio até escolher explicitamente os administradores. Sem IDs, a rota `/usuarios` responde HTTP 503; usuários autenticados fora da lista recebem HTTP 403. `RATE_LIMIT_REDIS_URL` é configurada pelo Compose para apontar ao Redis interno.
+* `DB_HOST`, `DB_PORT`, `RATE_LIMIT_REDIS_URL`, `KAFKA_BOOTSTRAP_SERVERS` e `SPECS_SERVICE_URL` são definidos pelo Compose para os nomes internos (`mysql`, `redis`, `kafka`, `specs-service`). Fora do Docker o core-api usa `localhost` e lê o `.env` da raiz.
+* `ADMIN_USER_IDS` aceita IDs separados por vírgula. Vazio, `/usuarios` responde HTTP 503; usuários fora da lista recebem HTTP 403.
+* `MOBILEAPI_KEY` é opcional: sem ela o specs-service segue só com o modelo 3D e a foto HD e registra um aviso.
+* Limites de recursos por serviço podem ser ajustados com `CORE_API_MEM_LIMIT`, `CORE_API_CPUS`, `SPECS_SERVICE_MEM_LIMIT`, `KAFKA_MEM_LIMIT`, `KAFKA_HEAP_OPTS`, `MYSQL_MEM_LIMIT`, `FRONTEND_MEM_LIMIT` (padrões em `docker-compose.yml`).
 
-### Frontend (`.env.local`)
+### Frontend
 
-```env
-NEXT_PUBLIC_API_URL=/api
-```
-
-`NEXT_PUBLIC_API_URL` é incorporada ao bundle durante o build do Next.js. No Compose, `/api` mantém frontend e API na mesma origem; ao executar o frontend fora do Docker, use a URL local correspondente à API.
-
----
-
-## 🧱 Stack Tecnológica
-
-* **Frontend:** Next.js, TypeScript
-* **Backend:** Node.js, Express
-* **Banco de dados:** MySQL
-* **Infraestrutura:** Docker Compose, Nginx, Redis
+`NEXT_PUBLIC_API_URL` é incorporada ao bundle no build do Next.js. No Compose o valor é `/api` (mesma origem, via proxy; troque com `DOCKER_API_URL`). Rodando o frontend fora do Docker, o padrão é `http://localhost:8080` (core-api direto).
 
 ---
 
-## 🛠 Desenvolvimento
+## 🐳 Docker
 
-Após alterar imagens ou dependências, reconstrua os serviços com `docker compose up -d --build`. Execute os testes unitários do backend no PowerShell:
+```bash
+# Subir / reconstruir
+docker compose up -d --build
 
-```powershell
-Set-Location backend
-pnpm test
+# Status e prontidão
+docker compose ps
+curl http://localhost:3000/readyz
+
+# Logs
+docker compose logs -f core-api specs-service
+
+# Parar sem apagar dados nem backups
+docker compose down
 ```
 
-Os testes de integração precisam de MySQL e Redis ativos. Com os serviços do Compose em execução, configure no terminal os endereços acessíveis a partir do host e rode o comando dedicado:
+**Não use `docker compose down -v`**: isso apaga os volumes do banco, do Kafka e dos backups.
+
+---
+
+## 🛠 Desenvolvimento e Testes
+
+Testes do core-api e do specs-service (Maven Wrapper, Java 21). No PowerShell:
 
 ```powershell
-$env:DB_HOST = "127.0.0.1"
+Set-Location backend-java/core-api
+$env:KAFKA_ENABLED = "false"
+.\mvnw.cmd -B verify
+
+Set-Location ../specs-service
+.\mvnw.cmd -B verify
+```
+
+Para rodar o core-api fora do Docker, suba as dependências com o arquivo de dev e aponte as variáveis para o host:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d mysql redis kafka kafka-init
+Set-Location backend-java/core-api
 $env:DB_PORT = "3307"
 $env:RATE_LIMIT_REDIS_URL = "redis://127.0.0.1:6379"
-pnpm test:integration
+$env:KAFKA_BOOTSTRAP_SERVERS = "localhost:29092"
+$env:SPECS_SERVICE_URL = "http://localhost:8081"
+.\mvnw.cmd spring-boot:run
 ```
 
-Esse teste confirma a prontidão com os dois serviços, o limite de requisições com Redis, a resposta de indisponibilidade quando MySQL ou Redis falham e o encerramento do servidor. A CI inicia MySQL e Redis isolados para executar a mesma verificação. Os valores de senha usados pela CI são exclusivos dos containers descartáveis de teste; credenciais reais devem ficar em variáveis protegidas do ambiente, nunca no código ou no Git.
+Frontend:
+
+```powershell
+Set-Location frontend
+pnpm install
+pnpm run lint
+pnpm run dev
+```
+
+A CI (`.github/workflows/ci.yml`) roda `mvnw verify` nos dois serviços Java, lint e build do frontend, valida os arquivos do Compose (incluindo que só o proxy publica porta), testa a sintaxe do Nginx e do script de backup e faz `docker compose build` de todas as imagens. Os valores de senha da CI servem só para a interpolação do Compose; credenciais reais ficam fora do código e do Git.
+
+---
+
+## 🚢 Deploy em produção
+
+Checklist antes de expor a aplicação:
+
+1. **Segredos**: crie o `.env` no servidor a partir do `.env.example` com `DB_PASSWORD` longo e aleatório e `JWT_SECRET` com pelo menos 32 caracteres (ex.: `openssl rand -base64 48`). Restrinja a leitura do arquivo (`chmod 600 .env`) e nunca o versione. Trocar `JWT_SECRET` invalida todos os tokens emitidos.
+2. **Administradores**: defina `ADMIN_USER_IDS` com os IDs que podem listar usuários; vazio desliga a rota.
+3. **Proxy confiável**: ajuste `TRUST_PROXY` ao número de proxies na frente da aplicação (o nginx do Compose conta como 1; com um load balancer externo, 2). Um valor maior que o real permite falsificar o IP de origem e contornar o rate limit.
+4. **TLS**: o proxy do Compose escuta só HTTP. Termine TLS num proxy/load balancer externo (ou adicione um listener 443 ao nginx com certificado) e ative HSTS lá. Se houver proxy local na frente, use `APP_BIND_ADDRESS=127.0.0.1` para que o HTTP não fique aberto à Internet. Ajuste `CORS_ORIGIN` para o domínio público.
+5. **Subida**: `docker compose up -d --build` (apenas `docker-compose.yml`; não inclua o arquivo de dev). O core-api aplica as migrações Flyway no startup; acompanhe com `docker compose logs -f core-api`.
+6. **Healthchecks**: confirme `docker compose ps` com todos os serviços `healthy` (o `kafka-init` termina com `exited (0)`), `curl -f https://<domínio>/health` (liveness) e `curl -f https://<domínio>/readyz` (banco e Redis). Use `/readyz` no load balancer.
+7. **Backup e restauração**: o serviço `backup` grava dumps comprimidos e verificados no volume `feedbackcellnextjs_mysql_backups` (intervalo `BACKUP_INTERVAL_SECONDS`, retenção `BACKUP_RETENTION_DAYS`). Copie-os para fora do host e teste a restauração periodicamente:
+
+   ```bash
+   docker compose exec backup ls -lh /backups
+   docker compose cp backup:/backups/<arquivo>.sql.gz .
+   # restauração (o dump inclui CREATE DATABASE/USE):
+   gunzip -c <arquivo>.sql.gz | docker compose exec -T mysql sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD"'
+   ```
+
+   Pare o core-api durante uma restauração (`docker compose stop core-api`) e suba de novo depois; o Flyway valida o histórico de migrações restaurado.
+8. **Escala**: `docker compose up -d --scale core-api=N --scale frontend=M`. O nginx redescobre as réplicas pelo DNS do Docker. Cada réplica do core-api abre até `DB_POOL_SIZE` conexões; respeite `DB_POOL_SIZE × réplicas + reservas (backup, administração, margem) < DB_MAX_CONNECTIONS` e ajuste ambos no `.env` antes de escalar. Os limites de memória/CPU do Compose valem por réplica; confira se o host comporta a soma. O specs-service roda com uma réplica (o tópico tem `KAFKA_TOPIC_PARTITIONS` partições, que limita o paralelismo do consumo).
+9. **Limites**: com uma réplica de cada serviço, os limites de memória do Compose somam cerca de 4,5 GB; reserve isso no host além do sistema operacional. Monitore com `docker stats` e ajuste as variáveis `*_MEM_LIMIT`.
+
+O Compose faz balanceamento e escala dentro de **um único host**, não alta disponibilidade: o host, o MySQL, o Redis e o broker Kafka (fator de replicação 1) são pontos únicos de falha.
 
 ---
 
 ## 🗺 Roadmap / Próximos Passos
 
-- [x] Adicionar teste automatizado para idempotência e validação das migrações de índices.
-- [ ] Adicionar testes automatizados para controllers, models e rotas.
-- [x] Alinhar as rotas de comentários com as expectativas de parâmetros do frontend e do controller.
-- [x] Adicionar visualização, criação e exclusão de comentários no frontend; o gerenciamento dos recursos do usuário ainda está pendente.
+- [ ] Ampliar os testes automatizados de controllers e rotas do core-api.
 - [ ] Melhorar o feedback visual e o tratamento de erros do frontend.
-- [ ] Preparar arquivos e fluxo de CI/CD específicos para produção.
-
----
-
-## ✅ Checklist para finalizar o projeto
-
-1. [x] Corrigir a rota de comentários para que o backend e o frontend usem o mesmo padrão de `idcelular` e `idcomentario`.
-2. [x] Encerrar o fluxo de comentários no frontend com visualização, criação e exclusão via token JWT.
-3. Criar testes automatizados para autenticação, celulares, comentários e perfil do usuário.
-4. Melhorar a experiência de erro no frontend com mensagens claras para login, cadastro, token expirado e falhas de API.
-5. Separar configuração de desenvolvimento e produção com `.env` e `NEXT_PUBLIC_API_URL` reais.
-6. Preparar o deploy com Docker Compose, healthchecks e documentação de operação.
+- [ ] Publicar imagens versionadas em um registry a partir da CI.
+- [ ] TLS e HSTS integrados ao proxy.
 
 ---
 
 ## 📌 Notes
 
-Este projeto está em desenvolvimento ativo. Ele já possui uma infraestrutura Docker funcional, autenticação JWT, CRUD de celulares, endpoints de perfil do usuário, endpoints de comentários no backend e uma tela para visualizar, criar e excluir comentários. Os caminhos de comentários usam `idcelular` na URL, conforme esperado pelo controller.
-
-O repositório ainda precisa de cobertura de testes mais ampla para controllers, rotas e recursos protegidos do frontend. O Compose balanceia réplicas no mesmo host; não substitui redundância entre hosts nem backups externos.
-
----
+Este projeto está em desenvolvimento ativo. O backend Node/Express original foi substituído pelo core-api (Spring Boot) e pelo specs-service (Quarkus); o schema do banco é mantido compatível e agora versionado pelo Flyway.
