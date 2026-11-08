@@ -7,7 +7,9 @@ import br.com.feedbackcell.specs.busca.Modelos.Modelo3d;
 import br.com.feedbackcell.specs.busca.Modelos.Resultado;
 import br.com.feedbackcell.specs.http.ClienteHttp;
 import com.fasterxml.jackson.databind.JsonNode;
+import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -19,6 +21,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.LongSupplier;
 import java.util.regex.Pattern;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
@@ -27,6 +30,9 @@ import org.jboss.logging.Logger;
  * Porta de especificacoesService.js. Especificações + miniatura: MobileAPI.dev (MOBILEAPI_KEY,
  * cota mensal baixa). Modelo 3D: busca pública do Sketchfab. Foto HD: Wikimedia.
  * Cache em memória de 24 h / 200 itens para não gastar a cota com buscas repetidas.
+ *
+ * <p>Orçamento de tempo (o proxy do core-api espera 30 s): MobileAPI e Sketchfab em paralelo
+ * ({@link #TIMEOUT}) e depois até 3 chamadas em sequência à Wikimedia ({@link ImagensHdService#TIMEOUT}).
  */
 @ApplicationScoped
 public class EspecificacoesService {
@@ -35,16 +41,17 @@ public class EspecificacoesService {
 
     static final String MOBILEAPI_URL = "https://api.mobileapi.dev/devices/search/";
     static final String SKETCHFAB_URL = "https://api.sketchfab.com/v3/search";
-    private static final Duration TIMEOUT = Duration.ofMillis(8000);
+    static final Duration TIMEOUT = Duration.ofMillis(8000);
     static final long CACHE_TTL_MS = 24L * 60 * 60 * 1000;
     static final int CACHE_MAX = 200;
     private static final int MAX_SUGESTOES = 8;
     private static final Pattern UID = Pattern.compile("^[0-9a-f]{32}$");
 
-    private record Busca(Aparelho aparelho, List<Aparelho> sugestoes, String aviso, boolean falhou) {
+    /** {@code falhou}: a fonte não respondeu; {@code temporaria}: vale tentar de novo (rede, timeout, 5xx). */
+    private record Busca(Aparelho aparelho, List<Aparelho> sugestoes, String aviso, boolean falhou, boolean temporaria) {
     }
 
-    private record Busca3d(Modelo3d modelo3d, String aviso, boolean falhou) {
+    private record Busca3d(Modelo3d modelo3d, String aviso, boolean falhou, boolean temporaria) {
     }
 
     private record ItemCache(Resultado valor, long expiraEm) {
@@ -53,8 +60,16 @@ public class EspecificacoesService {
     private final ClienteHttp http;
     private final ImagensHdService imagensHd;
     private final Optional<String> chaveMobileApi;
-    private final LinkedHashMap<String, ItemCache> cache = new LinkedHashMap<>();
+    /** Limitado a {@link #CACHE_MAX} itens: ao passar disso sai o gravado há mais tempo. */
+    private final LinkedHashMap<String, ItemCache> cache = new LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, ItemCache> maisAntigo) {
+            return size() > CACHE_MAX;
+        }
+    };
     private final ExecutorService pool = Executors.newVirtualThreadPerTaskExecutor();
+    /** Relógio do TTL do cache; os testes trocam. */
+    LongSupplier relogio = System::currentTimeMillis;
 
     public EspecificacoesService(ClienteHttp http, ImagensHdService imagensHd,
                                  @ConfigProperty(name = "mobileapi.key") Optional<String> chaveMobileApi) {
@@ -63,10 +78,16 @@ public class EspecificacoesService {
         this.chaveMobileApi = chaveMobileApi.filter(c -> !c.isBlank());
     }
 
+    void avisarSemChave(@Observes StartupEvent inicio) {
+        if (chaveMobileApi.isEmpty()) {
+            LOG.warn("MOBILEAPI_KEY não configurada: as buscas (REST e Kafka) seguem sem especificações, só com modelo 3D e foto HD.");
+        }
+    }
+
     private synchronized Resultado lerCache(String chave) {
         ItemCache item = cache.get(chave);
         if (item == null) return null;
-        if (System.currentTimeMillis() > item.expiraEm()) {
+        if (relogio.getAsLong() > item.expiraEm()) {
             cache.remove(chave);
             return null;
         }
@@ -74,12 +95,18 @@ public class EspecificacoesService {
     }
 
     private synchronized void gravarCache(String chave, Resultado valor) {
-        if (cache.size() >= CACHE_MAX) cache.remove(cache.keySet().iterator().next());
-        cache.put(chave, new ItemCache(valor, System.currentTimeMillis() + CACHE_TTL_MS));
+        long agora = relogio.getAsLong();
+        cache.values().removeIf(item -> agora > item.expiraEm());
+        cache.remove(chave); // regravar conta como o mais novo
+        cache.put(chave, new ItemCache(valor, agora + CACHE_TTL_MS));
     }
 
     public synchronized void limparCache() {
         cache.clear();
+    }
+
+    synchronized int tamanhoCache() {
+        return cache.size();
     }
 
     /**
@@ -92,7 +119,7 @@ public class EspecificacoesService {
         if (emCache != null) return emCache;
 
         CompletableFuture<Busca> spec = somente3d
-                ? CompletableFuture.completedFuture(new Busca(null, List.of(), null, false))
+                ? CompletableFuture.completedFuture(new Busca(null, List.of(), null, false, false))
                 : CompletableFuture.supplyAsync(() -> buscarAparelho(marca, modelo), pool);
         CompletableFuture<Busca3d> modelo3d = CompletableFuture.supplyAsync(() -> buscarModelo3d(marca, modelo), pool);
         Busca s = spec.join();
@@ -106,7 +133,7 @@ public class EspecificacoesService {
         if (s.aviso() != null) avisos.add(s.aviso());
         if (m.aviso() != null) avisos.add(m.aviso());
         Resultado resultado = new Resultado((marca + " " + modelo).strip(), aparelho, s.sugestoes(), m.modelo3d(),
-                List.copyOf(avisos));
+                List.copyOf(avisos), s.temporaria(), m.temporaria());
 
         // Só guarda quando as duas fontes responderam, para não fixar uma falha temporária.
         if (!s.falhou() && !m.falhou()) gravarCache(chave, resultado);
@@ -120,7 +147,7 @@ public class EspecificacoesService {
 
     private Busca buscarAparelho(String marca, String modelo) {
         if (chaveMobileApi.isEmpty()) {
-            return new Busca(null, List.of(), "Especificações indisponíveis: MOBILEAPI_KEY não configurada.", false);
+            return new Busca(null, List.of(), "Especificações indisponíveis: MOBILEAPI_KEY não configurada.", false, false);
         }
         // limit=50 custa a mesma consulta da cota e dá mais chance de o aparelho certo vir.
         Map<String, String> params = new LinkedHashMap<>();
@@ -148,15 +175,15 @@ public class EspecificacoesService {
             sugestoes = sugestoes.stream().map(a -> a.comFoto(fotos.get(a.chave()))).toList();
             if (aparelho == null) {
                 return new Busca(null, sugestoes,
-                        sugestoes.isEmpty() ? "Não encontramos especificações para esse modelo." : null, false);
+                        sugestoes.isEmpty() ? "Não encontramos especificações para esse modelo." : null, false, false);
             }
-            return new Busca(aparelho.comFoto(fotos.get(aparelho.chave())), sugestoes, null, false);
+            return new Busca(aparelho.comFoto(fotos.get(aparelho.chave())), sugestoes, null, false, false);
         } catch (ClienteHttp.ErroHttp e) {
             LOG.errorf("MobileAPI falhou: %s", e.getMessage());
             String aviso = e.status() == 429
                     ? "Limite de consultas de especificações atingido. Tente mais tarde."
                     : "Não foi possível consultar as especificações agora.";
-            return new Busca(null, List.of(), aviso, true);
+            return new Busca(null, List.of(), aviso, true, temporaria(e));
         }
     }
 
@@ -213,17 +240,22 @@ public class EspecificacoesService {
             }
             // Para o 3D aceitamos variante próxima ("S24 Ultra" para "S24") se não houver a exata.
             JsonNode m = CorrespondenciaNome.melhorCandidato(modelo, lista, EspecificacoesService::nome, new Opcoes(true, false));
-            if (m == null) return new Busca3d(null, null, false);
+            if (m == null) return new Busca3d(null, null, false, false);
             String uid = m.get("uid").textValue();
             return new Busca3d(new Modelo3d(
                     Textos.texto(m.get("name"), 120),
                     Textos.texto(m.path("user").get("displayName"), 80),
                     "https://sketchfab.com/models/" + uid + "/embed",
                     "https://sketchfab.com/3d-models/" + uid,
-                    escolherThumbnail(m.path("thumbnails"))), null, false);
+                    escolherThumbnail(m.path("thumbnails"))), null, false, false);
         } catch (ClienteHttp.ErroHttp e) {
             LOG.errorf("Sketchfab falhou: %s", e.getMessage());
-            return new Busca3d(null, "Não foi possível buscar o modelo 3D agora.", true);
+            return new Busca3d(null, "Não foi possível buscar o modelo 3D agora.", true, temporaria(e));
         }
+    }
+
+    /** Rede, timeout ou 5xx. 429 (cota) e 4xx (ex.: chave inválida) não melhoram tentando de novo. */
+    static boolean temporaria(ClienteHttp.ErroHttp e) {
+        return e.status() == 0 || e.status() >= 500;
     }
 }

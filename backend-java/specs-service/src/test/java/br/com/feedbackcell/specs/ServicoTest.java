@@ -4,6 +4,8 @@ import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -21,6 +23,7 @@ import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
 import java.time.Duration;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -56,7 +59,9 @@ class ServicoTest {
                 .body("aparelho.tela", equalTo("1080 x 2340"))
                 .body("aparelho.imagemHd", nullValue())
                 .body("modelo3d.embedUrl", equalTo("https://sketchfab.com/models/" + UID + "/embed"))
-                .body("avisos.size()", equalTo(0));
+                .body("avisos.size()", equalTo(0))
+                .body("$", not(hasKey("falhaTemporariaSpec")))
+                .body("$", not(hasKey("falhaTemporaria3d")));
     }
 
     @Test
@@ -93,6 +98,8 @@ class ServicoTest {
         assertTrue(r.get("especificacoes").get("creditoImagem").isNull());
         assertEquals(UID, r.get("modelo3d").asText());
         assertTrue(r.hasNonNull("ocorridoEm"));
+        // com o ObjectMapper do Quarkus (o mesmo da produção)
+        assertEquals(List.of(), ContratoEspecificacoes.violacoes(r));
     }
 
     @Test
