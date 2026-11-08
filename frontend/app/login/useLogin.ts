@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { notifySessionChange } from "@/src/lib/session";
+import { apiFetch, isRecord } from "@/src/lib/http";
+import { saveToken } from "@/src/lib/session";
 
 export function useLogin() {
   const [email, setEmail] = useState("");
@@ -37,22 +38,15 @@ export function useLogin() {
 
     setLoading(true);
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, senha }),
-        },
-      );
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.erro || "Falha ao fazer login");
+      const data = await apiFetch("/auth/login", {
+        method: "POST",
+        body: { email, senha },
+      });
+      if (!isRecord(data) || typeof data.token !== "string" || !data.token) {
+        throw new Error("A API não devolveu o token de acesso.");
       }
 
-      localStorage.setItem("token", data.token);
-      notifySessionChange();
+      saveToken(data.token);
       router.push("/catalog");
     } catch (error: unknown) {
       setErro(error instanceof Error ? error.message : "Erro inesperado");

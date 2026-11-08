@@ -1,5 +1,6 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { apiFetch } from "@/src/lib/http";
 
 export default function useRegister() {
   const [nome, setNome] = useState("");
@@ -44,20 +45,10 @@ export default function useRegister() {
 
     setLoading(true);
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nome, email, senha }),
-        },
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.erro || "Erro ao criar conta");
-      }
+      await apiFetch("/auth/register", {
+        method: "POST",
+        body: { nome, email, senha },
+      });
 
       router.push("/login?success=true");
     } catch (err: unknown) {

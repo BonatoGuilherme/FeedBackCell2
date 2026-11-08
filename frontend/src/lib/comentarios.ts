@@ -1,5 +1,4 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { apiFetch, isRecord } from "./http";
 
 export type Comentario = {
   idcomentario: number;
@@ -18,35 +17,6 @@ export type ListaComentarios = {
     itemsPorPagina: number;
   };
 };
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-async function readResponse(response: Response): Promise<unknown> {
-  const body = await response.text();
-  let payload: unknown = null;
-
-  if (body) {
-    try {
-      payload = JSON.parse(body) as unknown;
-    } catch {
-      if (response.ok) {
-        throw new Error("A API retornou uma resposta inválida.");
-      }
-    }
-  }
-
-  if (!response.ok) {
-    const message =
-      isRecord(payload) && typeof payload.erro === "string"
-        ? payload.erro
-        : `Não foi possível concluir a solicitação (HTTP ${response.status}).`;
-    throw new Error(message);
-  }
-
-  return payload;
-}
 
 function parseComentario(value: unknown): Comentario {
   if (
@@ -74,11 +44,7 @@ export async function listarComentarios(
   limit: number,
   signal?: AbortSignal,
 ): Promise<ListaComentarios> {
-  const response = await fetch(
-    `${API_BASE_URL}/comentarios/${idcelular}?page=${page}&limit=${limit}`,
-    { headers: { Accept: "application/json" }, signal },
-  );
-  const payload = await readResponse(response);
+  const payload = await apiFetch(`/comentarios/${idcelular}?page=${page}&limit=${limit}`, { signal });
 
   if (!isRecord(payload) || !Array.isArray(payload.comentarios)) {
     throw new Error("A API retornou uma lista de comentários inválida.");
@@ -111,16 +77,7 @@ export async function criarComentario(
   texto: string,
   token: string,
 ): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/comentarios/${idcelular}`, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ texto }),
-  });
-  await readResponse(response);
+  await apiFetch(`/comentarios/${idcelular}`, { method: "POST", token, body: { texto } });
 }
 
 export async function excluirComentario(
@@ -128,15 +85,5 @@ export async function excluirComentario(
   idcomentario: number,
   token: string,
 ): Promise<void> {
-  const response = await fetch(
-    `${API_BASE_URL}/comentarios/${idcelular}/${idcomentario}`,
-    {
-      method: "DELETE",
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  );
-  await readResponse(response);
+  await apiFetch(`/comentarios/${idcelular}/${idcomentario}`, { method: "DELETE", token });
 }

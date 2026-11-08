@@ -1,5 +1,5 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { API_BASE_URL } from "./config";
+import { apiFetch, isRecord } from "./http";
 
 export type CelularImagem = {
   idimagem: number;
@@ -50,38 +50,8 @@ export type ListaCelulares = {
   paginacao: Paginacao;
 };
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
-}
-
-async function readResponse(response: Response): Promise<unknown> {
-  const body = await response.text();
-  let payload: unknown = null;
-
-  if (body) {
-    try {
-      payload = JSON.parse(body) as unknown;
-    } catch {
-      if (response.ok) {
-        throw new Error("A API retornou uma resposta inválida.");
-      }
-    }
-  }
-
-  if (!response.ok) {
-    const message =
-      isRecord(payload) && typeof payload.erro === "string"
-        ? payload.erro
-        : `Não foi possível concluir a solicitação (HTTP ${response.status}).`;
-
-    throw new Error(message);
-  }
-
-  return payload;
 }
 
 function parseCelular(value: unknown): Celular {
@@ -140,14 +110,7 @@ export async function listarCelulares(
   limite: number,
   signal?: AbortSignal,
 ): Promise<ListaCelulares> {
-  const response = await fetch(
-    `${API_BASE_URL}/celulares?page=${pagina}&limit=${limite}`,
-    {
-      headers: { Accept: "application/json" },
-      signal,
-    },
-  );
-  const payload = await readResponse(response);
+  const payload = await apiFetch(`/celulares?page=${pagina}&limit=${limite}`, { signal });
 
   if (
     !isRecord(payload) ||
@@ -183,16 +146,7 @@ export async function criarCelular(
     Partial<Pick<Celular, "especificacoes" | "modelo3d">>,
   token: string,
 ): Promise<Celular> {
-  const response = await fetch(`${API_BASE_URL}/celulares`, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(celular),
-  });
-  const payload = await readResponse(response);
+  const payload = await apiFetch("/celulares", { method: "POST", token, body: celular });
 
   if (!isRecord(payload) || !isRecord(payload.celular)) {
     throw new Error("A API não confirmou o cadastro do celular.");
@@ -207,16 +161,12 @@ export async function enviarFoto(
   arquivo: File,
   token: string,
 ): Promise<CelularImagem> {
-  const response = await fetch(`${API_BASE_URL}/celulares/${idcelular}/imagens`, {
+  // o core-api recebe a foto como corpo binário (image/jpeg|png|webp), não multipart
+  const payload = await apiFetch(`/celulares/${idcelular}/imagens`, {
     method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": arquivo.type,
-      Authorization: `Bearer ${token}`,
-    },
+    token,
     body: arquivo,
   });
-  const payload = await readResponse(response);
   const [imagem] = isRecord(payload) ? parseImagens([payload.imagem]) : [];
   if (!imagem) throw new Error("A API não confirmou o envio da foto.");
   return imagem;
@@ -347,14 +297,7 @@ export async function buscarEspecificacoes(
 ): Promise<ResultadoEspecificacoes> {
   const params = new URLSearchParams({ marca: marca.trim(), modelo: modelo.trim() });
   if (somente3d) params.set("somente3d", "1");
-  const response = await fetch(
-    `${API_BASE_URL}/celulares/especificacoes?${params}`,
-    {
-      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-      signal,
-    },
-  );
-  const payload = await readResponse(response);
+  const payload = await apiFetch(`/celulares/especificacoes?${params}`, { token, signal });
   if (!isRecord(payload)) throw new Error("A API retornou especificações em formato inválido.");
 
   return {
@@ -374,9 +317,5 @@ export async function buscarEspecificacoes(
 
 /** Um celular pelo id (para abrir direto o celular escolhido na home). */
 export async function buscarCelular(idcelular: number, signal?: AbortSignal): Promise<Celular> {
-  const response = await fetch(`${API_BASE_URL}/celulares/${idcelular}`, {
-    headers: { Accept: "application/json" },
-    signal,
-  });
-  return parseCelular(await readResponse(response));
+  return parseCelular(await apiFetch(`/celulares/${idcelular}`, { signal }));
 }

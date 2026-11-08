@@ -7,6 +7,7 @@ import {
   type AparelhoEspecificacoes,
   type Modelo3d,
 } from "@/src/lib/celulares";
+import { getToken } from "@/src/lib/session";
 
 const ROTULOS: [keyof AparelhoEspecificacoes, string][] = [
   ["lancamento", "Lançamento"],
@@ -37,9 +38,7 @@ export type SpecsLookup = {
   limpar: () => void;
 };
 
-function lerToken() {
-  return window.localStorage.getItem("token");
-}
+const lerToken = getToken;
 
 const normalizar = (texto: string) =>
   texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\+/g, " plus ").replace(/\s+/g, " ").trim();
