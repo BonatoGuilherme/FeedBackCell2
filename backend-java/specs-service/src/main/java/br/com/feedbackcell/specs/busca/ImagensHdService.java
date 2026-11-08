@@ -34,12 +34,13 @@ public class ImagensHdService {
     static final String WIKIPEDIA_API = "https://en.wikipedia.org/w/api.php";
     static final String COMMONS_API = "https://commons.wikimedia.org/w/api.php";
     static final String USER_AGENT = "FeedBackCELL/1.0 (catalogo de celulares)";
-    private static final Duration TIMEOUT = Duration.ofMillis(6000);
+    /** Até 3 chamadas em sequência (artigo, arquivos, Commons): 3 x 5 s cabe no orçamento de 30 s do proxy. */
+    static final Duration TIMEOUT = Duration.ofMillis(5000);
     private static final String LARGURA = "960";
     private static final int LARGURA_MINIMA = 600;
 
-    public static final Pattern HOST_IMAGEM = Pattern.compile("^https://(upload|thumb)\\.wikimedia\\.org/wikipedia/commons/");
-    public static final Pattern HOST_CREDITO = Pattern.compile("^https://commons\\.wikimedia\\.org/wiki/");
+    private static final Pattern HOST_IMAGEM = Pattern.compile("^https://(upload|thumb)\\.wikimedia\\.org/wikipedia/commons/");
+    private static final Pattern HOST_CREDITO = Pattern.compile("^https://commons\\.wikimedia\\.org/wiki/");
     private static final Pattern FRENTE = Pattern.compile("(?i)\\bfront\\b|frente");
     private static final Pattern EXTENSAO = Pattern.compile("(?i)\\.[a-z0-9]+$");
 

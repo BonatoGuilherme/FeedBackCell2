@@ -1,6 +1,7 @@
 package br.com.feedbackcell.specs.busca;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -11,7 +12,9 @@ import br.com.feedbackcell.specs.api.EspecificacoesResource;
 import br.com.feedbackcell.specs.busca.CorrespondenciaNome.Opcoes;
 import br.com.feedbackcell.specs.busca.Modelos.Aparelho;
 import br.com.feedbackcell.specs.busca.Modelos.Resultado;
+import br.com.feedbackcell.specs.http.ClienteHttp;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -210,6 +213,42 @@ class EspecificacoesServiceTest {
         Resultado r = servico("x").buscar("Samsung", "Galaxy S24", false);
         assertNull(r.aparelho().imagemHd());
         assertEquals("data:image/png;base64," + PNG_B64, r.aparelho().imagem());
+    }
+
+    @Test
+    void cacheTemLimiteDeTamanhoETtl() {
+        http.responder(c -> Resposta.ok("{\"results\":[]}"));
+        EspecificacoesService s = servico(null);
+        long[] agora = {1_000};
+        s.relogio = () -> agora[0];
+        for (int i = 0; i <= EspecificacoesService.CACHE_MAX; i++) s.buscar("Marca", "Modelo " + i, true);
+        assertEquals(EspecificacoesService.CACHE_MAX, s.tamanhoCache());
+
+        http.responder(c -> Resposta.ok("{\"results\":[]}"));
+        s.buscar("Marca", "Modelo 0", true);
+        assertEquals(1, http.chamadas.size(), "o mais antigo saiu do cache");
+        s.buscar("Marca", "Modelo 2", true);
+        assertEquals(1, http.chamadas.size(), "os outros continuam no cache");
+
+        agora[0] += EspecificacoesService.CACHE_TTL_MS + 1;
+        s.buscar("Marca", "Modelo 2", true);
+        assertEquals(2, http.chamadas.size(), "expirado é buscado de novo");
+        assertEquals(1, s.tamanhoCache(), "gravar limpa os expirados");
+    }
+
+    @Test
+    void piorCasoDasChamadasExternasCabeNoProxyDe30s() {
+        // MobileAPI e Sketchfab em paralelo, depois até 3 chamadas em sequência à Wikimedia
+        Duration pior = EspecificacoesService.TIMEOUT.plus(ImagensHdService.TIMEOUT.multipliedBy(3));
+        assertTrue(pior.compareTo(Duration.ofSeconds(25)) <= 0, "pior caso " + pior);
+    }
+
+    @Test
+    void falhaDeRedeEhTemporariaMasCotaEChaveInvalidaNao() {
+        assertTrue(EspecificacoesService.temporaria(new ClienteHttp.ErroHttp(0, "timeout", null)));
+        assertTrue(EspecificacoesService.temporaria(ClienteHttp.ErroHttp.deStatus(503)));
+        assertFalse(EspecificacoesService.temporaria(ClienteHttp.ErroHttp.deStatus(429)));
+        assertFalse(EspecificacoesService.temporaria(ClienteHttp.ErroHttp.deStatus(401)));
     }
 
     @Test
