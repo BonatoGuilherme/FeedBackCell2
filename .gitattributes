@@ -1,0 +1,5 @@
+# Repo usado no Windows com core.autocrlf=true: scripts executados em containers
+# Linux precisam de LF (um backup.sh com CRLF quebra o /bin/sh do container).
+*.sh text eol=lf
+mvnw text eol=lf
+*.cmd text eol=crlf

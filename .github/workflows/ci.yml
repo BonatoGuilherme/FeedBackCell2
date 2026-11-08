@@ -4,64 +4,19 @@ on:
   push:
   pull_request:
 
-jobs:
-  backend:
-    name: Backend tests and integration
-    runs-on: ubuntu-latest
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: integration-test
-          MYSQL_DATABASE: feedbackcell_db
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost -uroot -pintegration-test --silent"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
-      redis:
-        image: redis:7.4-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd="redis-cli ping"
-          --health-interval=10s
-          --health-timeout=3s
-          --health-retries=10
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.33.2
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-          cache-dependency-path: backend/pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile
-        working-directory: backend
-      - run: pnpm test
-        working-directory: backend
-      - run: pnpm test:integration
-        working-directory: backend
-        env:
-          NODE_ENV: test
-          PORT: 0
-          TRUST_PROXY: 1
-          DB_HOST: 127.0.0.1
-          DB_PORT: 3306
-          DB_USER: root
-          DB_PASSWORD: integration-test
-          DB_NAME: feedbackcell_db
-          RATE_LIMIT_REDIS_URL: redis://127.0.0.1:6379
-          RATE_LIMIT: 2
-          RATE_LIMIT_WINDOW_MS: 60000
+permissions:
+  contents: read
 
+# Um push novo no mesmo branch/PR cancela o run anterior.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
   frontend:
     name: Frontend lint and build
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -82,6 +37,7 @@ jobs:
   core-api:
     name: core-api (Spring Boot) verify
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -100,6 +56,7 @@ jobs:
   specs-service:
     name: specs-service (Quarkus) verify
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -114,3 +71,35 @@ jobs:
         working-directory: backend-java/specs-service
         env:
           KAFKA_ENABLED: "false"
+
+  compose:
+    name: Docker Compose config and image build
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    # Valores descartáveis só para a interpolação do compose; não são segredos reais.
+    env:
+      DB_USER: root
+      DB_PASSWORD: ci-only-password
+      DB_NAME: feedbackcell_db
+      JWT_SECRET: ci-only-jwt-secret-with-at-least-32-chars
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate compose files
+        run: |
+          docker compose config -q
+          docker compose -f docker-compose.yml -f docker-compose.dev.yml config -q
+      - name: Only the proxy publishes ports in production
+        run: |
+          published="$(docker compose config --format json | jq -r '.services | to_entries[] | select(.value.ports != null) | .key')"
+          echo "services with published ports: $published"
+          test "$published" = "proxy"
+      - name: Validate nginx config
+        run: |
+          docker run --rm \
+            -v "$PWD/infra/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro" \
+            --add-host core-api:127.0.0.1 --add-host frontend:127.0.0.1 \
+            nginx:1.28-alpine nginx -t
+      - name: Lint backup script
+        run: sh -n infra/backup/backup.sh
+      - name: Build images
+        run: docker compose build
