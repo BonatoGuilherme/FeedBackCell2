@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import AppIcon from "./AppIcon";
+import { PhoneShelf } from "@/components/ui/phone-shelf";
 import {
+  buscarCelular,
   listarCelulares,
   type Celular,
   type ListaCelulares,
@@ -18,46 +20,53 @@ const currency = new Intl.NumberFormat("pt-BR", {
   currency: "BRL",
 });
 
-function PhoneArtwork() {
-  return (
-    <div className="phone-artwork" aria-hidden="true">
-      <div className="phone-artwork__device">
-        <span className="phone-artwork__speaker" />
-        <span className="phone-artwork__screen">
-          <span />
-          <span />
-          <span />
-        </span>
-        <span className="phone-artwork__button" />
-      </div>
-    </div>
-  );
-}
-
 function PhoneCard({ celular }: { celular: Celular }) {
+  const cover = celular.imagens[0]?.url;
   return (
-    <article className="phone-card">
-      <PhoneArtwork />
-      <div className="phone-card__details">
-        <p className="phone-card__brand">{celular.marca}</p>
-        <h3>{celular.modelo}</h3>
-        {celular.descricao && (
-          <p className="phone-card__description">{celular.descricao}</p>
+    <article className="group relative overflow-hidden rounded-[22px] bg-white ring-1 ring-black/[0.06] transition-[box-shadow,transform] duration-200 hover:-translate-y-1 hover:shadow-[0_24px_50px_-30px_rgba(15,16,32,0.45)] has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#4c5cf5]">
+      <div className="relative aspect-[4/3] overflow-hidden bg-[radial-gradient(80%_80%_at_50%_0%,#e7e9ff,#eef0f6_70%)]">
+        {cover ? (
+          // eslint-disable-next-line @next/next/no-img-element -- imagem servida pela API
+          <img
+            src={cover}
+            alt={`${celular.marca} ${celular.modelo}`}
+            loading="lazy"
+            className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+          />
+        ) : (
+          <div className="grid size-full place-items-center" aria-hidden="true">
+            <span className="h-[78%] aspect-[1/2] rounded-[22%/11%] bg-[#1f2027] p-[4%] shadow-[0_20px_30px_-16px_rgba(15,16,32,0.6)] transition-transform duration-500 group-hover:-rotate-3">
+              <span className="block size-full rounded-[18%/9%] bg-[linear-gradient(160deg,#6d7bff,#2a1f6b_60%,#0b0b10)]" />
+            </span>
+          </div>
         )}
-        <div className="phone-card__footer">
-          <span className="phone-card__price">
-            {celular.preco > 0
-              ? currency.format(celular.preco)
-              : "Preço não informado"}
+        {celular.imagens.length > 1 && (
+          <span className="absolute right-3 top-3 rounded-full bg-black/65 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
+            {celular.imagens.length} fotos
           </span>
-          <Link
-              className="button button--text"
-              href={`/comments?celular=${celular.idcelular}`}
-          >
-              Ver comentários
-          </Link>
-        </div>
+        )}
       </div>
+      <div className="flex items-end justify-between gap-3 p-4">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a8ea3]">{celular.marca}</p>
+          <h3 className="truncate text-[16px] font-semibold text-[#0f1020]">{celular.modelo}</h3>
+          <p className="mt-0.5 text-[14px] tabular-nums text-[#5f6378]">
+            {celular.preco > 0 ? currency.format(celular.preco) : "Preço não informado"}
+          </p>
+        </div>
+        <Link
+          className="relative z-[2] shrink-0 rounded-full bg-[#0b0b10] px-3.5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-[#4c5cf5]"
+          href={`/comments?celular=${celular.idcelular}`}
+        >
+          Comentários
+        </Link>
+      </div>
+      {/* o card inteiro abre o celular no catálogo (o botão de comentários fica por cima) */}
+      <Link
+        href={`/catalog?celular=${celular.idcelular}`}
+        aria-label={`Ver ${celular.marca} ${celular.modelo}`}
+        className="absolute inset-0 z-[1] rounded-[22px] outline-none"
+      />
     </article>
   );
 }
@@ -86,11 +95,13 @@ function EmptyState({ onRetry }: { onRetry?: () => void }) {
 
 export default function PhoneCollection({ variant }: PhoneCollectionProps) {
   const isOverview = variant === "overview";
-  const limit = isOverview ? 4 : 12;
+  const limit = isOverview ? 8 : 12;
   const [pagina, setPagina] = useState(1);
   const [busca, setBusca] = useState("");
   const [marcaSelecionada, setMarcaSelecionada] = useState("Todas as marcas");
   const [refreshKey, setRefreshKey] = useState(0);
+  // celular aberto no modal; /catalog?celular=ID abre direto (link da home)
+  const [selecionado, setSelecionado] = useState<Celular | null>(null);
   const requestKey = `${pagina}:${limit}:${refreshKey}`;
   const [requestResult, setRequestResult] = useState<
     | { key: string; status: "loading" }
@@ -158,6 +169,30 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
     });
   }, [busca, celulares, marcaSelecionada]);
 
+  useEffect(() => {
+    if (isOverview) return;
+    const id = new URLSearchParams(window.location.search).get("celular");
+    if (!id || !/^[1-9]\d{0,9}$/.test(id)) return;
+    const controller = new AbortController();
+    buscarCelular(Number(id), controller.signal)
+      .then(setSelecionado)
+      .catch(() => {
+        // celular inexistente ou removido: só mostra o catálogo
+        if (!controller.signal.aborted) window.history.replaceState(null, "", "/catalog");
+      });
+    return () => controller.abort();
+  }, [isOverview]);
+
+  const abrirCelular = useCallback((celular: Celular) => {
+    setSelecionado(celular);
+    window.history.replaceState(null, "", `/catalog?celular=${celular.idcelular}`);
+  }, []);
+
+  const fecharCelular = useCallback(() => {
+    setSelecionado(null);
+    window.history.replaceState(null, "", "/catalog");
+  }, []);
+
   function atualizarLista() {
     setRefreshKey((current) => current + 1);
   }
@@ -165,51 +200,38 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
   if (isOverview) {
     return (
       <div className="page-shell overview-page">
-        <section className="overview-hero">
-          <div className="overview-hero__copy">
-            <p className="eyebrow">FeedBackCELL · plataforma de celulares</p>
-            <h1>Celulares para comparar. Opiniões para decidir.</h1>
-            <p className="overview-hero__lead">
-              Cadastre aparelhos e reúna informações e comentários sobre cada modelo.
-            </p>
-            <div className="button-row">
-              <Link className="button button--accent" href="/items/new">
-                <AppIcon name="plus" size={18} />
-                Adicionar celular
-              </Link>
-              <Link className="button button--hero-secondary" href="/catalog">
-                Ver catálogo
-                <AppIcon name="arrow" size={17} />
-              </Link>
-            </div>
-            {paginacao && (
-              <p className="overview-hero__catalog-count">
-                <strong>{paginacao.totalItems}</strong>{" "}
-                {paginacao.totalItems === 1
-                  ? "celular no catálogo"
-                  : "celulares no catálogo"}
-              </p>
-            )}
-          </div>
-          <div className="overview-hero__visual" aria-hidden="true">
-            <div className="overview-device">
-              <span className="overview-device__camera" />
-              <span className="overview-device__display">
-                <span className="overview-device__topline" />
-                <span className="overview-device__title" />
-                <span className="overview-device__line" />
-                <span className="overview-device__line overview-device__line--short" />
-                <span className="overview-device__tile">
-                  <AppIcon name="smartphone" size={28} />
-                </span>
-              </span>
-            </div>
-            <div className="overview-visual-note">
-              <span className="overview-visual-note__mark">
-                <AppIcon name="check" size={16} />
-              </span>
-              <span>Informações por modelo</span>
-            </div>
+        <section className="pb-10 pt-6 sm:pt-12">
+          <p className="mb-5 inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-[13px] font-medium text-[#5f6378] ring-1 ring-black/[0.06]">
+            <span className="size-2 rounded-full bg-[#4c5cf5]" aria-hidden="true" />
+            {paginacao
+              ? `${paginacao.totalItems} ${paginacao.totalItems === 1 ? "celular" : "celulares"} no catálogo`
+              : "Catálogo de celulares"}
+          </p>
+          <h1 className="max-w-[16ch] text-[clamp(40px,7vw,88px)] font-semibold leading-[0.98] tracking-[-0.035em] text-[#0f1020]">
+            Os melhores celulares,{" "}
+            <span className="bg-[linear-gradient(90deg,#4c5cf5,#8b5cf6)] bg-clip-text text-transparent">
+              em um só lugar.
+            </span>
+          </h1>
+          <p className="mt-5 max-w-[52ch] text-[18px] leading-relaxed text-[#5f6378]">
+            Uma galeria de aparelhos com fotos reais e opiniões de quem usa. Compare, comente e
+            escolha o próximo.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              className="inline-flex h-12 items-center gap-2 rounded-xl bg-[#0b0b10] px-5 text-[15px] font-semibold text-white transition-colors hover:bg-black"
+              href="/catalog"
+            >
+              Explorar catálogo
+              <AppIcon name="arrow" size={17} />
+            </Link>
+            <Link
+              className="inline-flex h-12 items-center gap-2 rounded-xl bg-white px-5 text-[15px] font-semibold text-[#0f1020] ring-1 ring-black/10 transition-colors hover:bg-[#f7f8fb]"
+              href="/items/new"
+            >
+              <AppIcon name="plus" size={18} />
+              Adicionar celular
+            </Link>
           </div>
         </section>
 
@@ -250,7 +272,7 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
           ) : celulares.length === 0 ? (
             <EmptyState onRetry={atualizarLista} />
           ) : (
-            <div className="phone-grid phone-grid--overview">
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
               {celulares.map((celular) => (
                 <PhoneCard
                   key={celular.idcelular}
@@ -268,10 +290,12 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
     <div className="page-shell catalog-page">
       <header className="page-heading">
         <div>
-          <p className="eyebrow">Aparelhos e informações</p>
           <h1>Catálogo de celulares</h1>
           <p className="page-heading__description">
-            Consulte modelos, preços e descrições cadastrados na plataforma.
+            {paginacao
+              ? `${paginacao.totalItems} ${paginacao.totalItems === 1 ? "celular cadastrado" : "celulares cadastrados"} · `
+              : ""}
+            Toque em um aparelho para ver fotos e especificações.
           </p>
         </div>
         <Link className="button button--primary" href="/items/new">
@@ -294,32 +318,26 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
             }}
           />
         </label>
-        {paginacao && (
-          <p className="catalog-total">
-            {paginacao.totalItems}{" "}
-            {paginacao.totalItems === 1 ? "celular cadastrado" : "celulares cadastrados"}
-          </p>
+        {/* filtros na mesma linha da busca; rolam para o lado se não couberem */}
+        {marcas.length > 1 && !loading && !erro && (
+          <div className="brand-filters" aria-label="Filtrar por marca">
+            {["Todas as marcas", ...marcas].map((marca) => (
+              <button
+                key={marca}
+                type="button"
+                className={`filter-chip${marcaSelecionada === marca ? " is-active" : ""}`}
+                aria-pressed={marcaSelecionada === marca}
+                onClick={() => {
+                  setMarcaSelecionada(marca);
+                  setPagina(1);
+                }}
+              >
+                {marca}
+              </button>
+            ))}
+          </div>
         )}
       </div>
-
-      {marcas.length > 1 && !loading && !erro && (
-        <div className="brand-filters" aria-label="Filtrar por marca">
-          {["Todas as marcas", ...marcas].map((marca) => (
-            <button
-              key={marca}
-              type="button"
-              className={`filter-chip${marcaSelecionada === marca ? " is-active" : ""}`}
-              aria-pressed={marcaSelecionada === marca}
-              onClick={() => {
-                setMarcaSelecionada(marca);
-                setPagina(1);
-              }}
-            >
-              {marca}
-            </button>
-          ))}
-        </div>
-      )}
 
       {loading ? (
         <div className="collection-message" role="status">
@@ -361,11 +379,14 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
           </div>
         )
       ) : (
-        <div className="phone-grid">
-          {celularesFiltrados.map((celular) => (
-            <PhoneCard key={celular.idcelular} celular={celular} />
-          ))}
-        </div>
+        <PhoneShelf
+          className="mt-7"
+          celulares={celularesFiltrados}
+          formatPrice={(preco) => currency.format(preco)}
+          aberto={selecionado}
+          onAbrir={abrirCelular}
+          onFechar={fecharCelular}
+        />
       )}
 
       {paginacao && paginacao.totalPaginas > 1 && (

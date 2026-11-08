@@ -3,6 +3,9 @@ const { pool } = require("./connection");
 const requiredColumns = {
   Marca: "VARCHAR(100) NOT NULL DEFAULT 'Não informada' AFTER idusuario",
   Preco: "DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER Modelo",
+  // especificações escolhidas no cadastro (MobileAPI) e modelo 3D do Sketchfab
+  Especificacoes: "JSON NULL AFTER Descricao",
+  Modelo3d: "VARCHAR(32) NULL AFTER Especificacoes",
 };
 
 async function migrateCelulares() {

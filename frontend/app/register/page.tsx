@@ -1,109 +1,82 @@
 "use client";
 
-import Link from "next/link";
+import { Loader2, Lock, Mail, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import AuthPageShell from "../components/AuthPageShell";
+import { AuthField, FormAlert } from "../components/AuthField";
 import useRegister from "./useRegister";
 
 export default function RegisterPage() {
-	const {
-		email,
-		setEmail,
-		senha,
-		setSenha,
-		erro,
-		loading,
-		validations,
-		validateField,
-		handleRegister,
-		nome,
-		setNome,
-	} = useRegister();
+  const { email, setEmail, senha, setSenha, erro, loading, validations, validateField, handleRegister, nome, setNome } =
+    useRegister();
 
-	return (
-		<AuthPageShell
-			title="Criar Conta"
-			subtitle="Junte-se à comunidade FeedBackCELL"
-			securityText="Seus dados são processados com segurança"
-		>
-			<form className="space-y-4" onSubmit={handleRegister}>
-				{erro && (
-					<div>
-						<p>{erro}</p>
-					</div>
-				)}
+  return (
+    <AuthPageShell
+      mode="register"
+      title="Criar sua conta"
+      subtitle="Leva menos de um minuto."
+      securityText="Seus dados são processados com segurança"
+    >
+      <form className="space-y-4" onSubmit={handleRegister} noValidate>
+        {erro && <FormAlert>{erro}</FormAlert>}
 
-				<div>
-					<label htmlFor="nome">Nome Completo</label>
-					<div>
-						<input
-							id="nome"
-							type="text"
-							required
-							placeholder="João Silva"
-							value={nome}
-							onChange={(e) => {
-								setNome(e.target.value);
-								validateField("nome", e.target.value);
-							}}
-						/>
-						{validations.nome && <span>✓</span>}
-					</div>
-					{nome && !validations.nome && <p>Mínimo 3 caracteres</p>}
-				</div>
+        <AuthField
+          id="nome"
+          label="Nome completo"
+          autoComplete="name"
+          required
+          placeholder="João Silva"
+          icon={<User />}
+          value={nome}
+          error={nome && !validations.nome ? "Mínimo de 3 caracteres" : undefined}
+          onChange={(e) => {
+            setNome(e.target.value);
+            validateField("nome", e.target.value);
+          }}
+        />
 
-				<div>
-					<label htmlFor="email">E-mail</label>
-					<div>
-						<input
-							id="email"
-							type="email"
-							required
-							placeholder="seu@email.com"
-							value={email}
-							onChange={(e) => {
-								setEmail(e.target.value);
-								validateField("email", e.target.value);
-							}}
-						/>
-						{validations.email && <span>✓</span>}
-					</div>
-					{email && !validations.email && <p>E-mail inválido</p>}
-				</div>
+        <AuthField
+          id="email"
+          label="E-mail"
+          type="email"
+          autoComplete="email"
+          required
+          placeholder="seu@email.com"
+          icon={<Mail />}
+          value={email}
+          error={email && !validations.email ? "E-mail inválido" : undefined}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            validateField("email", e.target.value);
+          }}
+        />
 
-				<div>
-					<label htmlFor="senha">Senha</label>
-					<div>
-						<input
-							id="senha"
-							type="password"
-							required
-							placeholder="••••••••"
-							value={senha}
-							onChange={(e) => {
-								setSenha(e.target.value);
-								validateField("senha", e.target.value);
-							}}
-						/>
-						{validations.senha && <span>✓</span>}
-					</div>
-				</div>
+        <AuthField
+          id="senha"
+          label="Senha"
+          type="password"
+          autoComplete="new-password"
+          required
+          placeholder="Mínimo de 6 caracteres"
+          icon={<Lock />}
+          value={senha}
+          error={senha && !validations.senha ? "Mínimo de 6 caracteres" : undefined}
+          onChange={(e) => {
+            setSenha(e.target.value);
+            validateField("senha", e.target.value);
+          }}
+        />
 
-				<button
-					type="submit"
-					disabled={
-						loading ||
-						!validations.nome ||
-						!validations.email ||
-						!validations.senha
-					}
-				>
-					{loading ? "Cadastrando..." : "Criar Conta"}
-				</button>
-			</form>
-
-			<p>
-				Já tem uma conta? <Link href="/login">Faça login</Link>
-			</p>
-		</AuthPageShell>
-	);
+        <Button
+          type="submit"
+          size="lg"
+          className="mt-2 w-full"
+          disabled={loading || !validations.nome || !validations.email || !validations.senha}
+        >
+          {loading && <Loader2 className="size-4 animate-spin" aria-hidden />}
+          {loading ? "Cadastrando…" : "Criar conta"}
+        </Button>
+      </form>
+    </AuthPageShell>
+  );
 }

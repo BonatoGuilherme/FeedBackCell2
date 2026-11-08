@@ -4,7 +4,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import AppIcon from "./AppIcon";
-import { criarCelular } from "@/src/lib/celulares";
+import { ModeloAutocomplete, PhoneSpecsResult, useSpecsLookup } from "./PhoneSpecsLookup";
+import {
+  MAX_FOTOS,
+  TIPOS_FOTO,
+  baixarImagemHd,
+  criarCelular,
+  dataUriParaArquivo,
+  enviarFoto,
+  validarFoto,
+} from "@/src/lib/celulares";
+import { PhotoPicker, type PickedPhoto } from "@/components/ui/photo-picker";
 
 const currency = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -19,6 +29,13 @@ export default function NewPhoneForm() {
   const [descricao, setDescricao] = useState("");
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fotos, setFotos] = useState<PickedPhoto[]>([]);
+  const [progresso, setProgresso] = useState("");
+  const specs = useSpecsLookup();
+  const escolhido = specs.selecionado;
+  // a foto da busca (HD quando houver) vira a primeira foto do celular e conta no limite
+  const imagemApi = escolhido?.imagemHd ?? escolhido?.imagem ?? null;
+  const maxFotos = MAX_FOTOS - (imagemApi ? 1 : 0);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -43,15 +60,52 @@ export default function NewPhoneForm() {
 
     setLoading(true);
     try {
-      await criarCelular(
+      let especificacoes = null;
+      if (escolhido) {
+        const { imagem: _imagem, imagemHd: _imagemHd, ...resto } = escolhido;
+        void _imagem;
+        void _imagemHd;
+        especificacoes = resto;
+      }
+      const uid3d = specs.modelo3d?.embedUrl.match(/models\/([0-9a-f]{32})\//)?.[1] ?? null;
+      const celular = await criarCelular(
         {
           marca: marca.trim(),
           modelo: modelo.trim(),
           preco: precoNumerico,
           descricao: descricao.trim(),
+          especificacoes,
+          modelo3d: uid3d,
         },
         token,
       );
+
+      const nomeArquivo = modelo.trim() || "celular";
+      if (escolhido?.imagemHd) setProgresso("Baixando a foto em alta resolução…");
+      const arquivoApi =
+        (escolhido?.imagemHd ? await baixarImagemHd(escolhido.imagemHd, nomeArquivo) : null) ??
+        (escolhido?.imagem ? dataUriParaArquivo(escolhido.imagem, nomeArquivo) : null);
+      const envios = [...(arquivoApi ? [arquivoApi] : []), ...fotos.map((foto) => foto.file).slice(0, maxFotos)];
+      const falhas: string[] = [];
+      for (const [i, arquivo] of envios.entries()) {
+        setProgresso(`Enviando foto ${i + 1} de ${envios.length}…`);
+        try {
+          await enviarFoto(celular.idcelular, arquivo, token);
+        } catch (error: unknown) {
+          falhas.push(
+            `${arquivo.name}: ${error instanceof Error ? error.message : "falhou"}`,
+          );
+        }
+      }
+
+      if (falhas.length > 0) {
+        setFotos([]);
+        setErro(
+          `O celular foi salvo, mas ${falhas.length} foto(s) não foram enviadas. ${falhas.join(" · ")}`,
+        );
+        return;
+      }
+
       router.push("/catalog");
       router.refresh();
     } catch (error: unknown) {
@@ -62,6 +116,7 @@ export default function NewPhoneForm() {
       );
     } finally {
       setLoading(false);
+      setProgresso("");
     }
   }
 
@@ -116,15 +171,16 @@ export default function NewPhoneForm() {
 
           <div className="form-field">
             <label htmlFor="modelo">Modelo *</label>
-            <input
-              id="modelo"
-              name="modelo"
-              minLength={2}
-              maxLength={120}
-              placeholder="Ex.: Galaxy S24"
-              required
-              value={modelo}
-              onChange={(event) => setModelo(event.target.value)}
+            <ModeloAutocomplete
+              lookup={specs}
+              marca={marca}
+              modelo={modelo}
+              onModeloChange={setModelo}
+              onEscolher={(aparelho) => {
+                if (aparelho.nome) setModelo(aparelho.nome);
+                if (aparelho.fabricante) setMarca(aparelho.fabricante);
+              }}
+              disabled={loading}
             />
           </div>
 
@@ -164,6 +220,18 @@ export default function NewPhoneForm() {
             </span>
           </div>
 
+          <div className="phone-form__photos">
+            <span className="phone-form__photos-label">Fotos do aparelho</span>
+            <PhotoPicker
+              value={fotos}
+              onChange={setFotos}
+              max={maxFotos}
+              accept={TIPOS_FOTO}
+              validate={validarFoto}
+              disabled={loading}
+            />
+          </div>
+
           <div className="phone-form__actions">
             <Link className="button button--secondary" href="/catalog">
               Cancelar
@@ -176,7 +244,7 @@ export default function NewPhoneForm() {
               {loading ? (
                 <>
                   <span className="button-spinner" />
-                  Salvando…
+                  {progresso || "Salvando…"}
                 </>
               ) : (
                 <>
@@ -191,12 +259,17 @@ export default function NewPhoneForm() {
         <aside className="phone-preview" aria-label="Prévia do cadastro">
           <p className="eyebrow">Prévia</p>
           <div className="phone-preview__art" aria-hidden="true">
-            <div className="phone-preview__device">
-              <span className="phone-preview__speaker" />
-              <span className="phone-preview__screen">
-                <AppIcon name="smartphone" size={30} />
-              </span>
-            </div>
+            {imagemApi || fotos[0] ? (
+              // eslint-disable-next-line @next/next/no-img-element -- data: da API ou blob: local
+              <img className="phone-preview__photo foto-aparelho" src={imagemApi ?? fotos[0].preview} alt="" />
+            ) : (
+              <div className="phone-preview__device">
+                <span className="phone-preview__speaker" />
+                <span className="phone-preview__screen">
+                  <AppIcon name="smartphone" size={30} />
+                </span>
+              </div>
+            )}
           </div>
           <div className="phone-preview__details">
             <p>{marca.trim() || "Marca do aparelho"}</p>
@@ -206,6 +279,7 @@ export default function NewPhoneForm() {
           {descricao.trim() && (
             <p className="phone-preview__description">{descricao.trim()}</p>
           )}
+          <PhoneSpecsResult lookup={specs} />
         </aside>
       </div>
     </div>

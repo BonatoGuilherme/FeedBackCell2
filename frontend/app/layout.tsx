@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Anton, Caveat, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AuthLayout from "./components/AuthLayout";
 
@@ -13,11 +13,23 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const anton = Anton({
+  variable: "--font-display",
+  weight: "400",
+  subsets: ["latin"],
+});
+
+const caveat = Caveat({
+  variable: "--font-hand",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
   title: "FeedBackCELL",
   description: "Plataforma de feedback e comentários",
   icons: {
-    icon: "/favicon.svg",
+    icon: "/icons8-celular-100.png",
+    apple: "/icons8-celular-100.png",
   },
 };
 
@@ -28,7 +40,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${anton.variable} ${caveat.variable}`}>
         <AuthLayout>{children}</AuthLayout>
       </body>
     </html>

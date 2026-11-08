@@ -1,5 +1,6 @@
-require("dotenv").config();
+require("./config/loadEnv");
 
+const { once } = require("node:events");
 const express = require("express");
 const { pool } = require("./db/connection");
 const configMiddlewares = require("./middlewares/config");
@@ -50,30 +51,48 @@ app.use("/usuarios", usuariosRoutes);
 app.use("/comentarios", comentariosRoutes);
 app.use(errorHandler);
 
-const PORT = Number(process.env.PORT) || 5000;
+const PORT = Number(process.env.PORT ?? 5000);
+
+async function shutdownServer(server) {
+  const results = await Promise.allSettled([
+    server.listening
+      ? new Promise((resolve, reject) => {
+          server.close((error) => (error ? reject(error) : resolve()));
+        })
+      : Promise.resolve(),
+    pool.end(),
+    closeRateLimitStore(),
+  ]);
+  const errors = results
+    .filter((result) => result.status === "rejected")
+    .map((result) => result.reason);
+
+  if (errors.length > 0) {
+    throw new AggregateError(errors, "Erro ao encerrar os serviços do backend");
+  }
+}
 
 async function startServer() {
   await connectRateLimitStore();
   initializeRateLimiter();
 
-  const server = app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
-  });
+  const server = app.listen(PORT);
+  try {
+    await once(server, "listening");
+  } catch (error) {
+    await shutdownServer(server);
+    throw error;
+  }
+
+  console.log(`Servidor rodando na porta ${server.address().port}`);
 
   const shutdown = (signal) => {
+    process.removeListener("SIGTERM", shutdown);
+    process.removeListener("SIGINT", shutdown);
     console.log(`Recebido ${signal}; encerrando servidor.`);
-    server.close(async (error) => {
-      if (error) {
-        console.error("Erro ao encerrar o servidor HTTP:", error);
-        process.exitCode = 1;
-      }
-
-      try {
-        await Promise.all([pool.end(), closeRateLimitStore()]);
-      } catch (shutdownError) {
-        console.error("Erro ao encerrar conexões:", shutdownError);
-        process.exitCode = 1;
-      }
+    shutdownServer(server).catch((error) => {
+      console.error("Erro ao encerrar o backend:", error);
+      process.exitCode = 1;
     });
   };
 
@@ -89,4 +108,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { app, startServer };
+module.exports = { app, startServer, shutdownServer };

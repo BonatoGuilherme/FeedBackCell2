@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const authModel = require("../models/authModel");
-require("dotenv").config();
+require("../config/loadEnv");
 
 const authController = {
   // REGISTRO - criar novo usuário

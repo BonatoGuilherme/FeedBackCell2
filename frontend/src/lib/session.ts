@@ -76,8 +76,10 @@ export function getSessionUserId(): number | null {
   return token ? getTokenUserId(token) : null;
 }
 
-export function getServerSessionSnapshot(): boolean {
-  return false;
+// No servidor (e durante a hidratação) a sessão é desconhecida: null, e não false,
+// para não redirecionar ao login antes de o navegador ler o token.
+export function getServerSessionSnapshot(): boolean | null {
+  return null;
 }
 
 export function subscribeToSession(callback: () => void): () => void {

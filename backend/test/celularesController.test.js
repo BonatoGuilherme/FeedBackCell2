@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const test = require("node:test");
 const celularController = require("../controllers/celularesController");
 const celularModel = require("../models/celularModel");
+const celularImagemModel = require("../models/celularImagemModel");
 
 function createResponse() {
   return {
@@ -28,9 +29,12 @@ test("getAll applies default pagination and returns pagination metadata", async 
     return celulares;
   };
   celularModel.getCount = async () => 1;
+  const originalIds = celularImagemModel.idsByCelulares;
+  celularImagemModel.idsByCelulares = async () => new Map([[1, [5]]]);
   t.after(() => {
     celularModel.getAll = originalGetAll;
     celularModel.getCount = originalGetCount;
+    celularImagemModel.idsByCelulares = originalIds;
   });
 
   const response = createResponse();
@@ -39,7 +43,9 @@ test("getAll applies default pagination and returns pagination metadata", async 
   assert.deepEqual(receivedPagination, { page: 1, limit: 10 });
   assert.equal(response.statusCode, 200);
   assert.deepEqual(response.body, {
-    celulares,
+    celulares: [
+      { idcelular: 1, imagens: [{ idimagem: 5, url: "/celulares/imagens/5" }] },
+    ],
     paginacao: {
       paginaAtual: 1,
       totalPaginas: 1,
