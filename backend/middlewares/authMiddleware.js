@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-require("dotenv").config();
+require("../config/loadEnv");
 
 const authMiddleware = (req, res, next) => {
   try {

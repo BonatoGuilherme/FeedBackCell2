@@ -8,6 +8,7 @@ const celularModel = {
       const [results] = await pool.query(
         `SELECT idcelular, idusuario, Marca AS marca, Modelo AS modelo,
                 Preco AS preco, Imagem AS imagem, Descricao AS descricao,
+                Especificacoes AS especificacoes, Modelo3d AS modelo3d,
                 \`Like\` AS likes, Deslike AS dislikes, dataCriacao
          FROM Celulares
          ORDER BY dataCriacao DESC, idcelular DESC
@@ -38,6 +39,7 @@ const celularModel = {
       const [results] = await pool.query(
         `SELECT idcelular, idusuario, Marca AS marca, Modelo AS modelo,
                 Preco AS preco, Imagem AS imagem, Descricao AS descricao,
+                Especificacoes AS especificacoes, Modelo3d AS modelo3d,
                 \`Like\` AS likes, Deslike AS dislikes, dataCriacao
          FROM Celulares
          WHERE idcelular = ?`,
@@ -50,13 +52,13 @@ const celularModel = {
   },
 
   // Criar novo celular
-  create: async (marca, modelo, preco, descricao, idusuario) => {
+  create: async (marca, modelo, preco, descricao, idusuario, especificacoes = null, modelo3d = null) => {
     try {
       const [results] = await pool.query(
         `INSERT INTO Celulares
-          (Marca, Modelo, Preco, Descricao, idusuario, dataCriacao)
-         VALUES (?, ?, ?, ?, ?, NOW())`,
-        [marca, modelo, preco, descricao, idusuario]
+          (Marca, Modelo, Preco, Descricao, Especificacoes, Modelo3d, idusuario, dataCriacao)
+         VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+        [marca, modelo, preco, descricao, especificacoes ? JSON.stringify(especificacoes) : null, modelo3d, idusuario]
       );
       return {
         idcelular: results.insertId,
@@ -64,6 +66,8 @@ const celularModel = {
         modelo,
         preco,
         descricao,
+        especificacoes,
+        modelo3d,
         idusuario,
       };
     } catch (error) {
@@ -72,13 +76,13 @@ const celularModel = {
   },
 
   // Atualizar celular
-  update: async (id, marca, modelo, preco, descricao) => {
+  update: async (id, marca, modelo, preco, descricao, especificacoes = null, modelo3d = null) => {
     try {
       await pool.query(
         `UPDATE Celulares
-         SET Marca = ?, Modelo = ?, Preco = ?, Descricao = ?
+         SET Marca = ?, Modelo = ?, Preco = ?, Descricao = ?, Especificacoes = ?, Modelo3d = ?
          WHERE idcelular = ?`,
-        [marca, modelo, preco, descricao, id]
+        [marca, modelo, preco, descricao, especificacoes ? JSON.stringify(especificacoes) : null, modelo3d, id]
       );
       return {
         idcelular: id,
@@ -86,6 +90,8 @@ const celularModel = {
         modelo,
         preco,
         descricao,
+        especificacoes,
+        modelo3d,
       };
     } catch (error) {
       throw error;
@@ -111,6 +117,7 @@ const celularModel = {
       const [results] = await pool.query(
         `SELECT idcelular, idusuario, Marca AS marca, Modelo AS modelo,
                 Preco AS preco, Imagem AS imagem, Descricao AS descricao,
+                Especificacoes AS especificacoes, Modelo3d AS modelo3d,
                 \`Like\` AS likes, Deslike AS dislikes, dataCriacao
          FROM Celulares
          WHERE idusuario = ?

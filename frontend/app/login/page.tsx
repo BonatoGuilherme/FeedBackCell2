@@ -1,72 +1,54 @@
 "use client";
 
-import Link from "next/link";
+import { Loader2, Lock, Mail } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import AuthPageShell from "../components/AuthPageShell";
+import { AuthField, FormAlert } from "../components/AuthField";
 import { useLogin } from "./useLogin";
 
 export default function LoginPage() {
-  const {
-    email,
-    setEmail,
-    senha,
-    setSenha,
-    erro,
-    loading,
-    emailError,
-    validateEmail,
-    handleLogin,
-  } = useLogin();
+  const { email, setEmail, senha, setSenha, erro, loading, emailError, validateEmail, handleLogin } =
+    useLogin();
 
   return (
-    <AuthPageShell
-      title="FeedBackCELL"
-      subtitle="Gerencie seus dispositivos com eficiência"
-      securityText="🔒 Sua conexão é segura e criptografada"
-    >
-      <form onSubmit={handleLogin}>
-        {erro && (
-          <div>
-            <p>{erro}</p>
-          </div>
-        )}
+    <AuthPageShell mode="login" title="Entrar na sua conta" subtitle="Use seu e-mail e senha para continuar.">
+      <form className="space-y-4" onSubmit={handleLogin} noValidate>
+        {erro && <FormAlert>{erro}</FormAlert>}
 
-        <div>
-          <label htmlFor="email">E-mail</label>
-          <input
-            id="email"
-            type="email"
-            required
-            placeholder="seu@email.com"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              validateEmail(e.target.value);
-            }}
-          />
-          {emailError && <p>{emailError}</p>}
-        </div>
+        <AuthField
+          id="email"
+          label="E-mail"
+          type="email"
+          autoComplete="email"
+          required
+          placeholder="seu@email.com"
+          icon={<Mail />}
+          value={email}
+          error={emailError}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (emailError) validateEmail(e.target.value);
+          }}
+          onBlur={(e) => e.target.value && validateEmail(e.target.value)}
+        />
 
-        <div>
-          <label htmlFor="senha">Senha</label>
-          <input
-            id="senha"
-            type="password"
-            required
-            placeholder="••••••••"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-          />
-        </div>
+        <AuthField
+          id="senha"
+          label="Senha"
+          type="password"
+          autoComplete="current-password"
+          required
+          placeholder="••••••••"
+          icon={<Lock />}
+          value={senha}
+          onChange={(e) => setSenha(e.target.value)}
+        />
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Conectando..." : "Entrar"}
-        </button>
+        <Button type="submit" size="lg" className="mt-2 w-full" disabled={loading}>
+          {loading && <Loader2 className="size-4 animate-spin" aria-hidden />}
+          {loading ? "Conectando…" : "Entrar"}
+        </Button>
       </form>
-
-      <p>
-        Não tem uma conta?{" "}
-        <Link href="/register">Crie uma agora</Link>
-      </p>
     </AuthPageShell>
   );
 }

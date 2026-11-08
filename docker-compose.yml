@@ -101,9 +101,11 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
+        # No Docker o navegador fala com a API pelo proxy (/api). O NEXT_PUBLIC_API_URL
+        # do .env (localhost:5000) é para rodar fora do Docker; use DOCKER_API_URL para trocar aqui.
+        NEXT_PUBLIC_API_URL: ${DOCKER_API_URL:-/api}
     environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
+      NEXT_PUBLIC_API_URL: ${DOCKER_API_URL:-/api}
       NODE_ENV: production
     restart: unless-stopped
     networks:

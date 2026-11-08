@@ -1,4 +1,25 @@
 const celularModel = require("../models/celularModel");
+const celularImagemModel = require("../models/celularImagemModel");
+
+// Acrescenta `imagens: [{ idimagem, url }]` a cada celular.
+async function anexarImagens(celulares) {
+  let mapa = new Map();
+  try {
+    mapa = await celularImagemModel.idsByCelulares(
+      celulares.map((c) => c.idcelular),
+    );
+  } catch (error) {
+    // banco ainda sem a tabela de fotos (migração não aplicada): segue sem fotos
+    if (!error || error.code !== "ER_NO_SUCH_TABLE") throw error;
+  }
+  return celulares.map((c) => ({
+    ...c,
+    imagens: (mapa.get(c.idcelular) || []).map((idimagem) => ({
+      idimagem,
+      url: `/celulares/imagens/${idimagem}`,
+    })),
+  }));
+}
 const { MAX_PAGE_SIZE, parsePagination } = require("../utils/pagination");
 
 const MAX_PRECO_CELULAR = 99999999.99;
@@ -23,7 +44,7 @@ const celularController = {
       const totalPages = Math.ceil(total / limit);
 
       return res.status(200).json({
-        celulares,
+        celulares: await anexarImagens(celulares),
         paginacao: {
           paginaAtual: page,
           totalPaginas: totalPages,
@@ -53,7 +74,8 @@ const celularController = {
         return res.status(404).json({ erro: "Celular não encontrado" });
       }
 
-      return res.status(200).json(celular);
+      const [celularComImagens] = await anexarImagens([celular]);
+      return res.status(200).json(celularComImagens);
     } catch (error) {
       console.error("Erro ao buscar celular:", error);
       return res
@@ -65,7 +87,7 @@ const celularController = {
   // POST - Criar novo celular
   create: async (req, res) => {
     try {
-      const { marca, modelo, preco, descricao } = req.body;
+      const { marca, modelo, preco, descricao, especificacoes, modelo3d } = req.body;
       const idusuario = req.userId;
 
       // Validação
@@ -107,6 +129,8 @@ const celularController = {
         preco,
         descricao ? descricao.trim() : "",
         idusuario,
+        especificacoes ?? null,
+        modelo3d ?? null,
       );
 
       return res.status(201).json({
@@ -125,7 +149,7 @@ const celularController = {
   update: async (req, res) => {
     try {
       const { id } = req.params;
-      const { marca, modelo, preco, descricao } = req.body;
+      const { marca, modelo, preco, descricao, especificacoes, modelo3d } = req.body;
       const idusuario = req.userId;
 
       if (!id || isNaN(id)) {
@@ -184,6 +208,9 @@ const celularController = {
         modelo.trim(),
         preco,
         descricao ? descricao.trim() : "",
+        // sem os campos no corpo, mantém o que já estava salvo
+        especificacoes === undefined ? celular.especificacoes : especificacoes,
+        modelo3d === undefined ? celular.modelo3d : modelo3d,
       );
 
       return res.status(200).json({
@@ -243,7 +270,7 @@ const celularController = {
 
       return res.status(200).json({
         total: celulares.length,
-        celulares,
+        celulares: await anexarImagens(celulares),
       });
     } catch (error) {
       console.error("Erro ao buscar celulares do usuário:", error);

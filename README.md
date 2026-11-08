@@ -157,7 +157,7 @@ BACKUP_INTERVAL_SECONDS=86400
 BACKUP_RETENTION_DAYS=30
 ```
 
-Use `.env.example` como referência para a configuração do Compose. `ADMIN_USER_IDS` aceita IDs de usuário separados por vírgula; deixe-o vazio até escolher explicitamente os administradores. Sem IDs, a rota `/usuarios` responde HTTP 503; usuários autenticados fora da lista recebem HTTP 403. `RATE_LIMIT_REDIS_URL` é configurada pelo Compose para apontar ao Redis interno.
+Use `.env.example` como referência para a configuração do Compose. O backend sempre procura esse arquivo na raiz do repositório, independentemente do diretório de onde o comando foi executado; variáveis já definidas no ambiente têm prioridade. `ADMIN_USER_IDS` aceita IDs de usuário separados por vírgula; deixe-o vazio até escolher explicitamente os administradores. Sem IDs, a rota `/usuarios` responde HTTP 503; usuários autenticados fora da lista recebem HTTP 403. `RATE_LIMIT_REDIS_URL` é configurada pelo Compose para apontar ao Redis interno.
 
 ### Frontend (`.env.local`)
 
@@ -180,12 +180,23 @@ NEXT_PUBLIC_API_URL=/api
 
 ## 🛠 Desenvolvimento
 
-Após alterar imagens ou dependências, reconstrua os serviços com `docker compose up -d --build`. Execute os testes do backend no PowerShell:
+Após alterar imagens ou dependências, reconstrua os serviços com `docker compose up -d --build`. Execute os testes unitários do backend no PowerShell:
 
 ```powershell
 Set-Location backend
 pnpm test
 ```
+
+Os testes de integração precisam de MySQL e Redis ativos. Com os serviços do Compose em execução, configure no terminal os endereços acessíveis a partir do host e rode o comando dedicado:
+
+```powershell
+$env:DB_HOST = "127.0.0.1"
+$env:DB_PORT = "3307"
+$env:RATE_LIMIT_REDIS_URL = "redis://127.0.0.1:6379"
+pnpm test:integration
+```
+
+Esse teste confirma a prontidão com os dois serviços, o limite de requisições com Redis, a resposta de indisponibilidade quando MySQL ou Redis falham e o encerramento do servidor. A CI inicia MySQL e Redis isolados para executar a mesma verificação. Os valores de senha usados pela CI são exclusivos dos containers descartáveis de teste; credenciais reais devem ficar em variáveis protegidas do ambiente, nunca no código ou no Git.
 
 ---
 

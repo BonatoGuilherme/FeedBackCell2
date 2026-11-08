@@ -1,6 +1,6 @@
 // CONEXÃO COM BANCO DE DADOS
 const mysql = require("mysql2");
-require("dotenv").config();
+require("../config/loadEnv");
 
 const connectionLimit = Number(process.env.DB_POOL_SIZE || 10);
 if (!Number.isSafeInteger(connectionLimit) || connectionLimit < 1) {
@@ -20,15 +20,5 @@ const pool = mysql.createPool({
 
 // Habilita suporte a Promises no pool
 const promisePool = pool.promise();
-
-// Testa conexão ao iniciar
-pool.getConnection((err, conn) => {
-  if (err) {
-    console.error("Erro ao conectar ao MySQL:", err.message);
-  } else {
-    console.log("Conectado ao MySQL com sucesso!");
-    conn.release(); 
-  }
-});
 
 module.exports = { pool: promisePool };

@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS `Celulares` (
   `Preco` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `Imagem` VARCHAR(500),
   `Descricao` TEXT,
+  `Especificacoes` JSON NULL,
+  `Modelo3d` VARCHAR(32) NULL,
   `Like` INT DEFAULT 0,
   `Deslike` INT DEFAULT 0,
   `dataCriacao` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -27,6 +29,21 @@ CREATE TABLE IF NOT EXISTS `Celulares` (
   KEY `idx_usuario` (`idusuario`),
   CONSTRAINT `fk_Celulares_Usuarios` FOREIGN KEY (`idusuario`) 
     REFERENCES `Usuarios` (`idusuario`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Table: CelularImagens (fotos dos celulares, guardadas no próprio banco)
+CREATE TABLE IF NOT EXISTS `CelularImagens` (
+  `idimagem` INT NOT NULL AUTO_INCREMENT,
+  `idcelular` INT NOT NULL,
+  `mime` VARCHAR(40) NOT NULL,
+  `tamanho` INT NOT NULL,
+  `dados` MEDIUMBLOB NOT NULL,
+  `ordem` INT NOT NULL DEFAULT 0,
+  `dataCriacao` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idimagem`),
+  KEY `idx_imagens_celular_ordem` (`idcelular`, `ordem`, `idimagem`),
+  CONSTRAINT `fk_CelularImagens_Celulares` FOREIGN KEY (`idcelular`)
+    REFERENCES `Celulares` (`idcelular`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Table: Comentarios

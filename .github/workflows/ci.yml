@@ -6,8 +6,30 @@ on:
 
 jobs:
   backend:
-    name: Backend tests
+    name: Backend tests and integration
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: integration-test
+          MYSQL_DATABASE: feedbackcell_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -pintegration-test --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=3s
+          --health-retries=10
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -22,6 +44,20 @@ jobs:
         working-directory: backend
       - run: pnpm test
         working-directory: backend
+      - run: pnpm test:integration
+        working-directory: backend
+        env:
+          NODE_ENV: test
+          PORT: 0
+          TRUST_PROXY: 1
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USER: root
+          DB_PASSWORD: integration-test
+          DB_NAME: feedbackcell_db
+          RATE_LIMIT_REDIS_URL: redis://127.0.0.1:6379
+          RATE_LIMIT: 2
+          RATE_LIMIT_WINDOW_MS: 60000
 
   frontend:
     name: Frontend lint and build

@@ -22,13 +22,13 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   );
 
   useEffect(() => {
-    if (!isPublicPage && !hasSession) {
+    if (!isPublicPage && hasSession === false) {
       router.replace("/login");
     }
   }, [hasSession, isPublicPage, pathname, router]);
 
   if (isPublicPage) {
-    return <main className="auth-main">{children}</main>;
+    return <main>{children}</main>;
   }
 
   if (hasSession !== true) {

@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const usuarioModel = require("../models/usuarioModel");
 const { MAX_PAGE_SIZE, parsePagination } = require("../utils/pagination");
-require("dotenv").config();
+require("../config/loadEnv");
 
 const usuarioController = {
   // GET - Buscar perfil do usuário autenticado
