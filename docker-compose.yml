@@ -32,7 +32,9 @@ services:
     networks:
       - feedbackcell-network
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      # TCP (127.0.0.1), não socket: durante o init o servidor temporário roda sem rede
+      # e o ping por socket marcaria "healthy" cedo demais.
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
       interval: 10s
       timeout: 5s
       retries: 5
