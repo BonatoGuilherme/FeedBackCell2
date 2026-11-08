@@ -1,20 +1,23 @@
 const celularModel = require("../models/celularModel");
+const { MAX_PAGE_SIZE, parsePagination } = require("../utils/pagination");
 
 const MAX_PRECO_CELULAR = 99999999.99;
+const MAX_MODELO_CELULAR_LENGTH = 100;
 
 const celularController = {
   // GET - Listar todos os celulares
   getAll: async (req, res) => {
     try {
-      const page = parseInt(req.query.page) || 1;
-      const limit = parseInt(req.query.limit) || 10;
-
-      if (page < 1 || limit < 1) {
+      const pagination = parsePagination(req.query);
+      if (!pagination) {
         return res
           .status(400)
-          .json({ erro: "Página e limite devem ser maiores que 0" });
+          .json({
+            erro: `Página e limite devem ser inteiros positivos; limite máximo: ${MAX_PAGE_SIZE}`,
+          });
       }
 
+      const { page, limit } = pagination;
       const celulares = await celularModel.getAll(page, limit);
       const total = await celularModel.getCount();
       const totalPages = Math.ceil(total / limit);
@@ -79,22 +82,22 @@ const celularController = {
       if (
         typeof preco !== "number" ||
         !Number.isFinite(preco) ||
-        preco <= 0 ||
+        preco < 0 ||
         preco > MAX_PRECO_CELULAR
       ) {
         return res
           .status(400)
-          .json({ erro: "Preço deve ser positivo e não pode ultrapassar R$ 99.999.999,99" });
+          .json({ erro: "Preço não pode ser negativo nem ultrapassar R$ 99.999.999,99" });
       }
 
       if (
         marca.trim().length < 2 ||
         marca.trim().length > 100 ||
         modelo.trim().length < 2 ||
-        modelo.trim().length > 100
+        modelo.trim().length > MAX_MODELO_CELULAR_LENGTH
       ) {
         return res.status(400).json({
-          erro: "Marca e modelo devem ter entre 2 e 100 caracteres",
+          erro: `Marca deve ter entre 2 e 100 caracteres e modelo entre 2 e ${MAX_MODELO_CELULAR_LENGTH} caracteres`,
         });
       }
 
@@ -156,22 +159,22 @@ const celularController = {
       if (
         typeof preco !== "number" ||
         !Number.isFinite(preco) ||
-        preco <= 0 ||
+        preco < 0 ||
         preco > MAX_PRECO_CELULAR
       ) {
         return res
           .status(400)
-          .json({ erro: "Preço deve ser positivo e não pode ultrapassar R$ 99.999.999,99" });
+          .json({ erro: "Preço não pode ser negativo nem ultrapassar R$ 99.999.999,99" });
       }
 
       if (
         marca.trim().length < 2 ||
         marca.trim().length > 100 ||
         modelo.trim().length < 2 ||
-        modelo.trim().length > 100
+        modelo.trim().length > MAX_MODELO_CELULAR_LENGTH
       ) {
         return res.status(400).json({
-          erro: "Marca e modelo devem ter entre 2 e 100 caracteres",
+          erro: `Marca deve ter entre 2 e 100 caracteres e modelo entre 2 e ${MAX_MODELO_CELULAR_LENGTH} caracteres`,
         });
       }
 

@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 const usuarioModel = require("../models/usuarioModel");
+const { MAX_PAGE_SIZE, parsePagination } = require("../utils/pagination");
 require("dotenv").config();
 
 const usuarioController = {
@@ -162,15 +163,17 @@ const usuarioController = {
   // GET - Listar todos os usuários (apenas admin)
   getAll: async (req, res) => {
     try {
-      const page = parseInt(req.query.page) || 1;
-      const limit = parseInt(req.query.limit) || 10;
+      const pagination = parsePagination(req.query);
 
-      if (page < 1 || limit < 1) {
+      if (!pagination) {
         return res
           .status(400)
-          .json({ erro: "Página e limite devem ser maiores que 0" });
+          .json({
+            erro: `Página e limite devem ser inteiros positivos; limite máximo: ${MAX_PAGE_SIZE}`,
+          });
       }
 
+      const { page, limit } = pagination;
       const usuarios = await usuarioModel.getAll(page, limit);
       const total = await usuarioModel.getCount();
       const totalPages = Math.ceil(total / limit);

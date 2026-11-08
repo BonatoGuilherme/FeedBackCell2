@@ -1,6 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
+  "packageManager": "pnpm@10.33.2",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -15,6 +16,7 @@
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "express-rate-limit": "^7.1.5",
+    "joi": "^18.3.2",
     "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.19.1",
     "rate-limit-redis": "^4.3.1",

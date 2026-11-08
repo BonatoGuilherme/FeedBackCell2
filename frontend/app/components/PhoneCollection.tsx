@@ -50,6 +50,12 @@ function PhoneCard({ celular }: { celular: Celular }) {
               ? currency.format(celular.preco)
               : "Preço não informado"}
           </span>
+          <Link
+              className="button button--text"
+              href={`/comments?celular=${celular.idcelular}`}
+          >
+              Ver comentários
+          </Link>
         </div>
       </div>
     </article>

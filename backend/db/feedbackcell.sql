@@ -1,7 +1,5 @@
 -- Database automatically created by MYSQL_DATABASE env var
--- This script creates tables for feedbackcell_db
-
-USE `feedbackcell_db`;
+-- MySQL's Docker entrypoint runs this file in MYSQL_DATABASE.
 
 -- Table: Usuarios
 CREATE TABLE IF NOT EXISTS `Usuarios` (

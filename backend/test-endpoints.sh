@@ -118,7 +118,7 @@ if [ ! -z "$TOKEN" ]; then
         echo -e "${YELLOW}=== TESTE 4: COMENTÁRIOS ===${NC}\n"
         
         echo -e "${YELLOW}4.1 - Criar comentário${NC}"
-        COMENTARIO_RESPONSE=$(curl -s -X POST "$BASE_URL/celulares/$CELULAR_ID/comentarios" \
+        COMENTARIO_RESPONSE=$(curl -s -X POST "$BASE_URL/comentarios/$CELULAR_ID" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $TOKEN" \
             -d '{
@@ -129,9 +129,17 @@ if [ ! -z "$TOKEN" ]; then
         echo ""
         
         echo -e "${YELLOW}4.2 - Listar comentários${NC}"
-        curl -s -X GET "$BASE_URL/celulares/$CELULAR_ID/comentarios?page=1&limit=10" \
+        curl -s -X GET "$BASE_URL/comentarios/$CELULAR_ID?page=1&limit=10" \
             -H "Content-Type: application/json" | jq .
         echo ""
+
+        if [ ! -z "$COMENTARIO_ID" ]; then
+            echo -e "${YELLOW}4.3 - Excluir comentário${NC}"
+            curl -s -X DELETE "$BASE_URL/comentarios/$CELULAR_ID/$COMENTARIO_ID" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: ******" | jq .
+            echo ""
+        fi
     fi
     
     # ============================================

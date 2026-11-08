@@ -115,6 +115,8 @@ docker compose logs -f
 
 O Nginx encaminha `/` ao frontend e `/api/*` à API, atualizando a descoberta DNS das réplicas do Compose. O backend usa Redis para compartilhar os contadores do rate limit entre réplicas. Para manter a aplicação no mesmo host, não publique as portas do frontend ou backend diretamente.
 
+Cada réplica do backend abre um pool MySQL limitado por `DB_POOL_SIZE` (padrão: 10). O MySQL aceita até `DB_MAX_CONNECTIONS` conexões (padrão: 151). Dimensione as réplicas respeitando `réplicas do backend × DB_POOL_SIZE + conexões reservadas < DB_MAX_CONNECTIONS`; reserve conexões para migrações, backup, administração e margem operacional. Ajuste esses dois valores no `.env` antes de escalar.
+
 As migrações rodam uma vez no serviço `migrate` antes da API, evitando que várias réplicas alterem o schema simultaneamente. Os índices compostos acompanham as consultas de listagem e substituem índices simples redundantes que já existiam. O `EXPLAIN` no banco atual encontrou apenas 1 celular e 0 comentários; portanto, os índices correspondem aos filtros/ordenações usados, mas esses dados ainda não permitem alegar ganho de desempenho medido.
 
 O serviço `backup` cria um dump comprimido e verifica o arquivo ao iniciar e a cada intervalo configurado. As cópias ficam no volume `feedbackcellnextjs_mysql_backups`; para listar ou copiar um arquivo para o host:
@@ -140,6 +142,8 @@ DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=replace-with-a-long-random-password
 DB_NAME=feedbackcell_db
+DB_POOL_SIZE=10
+DB_MAX_CONNECTIONS=151
 NODE_ENV=development
 PORT=5000
 JWT_SECRET=replace-with-a-random-secret-of-at-least-32-characters
@@ -189,8 +193,8 @@ pnpm test
 
 - [x] Adicionar teste automatizado para idempotência e validação das migrações de índices.
 - [ ] Adicionar testes automatizados para controllers, models e rotas.
-- [ ] Alinhar as rotas de comentários com as expectativas de parâmetros do frontend e do controller.
-- [ ] Adicionar um fluxo completo do frontend para comentários e gerenciamento de recursos do usuário autenticado.
+- [x] Alinhar as rotas de comentários com as expectativas de parâmetros do frontend e do controller.
+- [x] Adicionar visualização, criação e exclusão de comentários no frontend; o gerenciamento dos recursos do usuário ainda está pendente.
 - [ ] Melhorar o feedback visual e o tratamento de erros do frontend.
 - [ ] Preparar arquivos e fluxo de CI/CD específicos para produção.
 
@@ -198,8 +202,8 @@ pnpm test
 
 ## ✅ Checklist para finalizar o projeto
 
-1. Corrigir a rota de comentários para que o backend e o frontend usem o mesmo padrão de `idcelular` e `idcomentario`.
-2. Encerrar o CRUD de comentários no frontend com visualização, criação e exclusão via token JWT.
+1. [x] Corrigir a rota de comentários para que o backend e o frontend usem o mesmo padrão de `idcelular` e `idcomentario`.
+2. [x] Encerrar o fluxo de comentários no frontend com visualização, criação e exclusão via token JWT.
 3. Criar testes automatizados para autenticação, celulares, comentários e perfil do usuário.
 4. Melhorar a experiência de erro no frontend com mensagens claras para login, cadastro, token expirado e falhas de API.
 5. Separar configuração de desenvolvimento e produção com `.env` e `NEXT_PUBLIC_API_URL` reais.
@@ -209,7 +213,7 @@ pnpm test
 
 ## 📌 Notes
 
-Este projeto está em desenvolvimento ativo. Ele já possui uma infraestrutura Docker funcional, autenticação JWT, CRUD de celulares, endpoints de perfil do usuário e endpoints de comentários no backend; porém, a configuração atual de comentários precisa ser normalizada para manter o caminho da rota e os nomes dos parâmetros do controller consistentes.
+Este projeto está em desenvolvimento ativo. Ele já possui uma infraestrutura Docker funcional, autenticação JWT, CRUD de celulares, endpoints de perfil do usuário, endpoints de comentários no backend e uma tela para visualizar, criar e excluir comentários. Os caminhos de comentários usam `idcelular` na URL, conforme esperado pelo controller.
 
 O repositório ainda precisa de cobertura de testes mais ampla para controllers, rotas e recursos protegidos do frontend. O Compose balanceia réplicas no mesmo host; não substitui redundância entre hosts nem backups externos.
 

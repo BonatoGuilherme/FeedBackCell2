@@ -54,13 +54,13 @@ const authController = {
       // Busca usuário no banco
       const usuario = await authModel.getUserByEmail(email);
       if (!usuario) {
-        return res.status(404).json({ erro: "Usuário não encontrado" });
+        return res.status(401).json({ erro: "Email ou senha inválidos" });
       }
 
       // Compara senha com hash
       const senhaValida = await bcrypt.compare(senha, usuario.Senha);
       if (!senhaValida) {
-        return res.status(401).json({ erro: "Senha incorreta" });
+        return res.status(401).json({ erro: "Email ou senha inválidos" });
       }
 
       // Gera token JWT

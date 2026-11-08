@@ -2,6 +2,11 @@
 const mysql = require("mysql2");
 require("dotenv").config();
 
+const connectionLimit = Number(process.env.DB_POOL_SIZE || 10);
+if (!Number.isSafeInteger(connectionLimit) || connectionLimit < 1) {
+  throw new Error("DB_POOL_SIZE must be a positive integer");
+}
+
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT) || 3306,
@@ -9,7 +14,7 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit,
   queueLimit: 0
 });
 
