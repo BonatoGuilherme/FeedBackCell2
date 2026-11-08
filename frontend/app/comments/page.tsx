@@ -8,7 +8,7 @@ import {
   listarComentarios,
   type ListaComentarios,
 } from "@/src/lib/comentarios";
-import { getSessionUserId } from "@/src/lib/session";
+import { getSessionUserId, getToken } from "@/src/lib/session";
 
 const PAGE_SIZE = 20;
 
@@ -78,7 +78,7 @@ export default function CommentsPage() {
 
   async function enviarComentario(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const token = window.localStorage.getItem("token");
+    const token = getToken();
     if (!token || celularCarregado === null) {
       setErro("Sua sessão expirou. Entre novamente para comentar.");
       return;
@@ -103,7 +103,7 @@ export default function CommentsPage() {
   }
 
   async function removerComentario(idcomentario: number) {
-    const token = window.localStorage.getItem("token");
+    const token = getToken();
     if (!token || celularCarregado === null) {
       setErro("Sua sessão expirou. Entre novamente para continuar.");
       return;
