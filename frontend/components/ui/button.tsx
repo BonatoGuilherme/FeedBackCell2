@@ -8,8 +8,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-accent text-white shadow-elevation-sm hover:bg-accent-hover",
-        ink: "bg-ink text-white hover:bg-black",
+        // desativado: cinza neutro em vez do índigo/preto "lavado" pela opacidade
+        default:
+          "bg-accent text-white shadow-elevation-sm hover:bg-accent-hover disabled:bg-surface-soft disabled:text-muted disabled:shadow-none disabled:opacity-100",
+        ink: "bg-ink text-white hover:bg-black disabled:bg-surface-soft disabled:text-muted disabled:opacity-100",
         outline:
           "border border-line bg-surface text-foreground shadow-elevation-sm hover:border-line-strong hover:bg-surface-hover",
         ghost: "text-foreground hover:bg-surface-soft",
