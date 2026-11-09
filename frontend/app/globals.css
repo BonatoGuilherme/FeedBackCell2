@@ -308,6 +308,13 @@
   gap: 14px;
 }
 
+/* carregando, erro e catálogo vazio ficam com o mesmo respiro da prateleira (mt-7) */
+.catalog-toolbar + .collection-message,
+.catalog-toolbar + .collection-error,
+.catalog-toolbar + .collection-empty {
+  margin-top: 28px;
+}
+
 .catalog-toolbar .search-field {
   width: 340px;
   flex: none;
