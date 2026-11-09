@@ -64,7 +64,7 @@ public class HttpFalso implements ClienteHttp {
         Chamada c = new Chamada(url, headers);
         chamadas.add(c);
         Resposta r = handler.apply(c);
-        if (r.status() < 200 || r.status() > 299) throw ErroHttp.deStatus(r.status());
+        if (r.status() < 200 || r.status() > 299) throw ErroHttp.deResposta(r.status(), r.json());
         try {
             return JSON.readTree(r.json());
         } catch (java.io.IOException e) {

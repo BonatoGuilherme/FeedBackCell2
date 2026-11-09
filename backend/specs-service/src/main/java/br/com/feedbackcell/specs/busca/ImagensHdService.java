@@ -39,6 +39,7 @@ public class ImagensHdService {
     static final Duration TIMEOUT = Duration.ofMillis(5000);
     private static final String LARGURA = "960";
     private static final int LARGURA_MINIMA = 600;
+    private static final int ALTURA_MINIMA_RETRATO = 450;
 
     private static final Pattern HOST_IMAGEM = Pattern.compile("^https://(upload|thumb)\\.wikimedia\\.org/wikipedia/commons/");
     private static final Pattern HOST_CREDITO = Pattern.compile("^https://commons\\.wikimedia\\.org/wiki/");
@@ -259,6 +260,16 @@ public class ImagensHdService {
         return detalhes;
     }
 
+    /**
+     * Largura mínima, ou, para foto em pé, altura mínima: o modal limita a foto pela altura
+     * (até ~520 px), então um recorte retrato de 230x470 aparece quase no tamanho original.
+     */
+    static boolean grandeOSuficiente(JsonNode info) {
+        double largura = info.path("width").asDouble(0);
+        double altura = info.path("height").asDouble(0);
+        return largura >= LARGURA_MINIMA || (altura > largura && altura >= ALTURA_MINIMA_RETRATO);
+    }
+
     /** 2º: busca de arquivos no Commons; o nome do arquivo precisa ser do modelo certo. */
     private List<Candidata> porBuscaNoCommons(Aparelho pedido) throws ClienteHttp.ErroHttp {
         JsonNode q = consultar(COMMONS_API, Map.of("generator", "search", "gsrnamespace", "6", "gsrlimit", "12",
@@ -271,7 +282,7 @@ public class ImagensHdService {
             String imagemHd = semQuery(info.get("thumburl"));
             String titulo = texto(pagina.get("title"));
             if (imagemHd == null || imagemHd.isEmpty() || !HOST_IMAGEM.matcher(imagemHd).find()
-                    || info.path("width").asDouble(0) < LARGURA_MINIMA || titulo == null) {
+                    || !grandeOSuficiente(info) || titulo == null) {
                 continue;
             }
             Avaliacao avaliacao = avaliar(pedido.nome(), nomeDoArquivo(titulo), info, true);

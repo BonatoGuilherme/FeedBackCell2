@@ -46,6 +46,15 @@ public class EspecificacoesService {
     static final Duration TIMEOUT = Duration.ofMillis(8000);
     /** Câmeras rodam em paralelo com a foto HD, então não aumentam o pior caso. */
     static final Duration TIMEOUT_CAMERAS = Duration.ofMillis(5000);
+    /**
+     * Limite das duas chamadas de câmera somadas (correm em paralelo com a foto HD). No plano Free
+     * a MobileAPI pede ~12 s entre requisições, então na busca interativa o 429 cai na câmera da
+     * busca; um reprocessamento em lote pode subir o prazo (MOBILEAPI_PRAZO_CAMERAS=40s).
+     */
+    @ConfigProperty(name = "mobileapi.prazo-cameras", defaultValue = "12s")
+    Duration prazoCameras = Duration.ofSeconds(12);
+    /** Espera depois de um 429 da MobileAPI sem "retry_after" no corpo; os testes zeram. */
+    Duration espera429 = Duration.ofMillis(2000);
     static final long CACHE_TTL_MS = 24L * 60 * 60 * 1000;
     static final int CACHE_MAX = 200;
     private static final int MAX_SUGESTOES = 8;
@@ -182,15 +191,17 @@ public class EspecificacoesService {
                     new Opcoes(true, true), MAX_SUGESTOES).stream().map(EspecificacoesService::normalizar).toList();
             // Câmeras do aparelho escolhido, em paralelo com a foto HD.
             String id = d == null ? null : idDispositivo(d);
-            CompletableFuture<JsonNode> principal = buscarCamera(id, "main-camera", auth);
-            CompletableFuture<JsonNode> frontal = buscarCamera(id, "selfie-camera", auth);
+            CompletableFuture<JsonNode[]> cameras = buscarCameras(id, auth);
             Aparelho aparelho = d == null ? null : normalizar(d);
 
             List<Aparelho> todos = new ArrayList<>();
             if (aparelho != null) todos.add(aparelho);
             todos.addAll(sugestoes);
             Map<String, FotoHd> fotos = imagensHd.buscar(todos);
-            if (aparelho != null) aparelho = normalizar(d, principal.join(), frontal.join());
+            if (aparelho != null) {
+                JsonNode[] cam = cameras.join();
+                aparelho = normalizar(d, cam[0], cam[1]);
+            }
             sugestoes = sugestoes.stream().map(a -> a.comFoto(fotos.get(a.chave()))).toList();
             if (aparelho == null) {
                 return new Busca(null, sugestoes,
@@ -214,17 +225,54 @@ public class EspecificacoesService {
         return t.matches("\\d{1,12}") ? t : null;
     }
 
-    /** Resposta de /devices/{id}/{tipo}/ ou null (sem id, desligado, 404 ou falha: fica a câmera da busca). */
-    private CompletableFuture<JsonNode> buscarCamera(String id, String tipo, Map<String, String> auth) {
-        if (id == null || !camerasDetalhadas) return CompletableFuture.completedFuture(null);
+    /**
+     * [main-camera, selfie-camera] do aparelho (cada uma pode ser null), em paralelo com a foto HD.
+     * O plano Free da MobileAPI aceita ~1 requisição a cada 1,5 s e responde 429 na hora: as duas
+     * vão em sequência, e um 429 espera o "retry_after" pedido e tenta de novo (até 2 vezes), dentro de
+     * {@link #prazoCameras}.
+     */
+    private CompletableFuture<JsonNode[]> buscarCameras(String id, Map<String, String> auth) {
+        if (id == null || !camerasDetalhadas) return CompletableFuture.completedFuture(new JsonNode[2]);
         return CompletableFuture.supplyAsync(() -> {
+            long prazo = System.nanoTime() + prazoCameras.toNanos();
+            JsonNode principal = buscarCamera(id, "main-camera", auth, prazo);
+            JsonNode frontal = buscarCamera(id, "selfie-camera", auth, prazo);
+            return new JsonNode[] {principal, frontal};
+        }, pool);
+    }
+
+    /** Resposta de /devices/{id}/{tipo}/ ou null (prazo esgotado, 404 ou falha: fica a câmera da busca). */
+    private JsonNode buscarCamera(String id, String tipo, Map<String, String> auth, long prazo) {
+        for (int tentativa = 0; System.nanoTime() < prazo; tentativa++) {
             try {
                 return http.buscarJson(MOBILEAPI_DEVICES + id + "/" + tipo + "/", auth, TIMEOUT_CAMERAS);
             } catch (ClienteHttp.ErroHttp e) {
-                if (e.status() != 404) LOG.warnf("MobileAPI %s falhou: %s", tipo, e.getMessage());
+                if (e.status() == 429 && tentativa < 2 && esperar(espera(e), prazo)) continue;
+                if (e.status() != 404) {
+                    LOG.warnf("MobileAPI %s falhou: %s%s", tipo, e.getMessage(),
+                            e.esperar() == null ? "" : " (pediu " + e.esperar().toMillis() + " ms)");
+                }
                 return null;
             }
-        }, pool);
+        }
+        return null;
+    }
+
+    /** O "retry_after" que a API mandou (com folga de 250 ms) ou {@link #espera429}. */
+    private Duration espera(ClienteHttp.ErroHttp e) {
+        return e.esperar() == null ? espera429 : e.esperar().plusMillis(250);
+    }
+
+    /** Dorme {@code espera} se ainda couber no prazo; false se não couber ou for interrompido. */
+    private static boolean esperar(Duration espera, long prazo) {
+        if (System.nanoTime() + espera.toNanos() >= prazo) return false;
+        try {
+            Thread.sleep(espera);
+            return true;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
     }
 
     /** Aparelho só com nome e foto HD (sem especificações), ou null se não houver foto. */

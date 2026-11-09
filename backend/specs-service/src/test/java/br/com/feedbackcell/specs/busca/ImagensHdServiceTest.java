@@ -37,6 +37,15 @@ class ImagensHdServiceTest {
         return new FotoHd("https://upload.wikimedia.org/wikipedia/commons/" + nome, "Foto: x", null);
     }
 
+    @Test
+    void retratoPequenoServeSeTiverAlturaParaOModal() throws Exception {
+        // "Galaxy S23 (cropped).png" do Commons: a única foto de um S23 sozinho
+        assertTrue(ImagensHdService.grandeOSuficiente(info(230, 470)));
+        assertTrue(ImagensHdService.grandeOSuficiente(info(1025, 677)));
+        assertFalse(ImagensHdService.grandeOSuficiente(info(400, 300)));
+        assertFalse(ImagensHdService.grandeOSuficiente(info(200, 400)));
+    }
+
     // ---- indicaGrupo ----
 
     @Test

@@ -48,7 +48,7 @@ public class ClienteHttpJdk implements ClienteHttp {
         }
 
         if (resposta.statusCode() < 200 || resposta.statusCode() > 299) {
-            throw ErroHttp.deStatus(resposta.statusCode());
+            throw ErroHttp.deResposta(resposta.statusCode(), resposta.body());
         }
         try {
             String corpo = resposta.body();

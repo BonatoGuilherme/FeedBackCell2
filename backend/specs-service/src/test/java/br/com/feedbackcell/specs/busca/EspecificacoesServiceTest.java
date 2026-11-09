@@ -104,6 +104,39 @@ class EspecificacoesServiceTest {
     }
 
     @Test
+    void camera429EsperaETentaDeNovoComOFormatoRealDaMobileApi() {
+        var tentativas = new java.util.concurrent.atomic.AtomicInteger();
+        http.responder(c -> {
+            if (c.url().contains("/devices/search/")) {
+                return Resposta.ok("{\"devices\":[{\"id\":11743,\"name\":\"Galaxy S23\",\"camera\":\"50MP\"}]}");
+            }
+            // o plano Free responde 429 logo depois da busca; a resposta real gruda os módulos
+            if (c.url().contains("main-camera")) {
+                return tentativas.getAndIncrement() == 0 ? Resposta.erro(429) : Resposta.ok("""
+                        {"id":9951,"modules":"50 MP, f/1.8, 24mm (wide), 1/1.56\\", 1.0µm, dual pixel PDAF, OIS10 MP, \
+                        f/2.4, 70mm (telephoto), 1/3.94\\", 1.0µm, PDAF, OIS, 3x optical zoom12 MP, f/2.2, 13mm, \
+                        120˚ (ultrawide), 1/2.55\\" 1.4µm, Super Steady video","modules_parsed":null}""");
+            }
+            if (c.url().contains("selfie-camera")) return Resposta.ok("{\"modules\":\"12 MP, f/2.2, 25mm (wide), 1/3.24\\\"\"}");
+            return wiki(c) ? Resposta.ok("{}") : Resposta.ok("{\"results\":[]}");
+        });
+        EspecificacoesService s = servico("x");
+        s.espera429 = java.time.Duration.ZERO;
+        assertEquals("50 MP (principal) + 10 MP (tele) + 12 MP (ultrawide) · frontal 12 MP",
+                s.buscar("Samsung", "Galaxy S23", false).aparelho().camera());
+        assertEquals(2, tentativas.get());
+    }
+
+    @Test
+    void erro429GuardaORetryAfterDaMobileApi() {
+        var e = ClienteHttp.ErroHttp.deResposta(429,
+                "{\"detail\": \"Rate limit exceeded for Free plan.\", \"retry_after\": 1.51872, \"plan\": \"Free\"}");
+        assertEquals(java.time.Duration.ofMillis(1519), e.esperar());
+        assertEquals(null, ClienteHttp.ErroHttp.deResposta(503, "{}").esperar());
+        assertEquals(null, ClienteHttp.ErroHttp.deResposta(429, null).esperar());
+    }
+
+    @Test
     void falhaNosEndpointsDeCameraFicaComACameraDaBusca() {
         http.responder(c -> c.url().contains("/devices/search/")
                 ? Resposta.ok("{\"devices\":[{\"id\":77,\"name\":\"Galaxy S23\",\"camera\":\"50MP\"}]}")
