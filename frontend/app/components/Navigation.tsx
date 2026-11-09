@@ -5,18 +5,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Plus, X } from "lucide-react";
+import { Home, LayoutGrid, LogOut, Menu, MessageSquare, Plus, X } from "lucide-react";
 import { expireSession } from "@/src/lib/session";
-import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "/", label: "Início" },
-  { href: "/catalog", label: "Catálogo" },
-  { href: "/comments", label: "Comentários" },
-  { href: "/items/new", label: "Adicionar celular" },
+  { href: "/", label: "Início", icon: Home },
+  { href: "/catalog", label: "Catálogo", icon: LayoutGrid },
+  { href: "/comments", label: "Comentários", icon: MessageSquare },
 ];
 
-const SPRING = { type: "spring" as const, bounce: 0, duration: 0.5 };
+const ADD_HREF = "/items/new";
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -44,10 +42,17 @@ export default function Navigation() {
         toggleRef.current?.focus();
       }
     };
+    // ao voltar para a largura de desktop o painel deixa de existir
+    const desktop = window.matchMedia("(min-width: 861px)");
+    const onResize = () => {
+      if (desktop.matches) setOpen(false);
+    };
     window.addEventListener("keydown", onKey);
+    desktop.addEventListener("change", onResize);
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", onKey);
+      desktop.removeEventListener("change", onResize);
     };
   }, [open]);
 
@@ -61,106 +66,113 @@ export default function Navigation() {
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-40 border-b border-black/[0.05] bg-white/75 backdrop-blur-xl">
-        <div className="mx-auto flex h-[72px] max-w-[1400px] items-center justify-end px-4 sm:px-8">
-          <Link href="/" className="flex items-center gap-2.5" aria-label="FeedBackCELL, início">
-            <span className="grid size-10 place-items-center rounded-xl bg-[#eef0ff]">
-              <Image src="/icons8-celular-100.png" alt="" width={24} height={24} unoptimized priority />
+      <header className="site-header">
+        <div className="site-header__inner">
+          <Link href="/" className="site-brand" aria-label="FeedBackCELL, início">
+            <span className="site-brand__mark">
+              <Image src="/icons8-celular-100.png" alt="" width={20} height={20} unoptimized priority />
             </span>
-            <span className="text-lg font-bold tracking-tight text-[#0f1020]">
-              FeedBack<span className="text-[#4c5cf5]">CELL</span>
+            <span aria-hidden>
+              FeedBack<strong>CELL</strong>
             </span>
           </Link>
+
+          <nav className="site-nav" aria-label="Navegação principal">
+            {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="site-nav__link"
+                aria-current={isActive(link.href) ? "page" : undefined}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="site-actions">
+            <Link
+              href={ADD_HREF}
+              className="button button--primary button--sm"
+              aria-current={isActive(ADD_HREF) ? "page" : undefined}
+            >
+              <Plus className="size-4" aria-hidden />
+              Adicionar celular
+            </Link>
+            <button type="button" className="button button--text button--sm" onClick={handleLogout}>
+              <LogOut className="size-4" aria-hidden />
+              Sair
+            </button>
+          </div>
+
+          <button
+            ref={toggleRef}
+            type="button"
+            className="site-menu-toggle"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-controls="menu-principal"
+            aria-label={open ? "Fechar menu" : "Abrir menu"}
+          >
+            {open ? <X className="size-5" aria-hidden /> : <Menu className="size-5" aria-hidden />}
+          </button>
         </div>
       </header>
-
-      {/* botão à esquerda, acima do painel, para virar "Fechar" */}
-      <div className="fixed left-3 top-3 z-[60] sm:left-6">
-        <button
-          ref={toggleRef}
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          aria-controls="menu-principal"
-          className={cn(
-            "flex h-12 cursor-pointer items-center gap-3 rounded-xl px-4 text-lg font-bold transition-colors",
-            open
-              ? "border border-white/80 bg-transparent text-white hover:bg-white/10"
-              : "bg-[#0b0b10] text-white hover:bg-black",
-          )}
-        >
-          {open ? "Fechar" : "Menu"}
-          <motion.span animate={{ rotate: open ? 90 : 0 }} transition={SPRING} className="grid">
-            {open ? <X className="size-6" strokeWidth={1.8} /> : <Plus className="size-6" strokeWidth={1.8} />}
-          </motion.span>
-        </button>
-      </div>
 
       <AnimatePresence>
         {open && (
           <>
             <motion.div
               key="scrim"
-              className="modal-backdrop fixed inset-0 z-50 bg-black/55"
+              className="site-scrim"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
+              transition={{ duration: 0.18 }}
               onClick={() => setOpen(false)}
               aria-hidden
             />
-            <motion.aside
+            <motion.div
               key="panel"
               id="menu-principal"
-              aria-label="Menu principal"
-              className="fixed inset-y-0 left-0 z-[55] flex w-[86%] max-w-[400px] flex-col overflow-y-auto bg-[#18181b] pb-8 pt-20 rounded-r-3xl"
-              initial={reduce ? { opacity: 0 } : { x: "-100%" }}
-              animate={reduce ? { opacity: 1 } : { x: 0 }}
-              exit={reduce ? { opacity: 0 } : { x: "-100%" }}
-              transition={SPRING}
+              className="site-mobile-panel"
+              initial={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
+              transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
             >
-              <nav aria-label="Navegação principal">
+              <nav aria-label="Menu principal">
                 <ul>
-                  {links.map((link, i) => (
-                    <motion.li
-                      key={link.href}
-                      initial={reduce ? false : { opacity: 0, x: -40 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ ...SPRING, delay: reduce ? 0 : 0.08 + i * 0.05 }}
-                    >
-                      <Link
-                        ref={i === 0 ? firstLinkRef : undefined}
-                        href={link.href}
-                        aria-current={isActive(link.href) ? "page" : undefined}
-                        className={cn(
-                          "block px-8 py-1 font-[family-name:var(--font-display)] text-[clamp(32px,6vw,48px)] uppercase leading-[1.12] tracking-tight transition-colors duration-150 outline-none sm:px-10",
-                          "text-[#f4f4f5] hover:bg-[#e5e5e7] hover:text-[#18181b] focus-visible:bg-[#e5e5e7] focus-visible:text-[#18181b]",
-                          isActive(link.href) && "text-[#9aa6ff]",
-                        )}
-                      >
-                        {link.label}
-                      </Link>
-                    </motion.li>
-                  ))}
-                  <motion.li
-                    initial={reduce ? false : { opacity: 0, x: -40 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ ...SPRING, delay: reduce ? 0 : 0.08 + links.length * 0.05 }}
-                  >
+                  {[...links, { href: ADD_HREF, label: "Adicionar celular", icon: Plus }].map((link, i) => {
+                    const Icon = link.icon;
+                    return (
+                      <li key={link.href}>
+                        <Link
+                          ref={i === 0 ? firstLinkRef : undefined}
+                          href={link.href}
+                          className="site-mobile-panel__link"
+                          aria-current={isActive(link.href) ? "page" : undefined}
+                        >
+                          <Icon className="size-[18px]" aria-hidden />
+                          {link.label}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                  <li aria-hidden className="site-mobile-panel__divider" />
+                  <li>
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="block w-full cursor-pointer px-8 py-1 text-left font-[family-name:var(--font-display)] text-[clamp(32px,6vw,48px)] uppercase leading-[1.12] tracking-tight text-[#f87171] outline-none transition-colors duration-150 hover:bg-[#e5e5e7] hover:text-[#18181b] focus-visible:bg-[#e5e5e7] focus-visible:text-[#18181b] sm:px-10"
+                      className="site-mobile-panel__link site-mobile-panel__link--danger"
                     >
+                      <LogOut className="size-[18px]" aria-hidden />
                       Sair
                     </button>
-                  </motion.li>
+                  </li>
                 </ul>
               </nav>
-              <p className="mt-auto px-8 pt-10 text-sm text-white/40 sm:px-10">
-                FeedBackCELL · celulares, fotos e opiniões
-              </p>
-            </motion.aside>
+            </motion.div>
           </>
         )}
       </AnimatePresence>

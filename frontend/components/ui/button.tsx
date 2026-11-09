@@ -4,23 +4,22 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-[background-color,box-shadow,transform,color] duration-150 outline-none focus-visible:ring-[3px] focus-visible:ring-[#4c5cf5]/40 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 cursor-pointer [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-control text-sm font-medium transition-[background-color,border-color,box-shadow,color] duration-150 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:pointer-events-none disabled:opacity-55 cursor-pointer [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default:
-          "bg-[#4c5cf5] text-white shadow-[0_8px_24px_-8px_rgba(76,92,245,0.65)] hover:bg-[#3946e0]",
-        ink: "bg-[#0b0b10] text-white hover:bg-black",
+        default: "bg-accent text-white shadow-elevation-sm hover:bg-accent-hover",
+        ink: "bg-ink text-white hover:bg-black",
         outline:
-          "border border-[#e1e3ec] bg-white text-[#0f1020] hover:border-[#c6c9d8] hover:bg-[#f7f8fb]",
-        ghost: "text-[#0f1020] hover:bg-black/5",
-        link: "text-[#4c5cf5] underline-offset-4 hover:underline",
+          "border border-line bg-surface text-foreground shadow-elevation-sm hover:border-line-strong hover:bg-surface-hover",
+        ghost: "text-foreground hover:bg-surface-soft",
+        link: "text-accent underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-11 px-5",
-        sm: "h-9 px-3.5 text-[13px]",
-        lg: "h-12 px-6 text-[15px]",
-        icon: "size-11",
+        default: "h-10 px-4",
+        sm: "h-8 px-3 text-label",
+        lg: "h-11 px-5 text-[15px]",
+        icon: "size-10",
       },
     },
     defaultVariants: { variant: "default", size: "default" },

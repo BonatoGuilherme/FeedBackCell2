@@ -1,0 +1,27 @@
+/*
+ * Acesso: AuthLayout (tela "Verificando sessão…"), AuthPageShell e AuthField.
+ * O login e o cadastro (AuthPageShell/AuthField) usam utilidades do Tailwind
+ * com os tokens de app/globals.css; aqui fica só o que é CSS próprio.
+ */
+
+.app-loading-screen {
+  display: grid;
+  min-height: 100vh;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-3);
+  background: var(--background);
+  color: var(--muted);
+  font-size: var(--font-size-label);
+}
+
+.app-loading-screen__mark {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: var(--radius-control);
+  background: var(--ink);
+  color: var(--accent-on-dark);
+  font-weight: var(--font-weight-semibold);
+}

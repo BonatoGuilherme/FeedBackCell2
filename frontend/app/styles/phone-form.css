@@ -1,0 +1,403 @@
+/*
+ * Cadastro de celular (/items/new): NewPhoneForm, PhoneSpecsLookup (autocomplete
+ * do modelo e especificações) e photo-picker. Os campos genéricos (.form-field,
+ * .input-prefix, .field-hint, .form-alert) ficam em base.css.
+ */
+
+.new-phone-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+  align-items: start;
+  gap: 22px;
+}
+
+.phone-form,
+.phone-preview {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+
+.phone-form {
+  padding: clamp(22px, 3vw, 34px);
+}
+
+.phone-form__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 25px;
+}
+
+.form-step {
+  color: var(--foreground);
+  font-size: 17px;
+  font-weight: 580;
+}
+
+.phone-form__heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.phone-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 27px;
+  padding-top: 21px;
+  border-top: 1px solid #eaebf0;
+}
+
+/* Fotos no cadastro de celular */
+.phone-form__photos {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 19px;
+}
+
+.phone-form__photos-label {
+  color: #343741;
+  font-size: 13px;
+  font-weight: 550;
+}
+
+.phone-preview {
+  position: sticky;
+  top: calc(var(--header-height) + 16px);
+  overflow: hidden;
+  padding: 22px;
+}
+
+.phone-preview .eyebrow {
+  margin-bottom: 17px;
+}
+
+.phone-preview__art {
+  position: relative;
+  display: grid;
+  height: 220px;
+  overflow: hidden;
+  place-items: center;
+  border-radius: 13px;
+  background: #e4e6ef;
+}
+
+/* as fotos da API vêm com fundo branco; multiply some com o branco sobre o fundo */
+.phone-preview__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 14px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.phone-preview__device {
+  display: flex;
+  width: 104px;
+  height: 171px;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 8px 8px;
+  border: 1px solid #565965;
+  border-radius: 20px;
+  background: #262933;
+  box-shadow: 0 14px 26px rgb(32 40 32 / 17%);
+}
+
+.phone-preview__speaker {
+  width: 28px;
+  height: 4px;
+  margin: 3px 0 9px;
+  border-radius: 5px;
+  background: #9296a4;
+}
+
+.phone-preview__screen {
+  display: grid;
+  width: 100%;
+  flex: 1;
+  place-items: center;
+  border-radius: 12px;
+  background: #eeeff4;
+  color: #555b76;
+}
+
+.phone-preview__details {
+  padding: 17px 1px 0;
+}
+
+.phone-preview__details > p {
+  margin: 0 0 5px;
+  color: #656978;
+  font-size: 12px;
+}
+
+.phone-preview__details h2 {
+  overflow-wrap: anywhere;
+  margin: 0;
+  color: var(--foreground);
+  font-size: 18px;
+  font-weight: 590;
+  letter-spacing: -0.5px;
+}
+
+.phone-preview__details > span {
+  display: block;
+  margin-top: 12px;
+  color: #313542;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.phone-preview__description {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+/* Especificações (PhoneSpecsLookup) */
+.phone-specs {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.phone-specs__viewer {
+  display: grid;
+  gap: 6px;
+}
+
+.phone-specs__viewer iframe,
+.phone-specs__poster {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border: 0;
+  border-radius: 13px;
+  background: var(--surface-soft);
+}
+
+.phone-specs__poster {
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  cursor: pointer;
+}
+
+.phone-specs__poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.phone-specs__poster span {
+  position: absolute;
+  inset: auto 50% 12px auto;
+  transform: translateX(50%);
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.phone-specs__credit {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.phone-specs dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.phone-specs dl div {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.phone-specs dt {
+  color: var(--muted);
+}
+
+.phone-specs dd {
+  margin: 0;
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+}
+
+/* Autocomplete do campo Modelo */
+.modelo-autocomplete {
+  position: relative;
+  display: grid;
+  gap: 6px;
+}
+
+.modelo-autocomplete__field {
+  position: relative;
+}
+
+.form-field .modelo-autocomplete__field input {
+  padding-right: 50px;
+}
+
+.modelo-autocomplete__search {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  background: var(--ink);
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.modelo-autocomplete__search:hover:not(:disabled) {
+  background: var(--accent);
+}
+
+.modelo-autocomplete__search:disabled {
+  background: var(--surface-soft);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.modelo-autocomplete__search .button-spinner {
+  width: 15px;
+  height: 15px;
+}
+
+.modelo-autocomplete__list {
+  position: absolute;
+  z-index: 20;
+  top: 50px;
+  right: 0;
+  left: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 18px 40px -18px rgb(15 16 32 / 35%);
+  list-style: none;
+}
+
+.modelo-autocomplete__option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.modelo-autocomplete__option[aria-selected="true"] {
+  background: var(--surface-soft);
+}
+
+.modelo-autocomplete__option img,
+.modelo-autocomplete__noimg {
+  display: grid;
+  width: 36px;
+  height: 44px;
+  flex: none;
+  place-items: center;
+  object-fit: contain;
+  color: var(--muted);
+}
+
+.modelo-autocomplete__option img {
+  mix-blend-mode: multiply;
+}
+
+.modelo-autocomplete__option strong {
+  display: block;
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.modelo-autocomplete__option small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 860px) {
+  .new-phone-layout {
+    grid-template-columns: minmax(0, 1.15fr) minmax(230px, 0.85fr);
+    gap: 16px;
+  }
+
+  .phone-preview {
+    padding: 17px;
+  }
+}
+
+@media (max-width: 600px) {
+  .new-phone-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* no celular o formulário vem primeiro; a prévia e as especificações ficam abaixo */
+  .phone-preview {
+    position: static;
+    scroll-margin-top: 88px;
+  }
+
+  .phone-specs {
+    scroll-margin-top: 88px;
+  }
+
+  .phone-preview__art {
+    height: 165px;
+  }
+
+  .phone-preview__device {
+    width: 85px;
+    height: 135px;
+  }
+
+  .phone-form {
+    padding: 21px 17px;
+  }
+
+  .phone-form__heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .phone-form__actions {
+    flex-direction: column-reverse;
+  }
+
+  .phone-form__actions .button {
+    width: 100%;
+  }
+}
