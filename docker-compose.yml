@@ -135,7 +135,7 @@ services:
   # API pública (Spring Boot). Aplica o schema com Flyway no startup.
   core-api:
     build:
-      context: ./backend-java/core-api
+      context: ./backend/core-api
       dockerfile: Dockerfile
     restart: unless-stopped
     env_file: *default-env-file
@@ -182,7 +182,7 @@ services:
   # Serviço interno de especificações: não publica portas nem passa pelo proxy.
   specs-service:
     build:
-      context: ./backend-java/specs-service
+      context: ./backend/specs-service
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
