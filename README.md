@@ -67,6 +67,7 @@ O specs-service não publica portas nem passa pelo proxy. Os tópicos são criad
 │   └── backup/                # Imagem e script de backup do MySQL
 ├── docker-compose.yml         # Stack de produção (só o proxy publica porta)
 ├── docker-compose.dev.yml     # Extra de dev: MySQL/Redis/Kafka em 127.0.0.1
+├── docker-compose.https.yml   # Extra de produção: HTTPS com Let's Encrypt no nginx
 ├── .env.example               # Modelo de variáveis; copiar para .env
 └── README.md
 ```
@@ -176,6 +177,10 @@ MOBILEAPI_KEY=
 APP_BIND_ADDRESS=0.0.0.0
 APP_PORT=3000
 
+# HTTPS no nginx (só com docker-compose.https.yml)
+DOMAIN=
+LETSENCRYPT_EMAIL=
+
 # Backup
 BACKUP_INTERVAL_SECONDS=86400
 BACKUP_RETENTION_DAYS=30
@@ -258,10 +263,22 @@ Checklist antes de expor a aplicação:
 1. **Segredos**: crie o `.env` no servidor a partir do `.env.example` com `DB_PASSWORD` longo e aleatório e `JWT_SECRET` com pelo menos 32 caracteres (ex.: `openssl rand -base64 48`). Restrinja a leitura do arquivo (`chmod 600 .env`) e nunca o versione. Trocar `JWT_SECRET` invalida todos os tokens emitidos.
 2. **Administradores**: defina `ADMIN_USER_IDS` com os IDs que podem listar usuários; vazio desliga a rota.
 3. **Proxy confiável**: ajuste `TRUST_PROXY` ao número de proxies na frente da aplicação (o nginx do Compose conta como 1; com um load balancer externo, 2). Um valor maior que o real permite falsificar o IP de origem e contornar o rate limit.
-4. **TLS**: o proxy do Compose escuta só HTTP. Termine TLS num proxy/load balancer externo (ou adicione um listener 443 ao nginx com certificado) e ative HSTS lá. Se houver proxy local na frente, use `APP_BIND_ADDRESS=127.0.0.1` para que o HTTP não fique aberto à Internet. Ajuste `CORS_ORIGIN` para o domínio público.
-5. **Subida**: `docker compose up -d --build` (apenas `docker-compose.yml`; não inclua o arquivo de dev). O core-api aplica as migrações Flyway no startup; acompanhe com `docker compose logs -f core-api`.
-6. **Healthchecks**: confirme `docker compose ps` com todos os serviços `healthy` (o `kafka-init` termina com `exited (0)`), `curl -f https://<domínio>/health` (liveness) e `curl -f https://<domínio>/readyz` (banco e Redis). Use `/readyz` no load balancer.
-7. **Backup e restauração**: o serviço `backup` grava dumps comprimidos e verificados no volume `feedbackcellnextjs_mysql_backups` (intervalo `BACKUP_INTERVAL_SECONDS`, retenção `BACKUP_RETENTION_DAYS`). Copie-os para fora do host e teste a restauração periodicamente:
+4. **Domínio e CORS**: defina `CORS_ORIGIN=https://<domínio>` no `.env`. Pelo proxy o frontend e a API têm a mesma origem, então o CORS só entra em jogo se a API for servida em outro domínio.
+5. **TLS**: escolha um dos caminhos.
+   * **HTTPS no próprio nginx (Let's Encrypt)**: com o DNS do domínio apontando para o servidor e `DOMAIN` e `LETSENCRYPT_EMAIL` no `.env`, emita o certificado inicial (a porta 80 precisa estar livre) e suba com o override:
+
+     ```bash
+     docker compose -f docker-compose.yml -f docker-compose.https.yml run --rm -p 80:80 \
+       --entrypoint certbot certbot certonly --standalone -d "$DOMAIN" \
+       --email "$LETSENCRYPT_EMAIL" --agree-tos --no-eff-email
+     docker compose -f docker-compose.yml -f docker-compose.https.yml up -d --build
+     ```
+
+     O proxy publica 80 e 443, redireciona HTTP para HTTPS e envia HSTS. O serviço `certbot` renova o certificado sozinho e o nginx recarrega a cada 6 h. Use sempre os dois arquivos nos comandos `docker compose` desse servidor.
+   * **TLS num proxy/load balancer externo** (Cloudflare, Caddy, ALB): use só o `docker-compose.yml`, `APP_BIND_ADDRESS=127.0.0.1` se o proxy estiver no mesmo host (o HTTP não fica aberto à Internet), ative HSTS nele e some 1 ao `TRUST_PROXY`.
+6. **Subida**: `docker compose up -d --build` (com HTTPS no nginx, inclua `-f docker-compose.https.yml`; nunca o arquivo de dev). O core-api aplica as migrações Flyway no startup; acompanhe com `docker compose logs -f core-api`.
+7. **Healthchecks**: confirme `docker compose ps` com todos os serviços `healthy` (o `kafka-init` termina com `exited (0)`), `curl -f https://<domínio>/health` (liveness) e `curl -f https://<domínio>/readyz` (banco e Redis). Use `/readyz` no load balancer.
+8. **Backup e restauração**: o serviço `backup` grava dumps comprimidos e verificados no volume `feedbackcellnextjs_mysql_backups` (intervalo `BACKUP_INTERVAL_SECONDS`, retenção `BACKUP_RETENTION_DAYS`). Copie-os para fora do host e teste a restauração periodicamente:
 
    ```bash
    docker compose exec backup ls -lh /backups
@@ -271,8 +288,8 @@ Checklist antes de expor a aplicação:
    ```
 
    Pare o core-api durante uma restauração (`docker compose stop core-api`) e suba de novo depois; o Flyway valida o histórico de migrações restaurado.
-8. **Escala**: `docker compose up -d --scale core-api=N --scale frontend=M`. O nginx redescobre as réplicas pelo DNS do Docker. Cada réplica do core-api abre até `DB_POOL_SIZE` conexões; respeite `DB_POOL_SIZE × réplicas + reservas (backup, administração, margem) < DB_MAX_CONNECTIONS` e ajuste ambos no `.env` antes de escalar. Os limites de memória/CPU do Compose valem por réplica; confira se o host comporta a soma. O specs-service roda com uma réplica (o tópico tem `KAFKA_TOPIC_PARTITIONS` partições, que limita o paralelismo do consumo).
-9. **Limites**: com uma réplica de cada serviço, os limites de memória do Compose somam cerca de 4,5 GB; reserve isso no host além do sistema operacional. Monitore com `docker stats` e ajuste as variáveis `*_MEM_LIMIT`.
+9. **Escala**: `docker compose up -d --scale core-api=N --scale frontend=M`. O nginx redescobre as réplicas pelo DNS do Docker. Cada réplica do core-api abre até `DB_POOL_SIZE` conexões; respeite `DB_POOL_SIZE × réplicas + reservas (backup, administração, margem) < DB_MAX_CONNECTIONS` e ajuste ambos no `.env` antes de escalar. Os limites de memória/CPU do Compose valem por réplica; confira se o host comporta a soma. O specs-service roda com uma réplica (o tópico tem `KAFKA_TOPIC_PARTITIONS` partições, que limita o paralelismo do consumo).
+10. **Limites**: com uma réplica de cada serviço, os limites de memória do Compose somam cerca de 4,5 GB; reserve isso no host além do sistema operacional. Monitore com `docker stats` e ajuste as variáveis `*_MEM_LIMIT`.
 
 O Compose faz balanceamento e escala dentro de **um único host**, não alta disponibilidade: o host, o MySQL, o Redis e o broker Kafka (fator de replicação 1) são pontos únicos de falha.
 
@@ -283,7 +300,6 @@ O Compose faz balanceamento e escala dentro de **um único host**, não alta dis
 - [ ] Ampliar os testes automatizados de controllers e rotas do core-api.
 - [ ] Melhorar o feedback visual e o tratamento de erros do frontend.
 - [ ] Publicar imagens versionadas em um registry a partir da CI.
-- [ ] TLS e HSTS integrados ao proxy.
 
 ---
 

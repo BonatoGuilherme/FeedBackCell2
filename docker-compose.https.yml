@@ -1,0 +1,45 @@
+# HTTPS no próprio nginx com Let's Encrypt. Uso (no servidor, com DOMAIN e
+# LETSENCRYPT_EMAIL no .env e o DNS do domínio apontando para ele):
+#
+#   1. certificado inicial (porta 80 livre, antes de subir o proxy):
+#      docker compose -f docker-compose.yml -f docker-compose.https.yml run --rm -p 80:80 \
+#        --entrypoint certbot certbot certonly --standalone -d "$DOMAIN" \
+#        --email "$LETSENCRYPT_EMAIL" --agree-tos --no-eff-email
+#   2. subir tudo:
+#      docker compose -f docker-compose.yml -f docker-compose.https.yml up -d --build
+#
+# O certbot renova sozinho (a cada 12 h verifica; renova perto de vencer) e o nginx
+# recarrega os certificados a cada 6 h.
+services:
+  proxy:
+    ports: !override
+      - "${APP_BIND_ADDRESS:-0.0.0.0}:80:80"
+      - "${APP_BIND_ADDRESS:-0.0.0.0}:443:443"
+    environment:
+      DOMAIN: "${DOMAIN:?defina DOMAIN no .env, ex. feedbackcell.com.br}"
+      # o envsubst do entrypoint só troca DOMAIN; $host, $scheme etc. ficam para o nginx
+      NGINX_ENVSUBST_FILTER: "^DOMAIN$$"
+    volumes:
+      - ./infra/nginx/https.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - letsencrypt:/etc/letsencrypt:ro
+      - certbot-webroot:/var/www/certbot:ro
+    # recarrega a cada 6 h para pegar certificados renovados. O nginx sobe pelo
+    # /docker-entrypoint.sh, que só renderiza os templates quando o comando é "nginx".
+    command: ["/bin/sh", "-c", "(while :; do sleep 6h; nginx -s reload; done) & exec /docker-entrypoint.sh nginx -g 'daemon off;'"]
+
+  certbot:
+    image: certbot/certbot:v3.1.0
+    restart: unless-stopped
+    volumes:
+      - letsencrypt:/etc/letsencrypt
+      - certbot-webroot:/var/www/certbot
+    entrypoint: ["/bin/sh", "-c", "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done"]
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  letsencrypt:
+  certbot-webroot:

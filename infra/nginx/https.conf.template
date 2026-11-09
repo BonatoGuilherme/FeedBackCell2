@@ -1,0 +1,66 @@
+# HTTPS com Let's Encrypt (docker-compose.https.yml). O entrypoint do nginx troca
+# ${DOMAIN} pelo valor do .env; as variáveis do nginx ($host, $scheme...) ficam como estão.
+
+resolver 127.0.0.11 valid=10s ipv6=off;
+server_tokens off;
+
+gzip on;
+gzip_vary on;
+gzip_proxied any;
+gzip_comp_level 5;
+gzip_min_length 1024;
+gzip_types text/plain text/css text/javascript application/javascript application/json
+           application/xml image/svg+xml application/manifest+json;
+
+upstream feedbackcell_core_api {
+    zone feedbackcell_core_api 64k;
+    server core-api:8080 resolve max_fails=3 fail_timeout=10s;
+    keepalive 16;
+}
+
+upstream feedbackcell_frontend {
+    zone feedbackcell_frontend 64k;
+    server frontend:3000 resolve max_fails=3 fail_timeout=10s;
+    keepalive 16;
+}
+
+# Porta 80: desafio do Let's Encrypt (renovação), health para o healthcheck interno e
+# redirecionamento do resto para HTTPS.
+server {
+    listen 80;
+    server_name _;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location = /readyz {
+        proxy_pass http://feedbackcell_core_api/readyz;
+    }
+
+    location / {
+        return 301 https://${DOMAIN}$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name ${DOMAIN};
+
+    ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1d;
+    ssl_session_tickets off;
+
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Content-Security-Policy "frame-ancestors 'none'" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    include /etc/nginx/snippets/feedbackcell-locations.conf;
+}
