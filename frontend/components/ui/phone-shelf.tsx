@@ -325,7 +325,7 @@ function ProductModal({
               {specs.map(([campo, rotulo]) => (
                 <div key={campo} className="contents">
                   <dt className="text-[#8a8ea3]">{rotulo}</dt>
-                  <dd className="mb-2 text-[#0f1020] sm:mb-0">{especificacoes?.[campo]}</dd>
+                  <dd className="mb-2 break-words text-[#0f1020] sm:mb-0">{especificacoes?.[campo]}</dd>
                 </div>
               ))}
             </dl>

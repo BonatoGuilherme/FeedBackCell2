@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -40,8 +41,11 @@ public class EspecificacoesService {
     private static final Logger LOG = Logger.getLogger(EspecificacoesService.class);
 
     static final String MOBILEAPI_URL = "https://api.mobileapi.dev/devices/search/";
+    static final String MOBILEAPI_DEVICES = "https://api.mobileapi.dev/devices/";
     static final String SKETCHFAB_URL = "https://api.sketchfab.com/v3/search";
     static final Duration TIMEOUT = Duration.ofMillis(8000);
+    /** Câmeras rodam em paralelo com a foto HD, então não aumentam o pior caso. */
+    static final Duration TIMEOUT_CAMERAS = Duration.ofMillis(5000);
     static final long CACHE_TTL_MS = 24L * 60 * 60 * 1000;
     static final int CACHE_MAX = 200;
     private static final int MAX_SUGESTOES = 8;
@@ -60,6 +64,8 @@ public class EspecificacoesService {
     private final ClienteHttp http;
     private final ImagensHdService imagensHd;
     private final Optional<String> chaveMobileApi;
+    /** Busca main-camera/selfie-camera do aparelho escolhido (2 créditos a mais da cota por busca). */
+    private final boolean camerasDetalhadas;
     /** Limitado a {@link #CACHE_MAX} itens: ao passar disso sai o gravado há mais tempo. */
     private final LinkedHashMap<String, ItemCache> cache = new LinkedHashMap<>() {
         @Override
@@ -71,11 +77,19 @@ public class EspecificacoesService {
     /** Relógio do TTL do cache; os testes trocam. */
     LongSupplier relogio = System::currentTimeMillis;
 
+    @Inject
     public EspecificacoesService(ClienteHttp http, ImagensHdService imagensHd,
-                                 @ConfigProperty(name = "mobileapi.key") Optional<String> chaveMobileApi) {
+                                 @ConfigProperty(name = "mobileapi.key") Optional<String> chaveMobileApi,
+                                 @ConfigProperty(name = "mobileapi.cameras-detalhadas", defaultValue = "true")
+                                 boolean camerasDetalhadas) {
         this.http = http;
         this.imagensHd = imagensHd;
         this.chaveMobileApi = chaveMobileApi.filter(c -> !c.isBlank());
+        this.camerasDetalhadas = camerasDetalhadas;
+    }
+
+    public EspecificacoesService(ClienteHttp http, ImagensHdService imagensHd, Optional<String> chaveMobileApi) {
+        this(http, imagensHd, chaveMobileApi, true);
     }
 
     void avisarSemChave(@Observes StartupEvent inicio) {
@@ -154,9 +168,9 @@ public class EspecificacoesService {
         params.put("name", modelo);
         params.put("limit", "50");
         if (!marca.isEmpty()) params.put("manufacturer", marca);
+        Map<String, String> auth = Map.of("Authorization", "Token " + chaveMobileApi.get());
         try {
-            JsonNode dados = http.buscarJson(MOBILEAPI_URL + "?" + ImagensHdService.query(params),
-                    Map.of("Authorization", "Token " + chaveMobileApi.get()), TIMEOUT);
+            JsonNode dados = http.buscarJson(MOBILEAPI_URL + "?" + ImagensHdService.query(params), auth, TIMEOUT);
             List<JsonNode> lista = new ArrayList<>();
             for (JsonNode d : dados.path("devices")) {
                 if (d.isObject()) lista.add(d);
@@ -166,12 +180,17 @@ public class EspecificacoesService {
             // Sugestões do autocomplete: variantes próximas e última palavra incompleta.
             List<Aparelho> sugestoes = CorrespondenciaNome.rankear(modelo, lista, EspecificacoesService::nome,
                     new Opcoes(true, true), MAX_SUGESTOES).stream().map(EspecificacoesService::normalizar).toList();
+            // Câmeras do aparelho escolhido, em paralelo com a foto HD.
+            String id = d == null ? null : idDispositivo(d);
+            CompletableFuture<JsonNode> principal = buscarCamera(id, "main-camera", auth);
+            CompletableFuture<JsonNode> frontal = buscarCamera(id, "selfie-camera", auth);
             Aparelho aparelho = d == null ? null : normalizar(d);
 
             List<Aparelho> todos = new ArrayList<>();
             if (aparelho != null) todos.add(aparelho);
             todos.addAll(sugestoes);
             Map<String, FotoHd> fotos = imagensHd.buscar(todos);
+            if (aparelho != null) aparelho = normalizar(d, principal.join(), frontal.join());
             sugestoes = sugestoes.stream().map(a -> a.comFoto(fotos.get(a.chave()))).toList();
             if (aparelho == null) {
                 return new Busca(null, sugestoes,
@@ -187,6 +206,27 @@ public class EspecificacoesService {
         }
     }
 
+    /** id numérico do aparelho na MobileAPI (para os endpoints de câmera), ou null. */
+    static String idDispositivo(JsonNode d) {
+        JsonNode id = d.get("id");
+        if (id == null || !id.isValueNode()) return null;
+        String t = id.asText("");
+        return t.matches("\\d{1,12}") ? t : null;
+    }
+
+    /** Resposta de /devices/{id}/{tipo}/ ou null (sem id, desligado, 404 ou falha: fica a câmera da busca). */
+    private CompletableFuture<JsonNode> buscarCamera(String id, String tipo, Map<String, String> auth) {
+        if (id == null || !camerasDetalhadas) return CompletableFuture.completedFuture(null);
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return http.buscarJson(MOBILEAPI_DEVICES + id + "/" + tipo + "/", auth, TIMEOUT_CAMERAS);
+            } catch (ClienteHttp.ErroHttp e) {
+                if (e.status() != 404) LOG.warnf("MobileAPI %s falhou: %s", tipo, e.getMessage());
+                return null;
+            }
+        }, pool);
+    }
+
     /** Aparelho só com nome e foto HD (sem especificações), ou null se não houver foto. */
     private Aparelho aparelhoSoComFoto(String marca, String modelo) {
         Aparelho a = new Aparelho(Textos.texto(modelo, 120), marca.isEmpty() ? null : Textos.texto(marca, 80),
@@ -196,18 +236,23 @@ public class EspecificacoesService {
     }
 
     static Aparelho normalizar(JsonNode d) {
+        return normalizar(d, null, null);
+    }
+
+    /** Textos da MobileAPI em pt-BR; {@code principal}/{@code frontal}: respostas dos endpoints de câmera. */
+    static Aparelho normalizar(JsonNode d, JsonNode principal, JsonNode frontal) {
         return new Aparelho(
                 Textos.texto(d.get("name"), 120),
                 Textos.texto(d.get("manufacturer_name"), 80),
                 Textos.imagemDataUri(d.get("image_b64")),
-                Textos.texto(d.get("release_date"), 60),
-                Textos.texto(d.get("screen_resolution"), 300),
-                Textos.texto(d.get("hardware"), 300),
-                Textos.limparSpec(Textos.texto(d.get("storage"), 300)),
-                Textos.texto(d.get("camera"), 300),
-                Textos.texto(d.get("battery_capacity"), 300),
-                Textos.comUnidade(Textos.texto(d.get("weight"), 60), "g"),
-                Textos.comUnidade(Textos.texto(d.get("thickness"), 60), "mm"),
+                Textos.texto(NormalizacaoSpecs.lancamento(Textos.texto(d.get("release_date"), 120)), 60),
+                Textos.texto(NormalizacaoSpecs.tela(Textos.texto(d.get("screen_resolution"), 300)), 300),
+                Textos.texto(NormalizacaoSpecs.hardware(Textos.texto(d.get("hardware"), 300)), 300),
+                Textos.texto(NormalizacaoSpecs.armazenamento(Textos.limparSpec(Textos.texto(d.get("storage"), 300))), 300),
+                Cameras.montar(Textos.texto(d.get("camera"), 300), principal, frontal),
+                Textos.texto(NormalizacaoSpecs.bateria(Textos.texto(d.get("battery_capacity"), 300)), 300),
+                Textos.texto(NormalizacaoSpecs.peso(Textos.texto(d.get("weight"), 60)), 60),
+                Textos.texto(NormalizacaoSpecs.espessura(Textos.texto(d.get("thickness"), 60)), 60),
                 Textos.texto(d.get("colors"), 300),
                 null, null, null);
     }

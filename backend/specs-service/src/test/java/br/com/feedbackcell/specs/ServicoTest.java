@@ -56,7 +56,7 @@ class ServicoTest {
                 .then().statusCode(200)
                 .body("consulta", equalTo("Samsung Galaxy S24"))
                 .body("aparelho.nome", equalTo("Galaxy S24"))
-                .body("aparelho.tela", equalTo("1080 x 2340"))
+                .body("aparelho.tela", equalTo("1080 x 2340 px"))
                 .body("aparelho.imagemHd", nullValue())
                 .body("modelo3d.embedUrl", equalTo("https://sketchfab.com/models/" + UID + "/embed"))
                 .body("avisos.size()", equalTo(0))
@@ -94,7 +94,7 @@ class ServicoTest {
                 {"idcelular":12,"marca":"Samsung","modelo":"Galaxy S24","precisaEspecificacoes":true,
                  "precisaModelo3d":true,"ocorridoEm":"2026-11-08T19:00:00Z"}""");
         assertEquals(12, r.get("idcelular").asInt());
-        assertEquals("1080 x 2340", r.get("especificacoes").get("tela").asText());
+        assertEquals("1080 x 2340 px", r.get("especificacoes").get("tela").asText());
         assertTrue(r.get("especificacoes").get("creditoImagem").isNull());
         assertEquals(UID, r.get("modelo3d").asText());
         assertTrue(r.hasNonNull("ocorridoEm"));
