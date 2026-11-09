@@ -70,6 +70,15 @@ class NormalizacaoSpecsTest {
     }
 
     @Test
+    void formatosBaguncadosDaMobileApi() {
+        // Galaxy S22 Ultra, como a MobileAPI devolve
+        assertEquals("8 GB / 12 GB de RAM, Samsung Exynos 2200",
+                NormalizacaoSpecs.hardware("12 GB8 GB RAM, Samsung Exynos 2200"));
+        assertEquals("128 GB, 256 GB, 512 GB, 1 TB", NormalizacaoSpecs.armazenamento("1000 GB, 128 GB, 256 GB, 512 GB"));
+        assertEquals("128 GB, 1 TB", NormalizacaoSpecs.armazenamento("1TB, 128GB"));
+    }
+
+    @Test
     void bateriaPesoEEspessura() {
         assertEquals("3900 mAh", NormalizacaoSpecs.bateria("3900"));
         assertEquals("3900 mAh", NormalizacaoSpecs.bateria("3900mAh"));

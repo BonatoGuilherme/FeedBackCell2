@@ -40,7 +40,10 @@ public final class NormalizacaoSpecs {
     private static final Pattern RESOLUCAO = Pattern.compile("(?i)(\\d{3,4})\\s*[x×]\\s*(\\d{3,4})(\\s*(?:pixels|px)\\b)?");
     private static final Pattern BYTES = Pattern.compile("(\\d+(?:[.,]\\d+)?)\\s*(GB|TB|MB)\\b");
     private static final Pattern ARMAZ_COM_RAM = Pattern.compile("(\\d+ [GT]B)\\s+(\\d+ GB) de RAM");
-    private static final Pattern MAH = Pattern.compile("(?i)(\\d+)\\s*mAh");
+    private static final Pattern RAM_GRUDADA = Pattern.compile("(\\d{1,2}) GB(\\d{1,2}) GB");
+    private static final Pattern TERA = Pattern.compile("\\b(?:1000|1024)\\s*GB\\b");
+    private static final Pattern SO_CAPACIDADE = Pattern.compile("(\\d+(?:[.,]\\d+)?) (GB|TB)");
+    private static final Pattern MAH =Pattern.compile("(?i)(\\d+)\\s*mAh");
     private static final Pattern SO_NUMERO = Pattern.compile("^\\d+(?:\\.\\d+)?$");
     private static final Pattern ONCAS = Pattern.compile("(?i)\\s*\\(\\s*[\\d.]+\\s*oz\\s*\\)");
     private static final Pattern POL_ENTRE_PARENTESES = Pattern.compile("(?i)\\s*\\(\\s*[\\d.]+\\s*in\\s*\\)");
@@ -150,12 +153,35 @@ public final class NormalizacaoSpecs {
     /** {@code 128GB 8GB RAM, 256GB 8GB RAM} → {@code 128 GB (8 GB de RAM), 256 GB (8 GB de RAM)}. */
     public static String armazenamento(String valor) {
         if (valor == null) return null;
-        return traduzir(ARMAZ_COM_RAM.matcher(ram(valor)).replaceAll("$1 ($2 de RAM)"));
+        String s = ARMAZ_COM_RAM.matcher(ram(TERA.matcher(valor).replaceAll("1 TB"))).replaceAll("$1 ($2 de RAM)");
+        // "1 TB, 128 GB, 256 GB" (como a MobileAPI manda) → do menor para o maior
+        String[] opcoes = s.split(",\\s*");
+        if (opcoes.length > 1 && java.util.Arrays.stream(opcoes).allMatch(o -> SO_CAPACIDADE.matcher(o).matches())) {
+            java.util.Arrays.sort(opcoes, java.util.Comparator.comparingDouble(NormalizacaoSpecs::emGb));
+            s = String.join(", ", opcoes);
+        }
+        return traduzir(s);
+    }
+
+    private static double emGb(String capacidade) {
+        Matcher m = SO_CAPACIDADE.matcher(capacidade);
+        if (!m.matches()) return 0;
+        double n = Double.parseDouble(m.group(1));
+        return m.group(2).equals("TB") ? n * 1024 : n;
     }
 
     private static String ram(String valor) {
         String s = BYTES.matcher(valor).replaceAll("$1 $2");
-        return s.replaceAll("\\b(GB|MB)\\s+RAM\\b", "$1 de RAM");
+        // "12 GB8 GB RAM" (opções de RAM grudadas na MobileAPI) → "8 GB / 12 GB RAM"
+        Matcher m = RAM_GRUDADA.matcher(s);
+        StringBuilder sb = new StringBuilder();
+        while (m.find()) {
+            int a = Integer.parseInt(m.group(1));
+            int b = Integer.parseInt(m.group(2));
+            m.appendReplacement(sb, Math.min(a, b) + " GB / " + Math.max(a, b) + " GB");
+        }
+        m.appendTail(sb);
+        return sb.toString().replaceAll("\\b(GB|MB)\\s+RAM\\b", "$1 de RAM");
     }
 
     /** {@code 4000} ou {@code 4000mAh} → {@code 4000 mAh}. */
