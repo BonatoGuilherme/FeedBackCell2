@@ -1,0 +1,385 @@
+/* Início: app/page.tsx (hero, "como funciona" e o catálogo resumido logo abaixo). */
+
+.home-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 520px);
+  align-items: center;
+  gap: var(--space-16);
+  padding: var(--space-8) 0 var(--space-12);
+}
+
+.home-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-5);
+  color: var(--accent);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.01em;
+}
+
+.home-hero__eyebrow::before {
+  width: 16px;
+  height: 1.5px;
+  border-radius: 1px;
+  background: currentColor;
+  content: "";
+}
+
+.home-hero h1 {
+  max-width: 15ch;
+  margin: 0;
+  color: var(--foreground);
+  font-size: clamp(34px, 3.4vw + 12px, 54px);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.032em;
+  line-height: 1.06;
+}
+
+.home-hero__lead {
+  max-width: 50ch;
+  margin: var(--space-5) 0 0;
+  color: var(--muted);
+  font-size: var(--font-size-lead);
+  line-height: 1.6;
+}
+
+.home-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-8);
+}
+
+.home-hero__cta {
+  min-height: 44px;
+  padding: 0 var(--space-5);
+  font-size: var(--font-size-body);
+}
+
+/* ---------- prévia do cadastro ---------- */
+
+.home-preview {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  user-select: none;
+}
+
+.home-preview__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-hover);
+  color: var(--muted);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+}
+
+.home-preview__dots {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.home-preview__dots i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--line-strong);
+}
+
+.home-preview__body {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+.home-preview__query {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-2) 0 var(--space-3);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-control);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+  color: var(--subtle);
+  font-size: 14px;
+}
+
+.home-preview__query > span:first-of-type {
+  flex: 1;
+  color: var(--foreground);
+}
+
+.home-preview__found {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--success-soft);
+  color: var(--success);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+}
+
+.home-preview__result {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+.home-preview__device {
+  display: grid;
+  place-items: center;
+  padding: var(--space-4) 0;
+  border-radius: var(--radius-card);
+  background: var(--surface-soft);
+}
+
+.home-preview__phone {
+  display: block;
+  width: 58px;
+  height: 118px;
+  padding: 4px;
+  border-radius: 14px;
+  background: #1f2027;
+  box-shadow: 0 14px 22px -14px rgb(15 16 32 / 60%);
+}
+
+.home-preview__phone span {
+  display: block;
+  height: 100%;
+  border-radius: 10px;
+  background: linear-gradient(165deg, #6d7bff, #2a2f7a 55%, #0b0b10);
+}
+
+.home-preview__specs {
+  display: grid;
+  margin: 0;
+}
+
+.home-preview__specs div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--font-size-label);
+}
+
+.home-preview__specs div:last-child {
+  border-bottom: 0;
+}
+
+.home-preview__specs dt {
+  color: var(--muted);
+}
+
+.home-preview__specs dd {
+  margin: 0;
+  color: var(--foreground);
+  font-weight: var(--font-weight-medium);
+  text-align: right;
+}
+
+.home-preview__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.home-preview__tags span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  color: var(--muted);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+}
+
+.home-preview__tags svg {
+  color: var(--accent);
+}
+
+.home-preview__comment {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-card);
+  background: var(--surface-hover);
+  border: 1px solid var(--line);
+}
+
+.home-preview__avatar {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.home-preview__comment p {
+  margin: 0;
+  color: var(--foreground);
+  font-size: var(--font-size-label);
+  line-height: 1.55;
+}
+
+.home-preview__comment .home-preview__author {
+  margin-bottom: 2px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.home-preview__author span {
+  color: var(--muted);
+  font-weight: var(--font-weight-regular);
+}
+
+/* ---------- como funciona ---------- */
+
+.home-steps ol {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  list-style: none;
+}
+
+.home-steps li {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-6);
+}
+
+.home-steps li + li {
+  border-left: 1px solid var(--line);
+}
+
+.home-steps__icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  place-items: center;
+  border-radius: var(--radius-control);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.home-steps__index {
+  margin: 0 0 2px;
+  color: var(--muted);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+}
+
+.home-steps h3 {
+  margin: 0;
+  color: var(--foreground);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.4;
+}
+
+.home-steps li p:last-child {
+  margin: var(--space-1) 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* ---------- catálogo resumido abaixo do hero ---------- */
+
+.home-page + .overview-page .overview-catalog {
+  margin-top: var(--space-16);
+}
+
+/* o hero antigo do PhoneCollection (sai no redesenho do catálogo) não aparece aqui */
+.home-page + .overview-page > section:not(.overview-catalog) {
+  display: none;
+}
+
+/* ---------- responsivo ---------- */
+
+@media (max-width: 1024px) {
+  .home-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-10);
+    padding-top: var(--space-4);
+  }
+
+  .home-preview {
+    max-width: 560px;
+  }
+}
+
+@media (max-width: 860px) {
+  .home-steps ol {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .home-steps li + li {
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .home-hero {
+    gap: var(--space-8);
+    padding: 0 0 var(--space-10);
+  }
+
+  .home-hero__lead {
+    font-size: var(--font-size-body);
+  }
+
+  .home-hero__actions {
+    flex-direction: column;
+  }
+
+  .home-hero__cta {
+    width: 100%;
+  }
+
+  .home-preview__body {
+    padding: var(--space-4);
+  }
+
+  .home-preview__result {
+    grid-template-columns: 84px minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+
+  .home-preview__phone {
+    width: 46px;
+    height: 94px;
+  }
+
+  .home-steps li {
+    padding: var(--space-5);
+  }
+
+  .home-page + .overview-page .overview-catalog {
+    margin-top: var(--space-12);
+  }
+}
