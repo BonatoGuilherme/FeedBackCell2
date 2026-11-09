@@ -15,6 +15,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -43,6 +44,34 @@ public class ImagensHdService {
     private static final Pattern HOST_CREDITO = Pattern.compile("^https://commons\\.wikimedia\\.org/wiki/");
     private static final Pattern FRENTE = Pattern.compile("(?i)\\bfront\\b|frente");
     private static final Pattern EXTENSAO = Pattern.compile("(?i)\\.[a-z0-9]+$");
+    /** Metadados pedidos na mesma chamada do imageinfo (crédito + texto para avaliar a foto). */
+    private static final String METADADOS = "Artist|LicenseShortName|ImageDescription|ObjectName";
+    /** Largura/altura acima disso é foto de grupo, banner ou palco, não um aparelho em pé. */
+    static final double PROPORCAO_MAXIMA = 1.3;
+    /** Palavras (tokens) de foto com vários aparelhos, evento ou comparação. */
+    private static final Pattern GRUPO = Pattern.compile("^(lineups?|family|families|series|unpacked|launch\\w*"
+            + "|events?|keynote|presentation|exhibit\\w*|expo|booth|mwc|ces|vs|versus|compar\\w*"
+            + "|collection|group|models|phones|smartphones|devices|range)$");
+    /** "front and back" é um aparelho só; outro "and" no título indica vários. */
+    private static final Pattern FRENTE_E_VERSO = Pattern.compile("(?i)(front|back|rear)[\\s_-]+and[\\s_-]+(front|back|rear)");
+    /** Indica foto do próprio aparelho. */
+    private static final Pattern APARELHO = Pattern.compile("(?i)(^|[^a-z])(back|rear|smartphone|phone|verso|traseira)([^a-z]|$)");
+    private static final Pattern LICENCA_NAO_LIVRE = Pattern.compile("(?i)fair use|non-free|nonfree");
+    /** Variantes que, citadas sem terem sido pedidas, indicam outro modelo na foto. */
+    private static final Set<String> OUTRAS_VARIANTES = Set.of(
+            "pro", "max", "ultra", "plus", "mini", "lite", "fe", "fold", "flip");
+
+    /** Nota de uma foto candidata; {@code adequada} = passou nos critérios de "um aparelho só". */
+    record Avaliacao(double nota, boolean adequada) {
+    }
+
+    /** Foto candidata já com crédito, e se ela passou nos critérios. */
+    record Candidata(FotoHd foto, Avaliacao avaliacao) {
+    }
+
+    /** Arquivo do artigo, com o imageinfo para avaliar depois por aparelho. */
+    private record Arquivo(FotoHd foto, String nome, JsonNode info) {
+    }
 
     private final ClienteHttp http;
 
@@ -89,6 +118,73 @@ public class ImagensHdService {
         String descricao = texto(info.get("descriptionurl"));
         String url = descricao != null && HOST_CREDITO.matcher(descricao).find() ? descricao : null;
         return new FotoHd(imagemHd, String.join(" ", partes), url);
+    }
+
+    /** Diz se o texto (título ou descrição) indica vários aparelhos, evento ou outro modelo. */
+    static boolean indicaGrupo(String modelo, String texto, boolean titulo) {
+        if (texto == null || texto.isEmpty()) return false;
+        List<String> pedidos = CorrespondenciaNome.tokens(modelo);
+        List<String> tokens = CorrespondenciaNome.tokens(titulo ? FRENTE_E_VERSO.matcher(texto).replaceAll(" ") : texto);
+        for (String t : tokens) {
+            if (GRUPO.matcher(t).matches()) return true;
+            if (titulo && t.equals("and")) return true;
+            if (OUTRAS_VARIANTES.contains(t) && !pedidos.contains(t)) return true;
+            // plural do modelo: "S23s", "Pixel 8s"
+            if (t.endsWith("s") && pedidos.contains(t.substring(0, t.length() - 1)) && t.matches(".*\\d.*s")) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Avalia uma foto para o modelo pedido; null se ela não serve de jeito nenhum (nome de
+     * outro modelo, quando {@code exigirNome}, ou licença não livre). Não "adequada" = foto
+     * paisagem (proporção > {@link #PROPORCAO_MAXIMA}) ou que indica grupo/evento/outro modelo:
+     * só é usada se nenhuma outra passar.
+     */
+    static Avaliacao avaliar(String modelo, String nomeArquivo, JsonNode info, boolean exigirNome) {
+        JsonNode meta = info.path("extmetadata");
+        String licenca = texto(meta.path("LicenseShortName").path("value"));
+        if (licenca != null && LICENCA_NAO_LIVRE.matcher(licenca).find()) return null;
+        Double nome = CorrespondenciaNome.pontuar(modelo, nomeArquivo);
+        if (exigirNome && nome == null) return null;
+
+        double largura = info.path("width").asDouble(0);
+        double altura = info.path("height").asDouble(0);
+        boolean paisagem = largura > 0 && altura > 0 && largura / altura > PROPORCAO_MAXIMA;
+        String descricao = Textos.semHtml(texto(meta.path("ImageDescription").path("value")), 1000);
+        String objeto = Textos.semHtml(texto(meta.path("ObjectName").path("value")), 300);
+        boolean grupo = indicaGrupo(modelo, nomeArquivo, true)
+                || indicaGrupo(modelo, objeto, true) || indicaGrupo(modelo, descricao, false);
+
+        double nota = nome == null ? 0 : nome;
+        if (altura > largura) nota += 1; // retrato: o celular em pé
+        else if (largura > 0 && altura > 0 && largura / altura <= 1.05) nota += 0.5; // quase quadrada
+        if (FRENTE.matcher(nomeArquivo).find()) nota += 1;
+        else if (APARELHO.matcher(nomeArquivo).find()) nota += 0.5;
+        return new Avaliacao(nota, !paisagem && !grupo);
+    }
+
+    /**
+     * A melhor foto entre as candidatas: as adequadas têm prioridade pela nota; uma não
+     * adequada só é usada se nenhuma adequada existir. Empate fica com a primeira.
+     */
+    static FotoHd escolher(List<Candidata> candidatas) {
+        Candidata melhor = null;
+        for (Candidata c : candidatas) {
+            if (c == null || c.avaliacao() == null) continue;
+            if (melhor == null || melhorQue(c.avaliacao(), melhor.avaliacao())) melhor = c;
+        }
+        return melhor == null ? null : melhor.foto();
+    }
+
+    private static boolean melhorQue(Avaliacao a, Avaliacao b) {
+        if (a.adequada() != b.adequada()) return a.adequada();
+        return a.nota() > b.nota();
+    }
+
+    /** "File:Galaxy S23 front.jpg" -> "Galaxy S23 front". */
+    private static String nomeDoArquivo(String titulo) {
+        return EXTENSAO.matcher(titulo.replaceFirst("^File:", "")).replaceFirst("");
     }
 
     /** Títulos de artigo a tentar, do mais específico ("Samsung Galaxy S24") para o mais genérico. */
@@ -141,14 +237,14 @@ public class ImagensHdService {
         return escolhas;
     }
 
-    /** Miniatura em ~960 px e crédito de vários arquivos do Commons numa chamada só. */
-    private Map<String, FotoHd> detalhesArquivos(List<String> arquivos) throws ClienteHttp.ErroHttp {
-        Map<String, FotoHd> detalhes = new HashMap<>();
+    /** Miniatura em ~960 px, crédito e metadados de vários arquivos do Commons numa chamada só. */
+    private Map<String, Arquivo> detalhesArquivos(List<String> arquivos) throws ClienteHttp.ErroHttp {
+        Map<String, Arquivo> detalhes = new HashMap<>();
         if (arquivos.isEmpty()) return detalhes;
         JsonNode q = consultar(WIKIPEDIA_API, Map.of(
                 "titles", String.join("|", arquivos.stream().map(a -> "File:" + a).toList()),
                 "prop", "imageinfo", "iiprop", "url|size|extmetadata", "iiurlwidth", LARGURA,
-                "iiextmetadatafilter", "Artist|LicenseShortName")).path("query");
+                "iiextmetadatafilter", METADADOS)).path("query");
         Map<String, String> original = new HashMap<>();
         for (JsonNode n : q.path("normalized")) original.put(texto(n.get("to")), texto(n.get("from")));
         for (JsonNode pagina : q.path("pages")) {
@@ -158,40 +254,30 @@ public class ImagensHdService {
             String arquivo = original.getOrDefault(titulo, titulo).replaceFirst("^File:", "").replace(' ', '_');
             String imagemHd = semQuery(info.get("thumburl"));
             if (imagemHd == null || imagemHd.isEmpty() || !HOST_IMAGEM.matcher(imagemHd).find()) continue;
-            detalhes.put(arquivo, foto(imagemHd, info));
+            detalhes.put(arquivo, new Arquivo(foto(imagemHd, info), nomeDoArquivo(titulo), info));
         }
         return detalhes;
     }
 
     /** 2º: busca de arquivos no Commons; o nome do arquivo precisa ser do modelo certo. */
-    private FotoHd porBuscaNoCommons(Aparelho pedido) throws ClienteHttp.ErroHttp {
+    private List<Candidata> porBuscaNoCommons(Aparelho pedido) throws ClienteHttp.ErroHttp {
         JsonNode q = consultar(COMMONS_API, Map.of("generator", "search", "gsrnamespace", "6", "gsrlimit", "12",
                 "gsrsearch", titulosPara(pedido.fabricante(), pedido.nome()).get(0) + " filetype:bitmap",
                 "prop", "imageinfo", "iiprop", "url|size|extmetadata", "iiurlwidth", LARGURA,
-                "iiextmetadatafilter", "Artist|LicenseShortName")).path("query");
-        FotoHd melhor = null;
-        double melhorNota = Double.NEGATIVE_INFINITY;
+                "iiextmetadatafilter", METADADOS)).path("query");
+        List<Candidata> candidatas = new ArrayList<>();
         for (JsonNode pagina : q.path("pages")) {
             JsonNode info = pagina.path("imageinfo").path(0);
             String imagemHd = semQuery(info.get("thumburl"));
+            String titulo = texto(pagina.get("title"));
             if (imagemHd == null || imagemHd.isEmpty() || !HOST_IMAGEM.matcher(imagemHd).find()
-                    || info.path("width").asDouble(0) < LARGURA_MINIMA) {
+                    || info.path("width").asDouble(0) < LARGURA_MINIMA || titulo == null) {
                 continue;
             }
-            String titulo = texto(pagina.get("title"));
-            if (titulo == null) continue;
-            String nomeArquivo = EXTENSAO.matcher(titulo.replaceFirst("^File:", "")).replaceFirst("");
-            Double nota = CorrespondenciaNome.pontuar(pedido.nome(), nomeArquivo);
-            if (nota == null) continue;
-            // preferimos retrato (o celular em pé) e fotos da frente do aparelho
-            double bonus = (info.path("height").asDouble(0) > info.path("width").asDouble(0) ? 1 : 0)
-                    + (FRENTE.matcher(nomeArquivo).find() ? 1 : 0);
-            if (nota + bonus > melhorNota) {
-                melhor = foto(imagemHd, info);
-                melhorNota = nota + bonus;
-            }
+            Avaliacao avaliacao = avaliar(pedido.nome(), nomeDoArquivo(titulo), info, true);
+            if (avaliacao != null) candidatas.add(new Candidata(foto(imagemHd, info), avaliacao));
         }
-        return melhor;
+        return candidatas;
     }
 
     /** Mapa "fabricante|nome" -> foto, só para os aparelhos que tiverem foto do modelo certo. */
@@ -204,11 +290,19 @@ public class ImagensHdService {
         if (unicos.isEmpty()) return resultado;
         List<Aparelho> pedidos = List.copyOf(unicos.values());
 
+        // foto do artigo que não é "adequada" (grupo, paisagem) fica de reserva e o Commons é consultado
+        Map<String, Candidata> reservas = new HashMap<>();
         try {
             Map<String, String> artigos = porArtigo(pedidos);
-            Map<String, FotoHd> detalhes = detalhesArquivos(List.copyOf(new LinkedHashSet<>(artigos.values())));
+            Map<String, Arquivo> detalhes = detalhesArquivos(List.copyOf(new LinkedHashSet<>(artigos.values())));
             artigos.forEach((chave, arquivo) -> {
-                if (detalhes.containsKey(arquivo)) resultado.put(chave, detalhes.get(arquivo));
+                Arquivo a = detalhes.get(arquivo);
+                if (a == null) return;
+                // o artigo já foi validado como do modelo certo: o nome do arquivo não é exigido
+                Avaliacao avaliacao = avaliar(unicos.get(chave).nome(), a.nome(), a.info(), false);
+                if (avaliacao == null) return;
+                if (avaliacao.adequada()) resultado.put(chave, a.foto());
+                else reservas.put(chave, new Candidata(a.foto(), avaliacao));
             });
         } catch (ClienteHttp.ErroHttp | RuntimeException e) {
             LOG.errorf("Wikipedia (imagens HD) falhou: %s", e.getMessage());
@@ -216,23 +310,28 @@ public class ImagensHdService {
 
         List<Aparelho> faltando = pedidos.stream().filter(p -> !resultado.containsKey(p.chave())).toList();
         try (ExecutorService pool = Executors.newVirtualThreadPerTaskExecutor()) {
-            List<Future<FotoHd>> futuros = faltando.stream().map(p -> pool.submit(() -> {
+            List<Future<List<Candidata>>> futuros = faltando.stream().map(p -> pool.submit(() -> {
                 try {
                     return porBuscaNoCommons(p);
                 } catch (ClienteHttp.ErroHttp | RuntimeException e) {
                     LOG.errorf("Commons (imagens HD) falhou: %s", e.getMessage());
-                    return null;
+                    return List.<Candidata>of();
                 }
             })).toList();
             for (int i = 0; i < faltando.size(); i++) {
-                FotoHd f = futuros.get(i).get();
-                if (f != null) resultado.put(faltando.get(i).chave(), f);
+                String chave = faltando.get(i).chave();
+                List<Candidata> candidatas = new ArrayList<>();
+                if (reservas.containsKey(chave)) candidatas.add(reservas.get(chave));
+                candidatas.addAll(futuros.get(i).get());
+                FotoHd f = escolher(candidatas);
+                if (f != null) resultado.put(chave, f);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } catch (java.util.concurrent.ExecutionException e) {
             LOG.errorf("Commons (imagens HD) falhou: %s", e.getMessage());
         }
+        reservas.forEach((chave, c) -> resultado.putIfAbsent(chave, c.foto()));
         return resultado;
     }
 }
