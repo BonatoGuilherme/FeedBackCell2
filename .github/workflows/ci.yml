@@ -88,17 +88,31 @@ jobs:
         run: |
           docker compose config -q
           docker compose -f docker-compose.yml -f docker-compose.dev.yml config -q
+          DOMAIN=ci.example.com docker compose -f docker-compose.yml -f docker-compose.https.yml config -q
       - name: Only the proxy publishes ports in production
         run: |
           published="$(docker compose config --format json | jq -r '.services | to_entries[] | select(.value.ports != null) | .key')"
           echo "services with published ports: $published"
           test "$published" = "proxy"
-      - name: Validate nginx config
+      - name: Validate nginx config (HTTP)
         run: |
           docker run --rm \
-            -v "$PWD/infra/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro" \
+            -v "$PWD/infra/nginx/default.conf:/etc/nginx/templates/default.conf.template:ro" \
+            -v "$PWD/infra/nginx/feedbackcell-locations.conf:/etc/nginx/snippets/feedbackcell-locations.conf:ro" \
             --add-host core-api:127.0.0.1 --add-host frontend:127.0.0.1 \
-            nginx:1.28-alpine nginx -t
+            nginx:1.28-alpine /bin/sh -c '/docker-entrypoint.sh nginx -t'
+      - name: Validate nginx config (HTTPS, certificado autoassinado)
+        run: |
+          docker run --rm -e DOMAIN=ci.example.com -e 'NGINX_ENVSUBST_FILTER=^DOMAIN$' \
+            -v "$PWD/infra/nginx/https.conf.template:/etc/nginx/templates/default.conf.template:ro" \
+            -v "$PWD/infra/nginx/feedbackcell-locations.conf:/etc/nginx/snippets/feedbackcell-locations.conf:ro" \
+            --add-host core-api:127.0.0.1 --add-host frontend:127.0.0.1 \
+            nginx:1.28-alpine /bin/sh -c '
+              apk add -q openssl >/dev/null
+              d=/etc/letsencrypt/live/ci.example.com && mkdir -p "$d"
+              openssl req -x509 -nodes -newkey rsa:2048 -days 1 -subj /CN=ci.example.com \
+                -keyout "$d/privkey.pem" -out "$d/fullchain.pem" 2>/dev/null
+              /docker-entrypoint.sh nginx -t'
       - name: Lint backup script
         run: sh -n infra/backup/backup.sh
       - name: Build images
