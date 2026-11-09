@@ -45,11 +45,11 @@ jobs:
           distribution: temurin
           java-version: 21
           cache: maven
-          cache-dependency-path: backend-java/core-api/pom.xml
+          cache-dependency-path: backend/core-api/pom.xml
       - run: chmod +x mvnw
-        working-directory: backend-java/core-api
+        working-directory: backend/core-api
       - run: ./mvnw -B verify
-        working-directory: backend-java/core-api
+        working-directory: backend/core-api
         env:
           KAFKA_ENABLED: "false"
 
@@ -64,11 +64,11 @@ jobs:
           distribution: temurin
           java-version: 21
           cache: maven
-          cache-dependency-path: backend-java/specs-service/pom.xml
+          cache-dependency-path: backend/specs-service/pom.xml
       - run: chmod +x mvnw
-        working-directory: backend-java/specs-service
+        working-directory: backend/specs-service
       - run: ./mvnw -B verify
-        working-directory: backend-java/specs-service
+        working-directory: backend/specs-service
         env:
           KAFKA_ENABLED: "false"
 

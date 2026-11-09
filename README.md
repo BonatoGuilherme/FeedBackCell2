@@ -59,7 +59,7 @@ O specs-service não publica portas nem passa pelo proxy. Os tópicos são criad
 ```text
 .
 ├── frontend/                  # Next.js (App Router + TypeScript)
-├── backend-java/
+├── backend/
 │   ├── core-api/              # Spring Boot: API pública + migrações Flyway
 │   └── specs-service/         # Quarkus: busca de especificações via Kafka/HTTP
 ├── infra/
@@ -139,7 +139,7 @@ Pelo proxy, prefixe com `/api` (ex.: `POST /api/auth/login`). Direto no core-api
 | DELETE | `/usuarios/conta` | Deletar conta do usuário atual | Sim |
 | GET | `/usuarios` | Listar todos os usuários (restrito a `ADMIN_USER_IDS`) | Sim |
 
-A coluna "Autenticação" resume o comportamento; a fonte de verdade são os controllers em `backend-java/core-api`.
+A coluna "Autenticação" resume o comportamento; a fonte de verdade são os controllers em `backend/core-api`.
 
 ---
 
@@ -218,7 +218,7 @@ docker compose down
 Testes do core-api e do specs-service (Maven Wrapper, Java 21). No PowerShell:
 
 ```powershell
-Set-Location backend-java/core-api
+Set-Location backend/core-api
 $env:KAFKA_ENABLED = "false"
 .\mvnw.cmd -B verify
 
@@ -230,7 +230,7 @@ Para rodar o core-api fora do Docker, suba as dependências com o arquivo de dev
 
 ```powershell
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d mysql redis kafka kafka-init
-Set-Location backend-java/core-api
+Set-Location backend/core-api
 $env:DB_PORT = "3307"
 $env:RATE_LIMIT_REDIS_URL = "redis://127.0.0.1:6379"
 $env:KAFKA_BOOTSTRAP_SERVERS = "localhost:29092"

@@ -57,9 +57,9 @@ class ProcessadorCelularCriadoTest {
         assertTrue(valor.matches(".*\"ocorridoEm\":\"\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\dZ\"}$"), valor);
         assertEquals("""
                 {"idcelular":12,"especificacoes":{"nome":"Galaxy S24","fabricante":"Samsung",\
-                "lancamento":"2024, January 17","tela":"1080 x 2340","hardware":"Exynos 2400",\
-                "armazenamento":"128 GB, 256 GB","camera":"50 MP","bateria":"4000","peso":"168 g",\
-                "espessura":"7.6mm","cores":"Onyx Black, Marble Gray","creditoImagem":null,"creditoImagemUrl":null},\
+                "lancamento":"17/01/2024","tela":"1080 x 2340 px","hardware":"Exynos 2400",\
+                "armazenamento":"128 GB, 256 GB","camera":"50 MP","bateria":"4000 mAh","peso":"168 g",\
+                "espessura":"7,6 mm","cores":"Onyx Black, Marble Gray","creditoImagem":null,"creditoImagemUrl":null},\
                 "modelo3d":"%s","ocorridoEm":"T"}""".formatted(UID),
                 valor.replaceFirst("\"ocorridoEm\":\"[^\"]+\"", "\"ocorridoEm\":\"T\""));
         assertEquals(List.of(), ContratoEspecificacoes.violacoes(JSON.readTree(valor)));
@@ -96,7 +96,7 @@ class ProcessadorCelularCriadoTest {
                 ? (tentativas.incrementAndGet() == 1 ? Resposta.erro(0) : Resposta.ok(MOBILEAPI))
                 : c.url().contains("sketchfab") ? Resposta.ok(SKETCHFAB) : Resposta.ok("{}"));
         JsonNode r = JSON.readTree(publicado(processador("x"), EVENTO));
-        assertEquals("1080 x 2340", r.get("especificacoes").get("tela").asText());
+        assertEquals("1080 x 2340 px", r.get("especificacoes").get("tela").asText());
         assertEquals(UID, r.get("modelo3d").asText());
         assertEquals(2, chamadas("mobileapi"));
     }

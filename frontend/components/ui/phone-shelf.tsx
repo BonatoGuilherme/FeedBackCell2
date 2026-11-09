@@ -4,19 +4,20 @@
  * Prateleira de celulares — adaptada do "Product Shelf" de Aakash Mehra.
  * Cada fileira mostra os aparelhos (a foto do aparelho; sem foto, um celular
  * desenhado). Ao clicar, o aparelho "voa" para um modal com fotos, especificações e,
- * quando houver, o modelo 3D. Clicar fora, Esc, X ou "Voltar ao catálogo" fecha e o
+ * quando houver, o modelo 3D. Clicar fora, Esc ou o botão X fecha e o
  * aparelho volta para o mesmo lugar na prateleira. O celular aberto é controlado
  * pelo pai (o catálogo abre direto o celular de /catalog?celular=ID).
  */
 
-import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
-import { Box, ChevronLeft, Images, MessageSquareText, X } from "lucide-react";
+import { MessageSquareText, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PhonePhoto } from "@/components/ui/phone-photo";
 import { cn } from "@/lib/utils";
-import { sketchfabEmbedUrl, type Celular, type Especificacoes } from "@/src/lib/celulares";
+import { type Celular, type Especificacoes } from "@/src/lib/celulares";
 
 const SPRING = { type: "spring" as const, bounce: 0, duration: 0.5 };
 
@@ -213,11 +214,8 @@ function ProductModal({
   onClose: () => void;
 }) {
   const reduce = useReducedMotion();
-  const [foto, setFoto] = useState(0);
-  const [modo, setModo] = useState<"fotos" | "3d">("fotos");
   const closeRef = useRef<HTMLButtonElement>(null);
-  const { imagens, especificacoes, modelo3d } = celular;
-  const atual = imagens[foto];
+  const { especificacoes } = celular;
   const specs = especificacoes ? ROTULOS.filter(([campo]) => especificacoes[campo]) : [];
   const fade = {
     initial: { opacity: 0, y: 10 },
@@ -226,16 +224,32 @@ function ProductModal({
     transition: { ...SPRING, delay: reduce ? 0 : 0.08 },
   };
 
-  // Esc fecha, foco no botão de fechar e a página por trás não rola
+  // Esc fecha, foco no botão de fechar e a página por trás não rola.
+  // O <html> reserva o espaço da barra (scrollbar-gutter: stable, em globals.css); com
+  // overflow só no body essa faixa vazia continuava visível à direita, fora do fundo
+  // fixo do modal. Aqui a rolagem trava no <html>, a reserva é desligada e a largura
+  // da barra vira padding-right no body, para o conteúdo não "pular".
   useEffect(() => {
     closeRef.current?.focus({ preventScroll: true });
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const html = document.documentElement;
+    const body = document.body;
+    const barra = window.innerWidth - html.clientWidth;
+    const antes = {
+      overflow: html.style.overflow,
+      gutter: html.style.scrollbarGutter,
+      padding: body.style.paddingRight,
+    };
+    const paddingAtual = parseFloat(getComputedStyle(body).paddingRight) || 0;
+    html.style.overflow = "hidden";
+    html.style.scrollbarGutter = "auto";
+    if (barra > 0) body.style.paddingRight = `${paddingAtual + barra}px`;
     return () => {
       window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = overflow;
+      html.style.overflow = antes.overflow;
+      html.style.scrollbarGutter = antes.gutter;
+      body.style.paddingRight = antes.padding;
     };
   }, [onClose]);
 
@@ -288,90 +302,13 @@ function ProductModal({
         </button>
 
         {/* mídia */}
-        <div className="relative flex flex-col items-center gap-4 rounded-t-[24px] bg-[radial-gradient(90%_70%_at_50%_20%,#eef0ff,#f4f5f9_70%)] px-5 pb-5 pt-10 md:max-h-[calc(100dvh-3rem)] md:overflow-y-auto md:rounded-l-[24px] md:rounded-tr-none">
-          {modo === "3d" && modelo3d ? (
-            <motion.div {...fade} className="aspect-[4/5] w-full max-w-[380px] overflow-hidden rounded-2xl bg-[#e9ebf3]">
-              <iframe
-                title={`${celular.marca} ${celular.modelo} em 3D`}
-                src={sketchfabEmbedUrl(modelo3d)}
-                allow="autoplay; fullscreen; xr-spatial-tracking"
-                allowFullScreen
-                referrerPolicy="strict-origin-when-cross-origin"
-                className="size-full border-0"
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              layoutId={`phone-${celular.idcelular}`}
-              transition={SPRING}
-              className="relative aspect-[1/2] h-[min(46vh,400px)] rounded-[22%/11%]"
-            >
-              <PhoneVisual celular={celular} src={atual?.url} ajuste="contain" />
-            </motion.div>
-          )}
-
-          <motion.div {...fade} className="flex w-full flex-col items-center gap-3">
-            {modelo3d && (
-              <div className="inline-flex rounded-full bg-white p-1 ring-1 ring-black/[0.06]" role="group" aria-label="Visualização">
-                <ModoButton ativo={modo === "fotos"} onClick={() => setModo("fotos")}>
-                  <Images className="size-4" aria-hidden /> Fotos
-                </ModoButton>
-                <ModoButton ativo={modo === "3d"} onClick={() => setModo("3d")}>
-                  <Box className="size-4" aria-hidden /> Ver em 3D
-                </ModoButton>
-              </div>
-            )}
-            {modo === "fotos" && imagens.length > 1 && (
-              <ul className="flex flex-wrap justify-center gap-2" aria-label="Fotos do aparelho">
-                {imagens.map((img, i) => (
-                  <li key={img.idimagem}>
-                    <button
-                      type="button"
-                      onClick={() => setFoto(i)}
-                      aria-label={`Mostrar foto ${i + 1}`}
-                      aria-pressed={i === foto}
-                      className={cn(
-                        "size-12 cursor-pointer overflow-hidden rounded-xl bg-white ring-2 ring-offset-2 ring-offset-[#f4f5f9] transition",
-                        i === foto ? "ring-[#4c5cf5]" : "ring-transparent opacity-70 hover:opacity-100",
-                      )}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element -- imagem servida pela API */}
-                      <img src={img.url} alt="" loading="lazy" className="size-full object-contain mix-blend-multiply" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {modo === "fotos" && imagens.length === 0 && (
-              <p className="text-sm text-[#8a8ea3]">Este aparelho ainda não tem fotos.</p>
-            )}
-            {/* a primeira foto é a da busca; a licença do Wikimedia exige o crédito */}
-            {modo === "fotos" && foto === 0 && especificacoes?.creditoImagem && (
-              <p className="max-w-[320px] text-center text-[11px] leading-snug text-[#8a8ea3]">
-                {especificacoes.creditoImagemUrl ? (
-                  <a href={especificacoes.creditoImagemUrl} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:underline">
-                    {especificacoes.creditoImagem}
-                  </a>
-                ) : (
-                  especificacoes.creditoImagem
-                )}
-              </p>
-            )}
-          </motion.div>
-        </div>
+        <PhonePhoto celular={celular} placeholder={<PhoneArt celular={celular} />} />
 
         {/* informações */}
         <motion.div
           {...fade}
           className="relative px-6 pb-7 pt-6 sm:px-8 md:max-h-[calc(100dvh-3rem)] md:overflow-y-auto md:pt-10"
         >
-          <button
-            type="button"
-            onClick={onClose}
-            className="-ml-1.5 mb-5 inline-flex cursor-pointer items-center gap-0.5 rounded-md px-1.5 py-1 text-[14px] text-[#5f6378] underline-offset-4 hover:text-[#0f1020] hover:underline focus-visible:outline-2 focus-visible:outline-[#4c5cf5]"
-          >
-            <ChevronLeft className="size-4" strokeWidth={2.2} aria-hidden /> Voltar ao catálogo
-          </button>
           <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#4c5cf5]">{celular.marca}</div>
           <h2 className="mt-1 pr-8 text-[clamp(26px,3.4vw,36px)] font-semibold leading-[1.08] tracking-[-0.022em] text-[#0f1020]">
             {celular.modelo}
@@ -388,24 +325,20 @@ function ProductModal({
               {specs.map(([campo, rotulo]) => (
                 <div key={campo} className="contents">
                   <dt className="text-[#8a8ea3]">{rotulo}</dt>
-                  <dd className="mb-2 text-[#0f1020] sm:mb-0">{especificacoes?.[campo]}</dd>
+                  <dd className="mb-2 break-words text-[#0f1020] sm:mb-0">{especificacoes?.[campo]}</dd>
                 </div>
               ))}
             </dl>
           )}
 
-          <dl className="mt-4 grid grid-cols-2 gap-3 text-[13px]">
-            <div className="rounded-xl bg-white p-3.5 ring-1 ring-black/[0.06]">
-              <dt className="text-[#8a8ea3]">Fotos</dt>
-              <dd className="mt-0.5 font-semibold text-[#0f1020]">{imagens.length}</dd>
-            </div>
-            <div className="rounded-xl bg-white p-3.5 ring-1 ring-black/[0.06]">
+          {celular.dataCriacao && (
+            <dl className="mt-4 flex items-baseline gap-1.5 text-[13px]">
               <dt className="text-[#8a8ea3]">Cadastrado em</dt>
-              <dd className="mt-0.5 font-semibold text-[#0f1020]">
-                {celular.dataCriacao ? new Date(celular.dataCriacao).toLocaleDateString("pt-BR") : "—"}
+              <dd className="font-medium tabular-nums text-[#5f6378]">
+                {new Date(celular.dataCriacao).toLocaleDateString("pt-BR")}
               </dd>
-            </div>
-          </dl>
+            </dl>
+          )}
 
           <Button asChild size="lg" className="mt-5 w-full sm:w-auto">
             <Link href={`/comments?celular=${celular.idcelular}`}>
@@ -417,21 +350,5 @@ function ProductModal({
       </div>
     </motion.div>,
     document.body,
-  );
-}
-
-function ModoButton({ ativo, onClick, children }: { ativo: boolean; onClick: () => void; children: ReactNode }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={ativo}
-      className={cn(
-        "inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition",
-        ativo ? "bg-[#0b0b10] text-white" : "text-[#5f6378] hover:text-[#0f1020]",
-      )}
-    >
-      {children}
-    </button>
   );
 }

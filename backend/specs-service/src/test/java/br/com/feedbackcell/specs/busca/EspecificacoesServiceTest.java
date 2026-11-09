@@ -59,8 +59,8 @@ class EspecificacoesServiceTest {
         assertEquals("Galaxy S24", r.aparelho().nome());
         assertEquals("128 GB, 256 GB", r.aparelho().armazenamento());
         assertEquals("168 g", r.aparelho().peso());
-        assertEquals("7.6mm", r.aparelho().espessura());
-        assertEquals("4000", r.aparelho().bateria());
+        assertEquals("7,6 mm", r.aparelho().espessura());
+        assertEquals("4000 mAh", r.aparelho().bateria());
         assertEquals("data:image/png;base64," + PNG_B64, r.aparelho().imagem());
         // 3D: aceita a variante próxima quando não existe a exata
         assertEquals("https://sketchfab.com/models/" + UID2 + "/embed", r.modelo3d().embedUrl());
@@ -74,6 +74,51 @@ class EspecificacoesServiceTest {
 
         s.buscar("SAMSUNG", "galaxy s24", false);
         assertEquals(2, externas(), "segunda busca deve vir do cache");
+    }
+
+    @Test
+    void camerasCompletasVemDosEndpointsDoAparelhoEscolhido() {
+        http.responder(c -> {
+            if (c.url().contains("/devices/search/")) {
+                return Resposta.ok("""
+                        {"devices":[{"id":77,"name":"Galaxy S23","manufacturer_name":"Samsung","camera":"50MP",
+                          "release_date":"Released 2023, February 17","screen_resolution":"6.1\\", 1080x2340 pixels"},
+                          {"id":78,"name":"Galaxy S23 Ultra","manufacturer_name":"Samsung","camera":"200MP"}]}""");
+            }
+            if (c.url().endsWith("/devices/77/main-camera/")) {
+                return Resposta.ok("{\"id\":1,\"modules\":\"50 MP, f/1.8 (wide)\\n10 MP, f/2.4 (telephoto)\\n12 MP (ultrawide)\"}");
+            }
+            if (c.url().endsWith("/devices/77/selfie-camera/")) return Resposta.ok("{\"modules\":\"12 MP, f/2.2 (wide)\"}");
+            return wiki(c) ? Resposta.ok("{}") : Resposta.ok("{\"results\":[]}");
+        });
+        Resultado r = servico("x").buscar("Samsung", "Galaxy S23", false);
+        assertEquals("50 MP (principal) + 10 MP (tele) + 12 MP (ultrawide) · frontal 12 MP", r.aparelho().camera());
+        assertEquals("17/02/2023", r.aparelho().lancamento());
+        assertEquals("6,1 polegadas, 1080 x 2340 px", r.aparelho().tela());
+        assertEquals("Token x", http.chamadas.stream().filter(c -> c.url().contains("main-camera")).findFirst()
+                .orElseThrow().headers().get("Authorization"));
+        // sugestões não gastam cota com câmeras
+        assertEquals(0, http.chamadas.stream().filter(c -> c.url().contains("/devices/78/")).count());
+        assertEquals("200 MP", r.sugestoes().stream().filter(s -> s.nome().equals("Galaxy S23 Ultra"))
+                .findFirst().orElseThrow().camera());
+    }
+
+    @Test
+    void falhaNosEndpointsDeCameraFicaComACameraDaBusca() {
+        http.responder(c -> c.url().contains("/devices/search/")
+                ? Resposta.ok("{\"devices\":[{\"id\":77,\"name\":\"Galaxy S23\",\"camera\":\"50MP\"}]}")
+                : c.url().contains("selfie-camera") ? Resposta.erro(404)
+                : c.url().contains("main-camera") ? Resposta.erro(503)
+                : Resposta.ok("{\"results\":[]}"));
+        EspecificacoesService s = new EspecificacoesService(http, new ImagensHdService(http), Optional.of("x"), true);
+        assertEquals("50 MP", s.buscar("Samsung", "Galaxy S23", false).aparelho().camera());
+
+        http.responder(c -> c.url().contains("/devices/search/")
+                ? Resposta.ok("{\"devices\":[{\"id\":77,\"name\":\"Galaxy S23\",\"camera\":\"50MP\"}]}")
+                : Resposta.ok("{\"results\":[]}"));
+        EspecificacoesService desligado = new EspecificacoesService(http, new ImagensHdService(http), Optional.of("x"), false);
+        assertEquals("50 MP", desligado.buscar("Samsung", "Galaxy S23", false).aparelho().camera());
+        assertEquals(0, http.chamadas.stream().filter(c -> c.url().contains("camera")).count());
     }
 
     @Test
