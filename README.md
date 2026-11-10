@@ -258,6 +258,20 @@ A CI (`.github/workflows/ci.yml`) roda `mvnw verify` nos dois serviços Java, li
 
 ## 🚢 Deploy em produção
 
+### Deploy rápido (servidor Linux + HTTPS)
+
+1. **Servidor**: Linux (ex.: Ubuntu 24.04) com pelo menos **8 GB de RAM** (os limites do Compose somam cerca de 4,5 GB) e 20 GB de disco. Libere as portas 22, 80 e 443 no firewall.
+2. **DNS**: crie um registro `A` do domínio apontando para o IP do servidor e espere propagar (`nslookup <domínio>`).
+3. **Docker**: `curl -fsSL https://get.docker.com | sh` (instala o Docker com o plugin compose).
+4. **Código e subida**:
+
+   ```bash
+   git clone https://github.com/BonatoGuilherme/FeedBackCell2.git feedbackcell && cd feedbackcell
+   DOMAIN=<domínio> LETSENCRYPT_EMAIL=<seu e-mail> ./scripts/deploy.sh
+   ```
+
+O `scripts/deploy.sh` cria o `.env` com senhas e `JWT_SECRET` aleatórios (só na primeira vez), define `CORS_ORIGIN=https://<domínio>`, emite o certificado Let's Encrypt, sobe tudo com `docker-compose.https.yml` e confere `/health`, `/readyz` e o frontend pelo HTTPS. Para atualizar depois, rode `./scripts/deploy.sh` de novo: ele faz `git pull` da `master` e reconstrói, mantendo o `.env` e os dados. Opcional: preencha `MOBILEAPI_KEY` e `ADMIN_USER_IDS` no `.env` e rode o script outra vez.
+
 Checklist antes de expor a aplicação:
 
 1. **Segredos**: crie o `.env` no servidor a partir do `.env.example` com `DB_PASSWORD` longo e aleatório e `JWT_SECRET` com pelo menos 32 caracteres (ex.: `openssl rand -base64 48`). Restrinja a leitura do arquivo (`chmod 600 .env`) e nunca o versione. Trocar `JWT_SECRET` invalida todos os tokens emitidos.
