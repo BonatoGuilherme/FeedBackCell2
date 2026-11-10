@@ -153,6 +153,9 @@ services:
       KAFKA_ENABLED: ${KAFKA_ENABLED:-true}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SPECS_SERVICE_URL: http://specs-service:8081
+      # Domínio público do frontend (ex.: https://feedbackcell.com.br). Vazio = http://localhost:3000.
+      # Pelo proxy o frontend e a API têm a mesma origem; CORS só importa com a API em outro domínio.
+      CORS_ORIGIN: ${CORS_ORIGIN:-}
     depends_on:
       mysql:
         condition: service_healthy
@@ -237,14 +240,17 @@ services:
           memory: ${FRONTEND_MEM_LIMIT:-512m}
     logging: *default-logging
 
-  # Única porta publicada no host. Termine TLS num proxy/load balancer na frente dele.
+  # Única porta publicada no host. Só HTTP aqui: para HTTPS no próprio nginx, some
+  # docker-compose.https.yml (Let's Encrypt); ou termine TLS num proxy/load balancer na frente.
   proxy:
     image: nginx:1.28-alpine
     restart: unless-stopped
     ports:
       - "${APP_BIND_ADDRESS:-0.0.0.0}:${APP_PORT:-3000}:80"
     volumes:
-      - ./infra/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      # pelo diretório de templates (e não direto no conf.d) para o override HTTPS trocar o arquivo
+      - ./infra/nginx/default.conf:/etc/nginx/templates/default.conf.template:ro
+      - ./infra/nginx/feedbackcell-locations.conf:/etc/nginx/snippets/feedbackcell-locations.conf:ro
     depends_on:
       core-api:
         condition: service_healthy
