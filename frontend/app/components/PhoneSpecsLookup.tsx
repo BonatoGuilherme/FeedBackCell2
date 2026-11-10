@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { AlertCircle, Box, CheckCircle2, Cpu, Info } from "lucide-react";
 import AppIcon from "./AppIcon";
 import {
   buscarEspecificacoes,
@@ -177,6 +178,7 @@ export function ModeloAutocomplete({
   onModeloChange,
   onEscolher,
   disabled,
+  invalido,
 }: {
   lookup: SpecsLookup;
   marca: string;
@@ -184,8 +186,11 @@ export function ModeloAutocomplete({
   onModeloChange: (valor: string) => void;
   onEscolher: (aparelho: AparelhoEspecificacoes) => void;
   disabled?: boolean;
+  /** Marca o campo como inválido (o erro fica em #modelo-erro). */
+  invalido?: boolean;
 }) {
   const listaId = useId();
+  const dicaId = useId();
   const wrapper = useRef<HTMLDivElement>(null);
   const { sugestoes, aberto, loading, setAberto } = lookup;
   const pronto = marca.trim().length >= 2 && modelo.trim().length >= 1;
@@ -238,9 +243,29 @@ export function ModeloAutocomplete({
     }
   }
 
+  const aviso = lookup.erro || lookup.avisos[0];
+  let dica: ReactNode;
+  let tom = "";
+  if (lookup.erro) {
+    tom = "is-error";
+    dica = <><AlertCircle size={14} aria-hidden="true" />{lookup.erro}</>;
+  } else if (aviso) {
+    tom = "is-warning";
+    dica = <><Info size={14} aria-hidden="true" />{aviso}</>;
+  } else if (loading) {
+    dica = "Buscando o modelo…";
+  } else if (selecionado) {
+    tom = "is-success";
+    dica = <><CheckCircle2 size={14} aria-hidden="true" />Aparelho encontrado. Confira a foto e as especificações abaixo.</>;
+  } else if (pronto) {
+    dica = "A busca é automática; escolha o seu aparelho na lista.";
+  } else {
+    dica = "Preencha marca e modelo: a foto e as especificações aparecem sozinhas.";
+  }
+
   return (
     <div className="modelo-autocomplete" ref={wrapper}>
-      <div className="modelo-autocomplete__field">
+      <div className="relative">
         <input
           id="modelo"
           name="modelo"
@@ -249,6 +274,8 @@ export function ModeloAutocomplete({
           aria-controls={listaId}
           aria-autocomplete="list"
           aria-activedescendant={aberto && ativo >= 0 ? `${listaId}-${ativo}` : undefined}
+          aria-invalid={invalido || undefined}
+          aria-describedby={invalido ? `modelo-erro ${dicaId}` : dicaId}
           autoComplete="off"
           minLength={2}
           maxLength={120}
@@ -264,80 +291,127 @@ export function ModeloAutocomplete({
         />
         <button
           type="button"
-          className="modelo-autocomplete__search"
+          className="absolute right-1 top-1 grid size-9 cursor-pointer place-items-center rounded-lg text-muted transition-colors duration-150 hover:enabled:bg-accent-soft hover:enabled:text-accent disabled:cursor-not-allowed disabled:text-subtle"
           onClick={() => void lookup.buscar(marca, modelo)}
           disabled={disabled || loading || !pronto}
           aria-label="Buscar especificações e imagem"
           title="Buscar especificações e imagem"
         >
-          {loading ? <span className="button-spinner" /> : <AppIcon name="search" size={17} />}
+          {loading ? <span className="modelo-autocomplete__spinner" aria-hidden="true" /> : <AppIcon name="search" size={16} />}
         </button>
       </div>
 
       {aberto && sugestoes.length > 0 && (
-        <ul id={listaId} role="listbox" className="modelo-autocomplete__list" aria-label="Aparelhos encontrados">
-          {sugestoes.map((s, i) => (
-            <li
-              key={`${s.fabricante}-${s.nome}`}
-              id={`${listaId}-${i}`}
-              role="option"
-              aria-selected={i === ativo}
-              className="modelo-autocomplete__option"
-              onPointerDown={(e) => e.preventDefault()} // mantém o foco no campo
-              onClick={() => escolher(s)}
-              onMouseEnter={() => setAtivo(() => i)}
-            >
-              {s.imagemHd || s.imagem ? (
-                // eslint-disable-next-line @next/next/no-img-element -- miniatura data: (leve e instantânea)
-                <img src={s.imagem ?? s.imagemHd ?? undefined} alt="" />
-              ) : (
-                <span className="modelo-autocomplete__noimg"><AppIcon name="smartphone" size={18} /></span>
-              )}
-              <span>
-                <strong>{s.nome}</strong>
-                <small>{[s.fabricante, s.lancamento?.replace(/^Released\s*/i, "")].filter(Boolean).join(" · ")}</small>
-              </span>
-            </li>
-          ))}
-        </ul>
+        <div className="absolute inset-x-0 top-[50px] z-20 overflow-hidden rounded-card border border-line bg-surface shadow-elevation-lg">
+          <p className="m-0 border-b border-line px-3 py-2 text-caption font-medium text-muted" aria-hidden="true">
+            {sugestoes.length === 1 ? "1 aparelho encontrado" : `${sugestoes.length} aparelhos encontrados`}
+          </p>
+          <ul id={listaId} role="listbox" className="m-0 max-h-[300px] list-none overflow-y-auto p-1" aria-label="Aparelhos encontrados">
+            {sugestoes.map((s, i) => (
+              <li
+                key={`${s.fabricante}-${s.nome}`}
+                id={`${listaId}-${i}`}
+                role="option"
+                aria-selected={i === ativo}
+                className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-1.5 text-subtle aria-selected:bg-accent-soft aria-selected:text-accent"
+                onPointerDown={(e) => e.preventDefault()} // mantém o foco no campo
+                onClick={() => escolher(s)}
+                onMouseEnter={() => setAtivo(() => i)}
+              >
+                <span className="grid h-11 w-9 flex-none place-items-center overflow-hidden rounded-md bg-surface-soft text-subtle">
+                  {s.imagemHd || s.imagem ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- miniatura data: (leve e instantânea)
+                    <img src={s.imagem ?? s.imagemHd ?? undefined} alt="" className="size-full object-contain p-0.5 mix-blend-multiply" />
+                  ) : (
+                    <AppIcon name="smartphone" size={16} />
+                  )}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <strong className="block truncate text-sm font-medium text-foreground">{s.nome}</strong>
+                  <small className="block text-caption text-muted">{[s.fabricante, s.lancamento?.replace(/^Released\s*/i, "")].filter(Boolean).join(" · ")}</small>
+                </span>
+                <AppIcon name="chevron-right" size={16} />
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
-      <span className="field-hint">
-        {lookup.erro || lookup.avisos[0] ||
-          (loading
-            ? "Buscando o modelo…"
-            : pronto
-              ? "A busca é automática; escolha o seu aparelho na lista."
-              : "Preencha marca e modelo: a imagem e as especificações aparecem sozinhas.")}
+      <span id={dicaId} className={`modelo-autocomplete__hint ${tom}`} aria-live="polite">
+        {dica}
       </span>
     </div>
   );
 }
 
-/** Especificações e modelo 3D do aparelho escolhido (na prévia). */
+/** Especificações, foto HD e modelo 3D do aparelho escolhido. */
 export function PhoneSpecsResult({ lookup }: { lookup: SpecsLookup }) {
   const [mostrar3d, setMostrar3d] = useState<string | null>(null);
-  const { selecionado: aparelho, modelo3d } = lookup;
-  if (!aparelho && !modelo3d) return null;
+  const { selecionado: aparelho, modelo3d, loading } = lookup;
+
+  if (!aparelho && !modelo3d) {
+    return (
+      <div id="phone-specs-result" className="flex items-start gap-3 rounded-card border border-dashed border-line-strong p-4" aria-live="polite">
+        <span className="grid size-9 flex-none place-items-center rounded-control bg-surface-soft text-muted" aria-hidden="true">
+          {loading ? <span className="modelo-autocomplete__spinner" /> : <Cpu size={18} />}
+        </span>
+        <div>
+          <p className="m-0 text-sm font-semibold text-foreground">
+            {loading ? "Buscando especificações…" : "Nenhum aparelho escolhido"}
+          </p>
+          <p className="mt-0.5 mb-0 text-label text-muted">
+            Escolha o modelo na lista do campo Modelo para trazer tela, câmera, bateria e a foto do aparelho.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const specs = aparelho ? ROTULOS.filter(([campo]) => aparelho[campo]) : [];
+  const foto = aparelho?.imagemHd ?? aparelho?.imagem ?? null;
 
   return (
     <section id="phone-specs-result" className="phone-specs" aria-live="polite" aria-label="Especificações encontradas">
-      {aparelho?.imagemHd && aparelho.creditoImagem && (
-        <p className="phone-specs__credit">
-          {aparelho.creditoImagemUrl ? (
-            <a href={aparelho.creditoImagemUrl} target="_blank" rel="noopener noreferrer">{aparelho.creditoImagem}</a>
-          ) : (
-            aparelho.creditoImagem
-          )}
-        </p>
+      {aparelho && (
+        <div className="phone-specs__summary">
+          <div className="phone-specs__photo">
+            {foto ? (
+              // eslint-disable-next-line @next/next/no-img-element -- foto da Wikimedia ou data: da API
+              <img className="foto-aparelho" src={foto} alt={`Foto do ${aparelho.nome ?? "aparelho"}`} />
+            ) : (
+              <AppIcon name="smartphone" size={22} />
+            )}
+          </div>
+          <div className="phone-specs__identity">
+            <p className="phone-specs__brand">{aparelho.fabricante ?? "Aparelho"}</p>
+            <p className="phone-specs__name">{aparelho.nome}</p>
+            <div className="phone-specs__badges">
+              <span className="phone-specs__badge is-success">
+                <CheckCircle2 size={12} aria-hidden="true" />
+                {specs.length} especificações
+              </span>
+              {aparelho.imagemHd && <span className="phone-specs__badge">Foto em alta resolução</span>}
+            </div>
+            {aparelho.imagemHd && aparelho.creditoImagem && (
+              <p className="phone-specs__credit">
+                Foto:{" "}
+                {aparelho.creditoImagemUrl ? (
+                  <a href={aparelho.creditoImagemUrl} target="_blank" rel="noopener noreferrer">{aparelho.creditoImagem}</a>
+                ) : (
+                  aparelho.creditoImagem
+                )}
+              </p>
+            )}
+          </div>
+        </div>
       )}
+
       {specs.length > 0 && (
-        <dl>
+        <dl className="phone-specs__list">
           {specs.map(([campo, rotulo]) => (
             <div key={campo}>
               <dt>{rotulo}</dt>
-              <dd>{aparelho?.[campo]}</dd>
+              <dd>{campo === "lancamento" ? aparelho?.[campo]?.replace(/^Released\s*/i, "") : aparelho?.[campo]}</dd>
             </div>
           ))}
         </dl>
@@ -359,7 +433,7 @@ export function PhoneSpecsResult({ lookup }: { lookup: SpecsLookup }) {
                 // eslint-disable-next-line @next/next/no-img-element -- thumbnail externo do Sketchfab
                 <img src={modelo3d.thumbnail} alt="" />
               )}
-              <span>Ver em 3D</span>
+              <span><Box size={14} aria-hidden="true" />Ver em 3D</span>
             </button>
           )}
           <Credit href={modelo3d.viewerUrl}>

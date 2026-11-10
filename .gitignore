@@ -41,3 +41,6 @@ db/*.db
 .claude-flow/data/
 .claude-flow/logs/
 .claude-flow/sessions/
+
+# segredos locais do Claude Code (chave do OmniRoute)
+.claude/settings.local.json

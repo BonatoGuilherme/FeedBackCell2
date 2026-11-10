@@ -23,11 +23,11 @@ const SPRING = { type: "spring" as const, bounce: 0, duration: 0.5 };
 
 const FRAMES = ["#1f2027", "#d7d9df", "#26335c", "#4b3d7a", "#6b2433", "#244c42", "#b9a27c", "#3a3b44"];
 const SCREENS = [
-  "linear-gradient(160deg,#6d7bff,#2a1f6b 60%,#0b0b10)",
-  "linear-gradient(160deg,#22d3ee,#1e3a8a 60%,#0b0b10)",
-  "linear-gradient(160deg,#f472b6,#6d28d9 60%,#0b0b10)",
-  "linear-gradient(160deg,#fbbf24,#b45309 55%,#1c1917)",
-  "linear-gradient(160deg,#34d399,#065f46 60%,#0b0b10)",
+  "linear-gradient(160deg,#e6c27a,#7a4a1c 60%,#120c06)",
+  "linear-gradient(160deg,#8fb0de,#2b3f68 60%,#0c0d14)",
+  "linear-gradient(160deg,#e08a68,#7a2e1c 60%,#140906)",
+  "linear-gradient(160deg,#efd9a8,#a0682c 55%,#1c1309)",
+  "linear-gradient(160deg,#9cc9b2,#2f5a49 60%,#08100c)",
 ];
 
 const ROTULOS: [keyof Especificacoes, string][] = [
@@ -97,7 +97,7 @@ export function PhoneShelf({ celulares, formatPrice, aberto, onAbrir, onFechar, 
                   {/* sombra de chão sob o aparelho (no lugar da prateleira branca) */}
                   <span
                     aria-hidden
-                    className="pointer-events-none absolute -bottom-2.5 left-1/2 h-4 w-[min(100%,96px)] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgba(15,16,32,0.22),transparent)]"
+                    className="pointer-events-none absolute -bottom-2.5 left-1/2 h-4 w-[min(100%,96px)] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgba(201,151,63,0.35),transparent)]"
                   />
                   {openId === c.idcelular ? (
                     <div className="aspect-[1/2] w-full max-w-[76px]" />
@@ -108,8 +108,9 @@ export function PhoneShelf({ celulares, formatPrice, aberto, onAbrir, onFechar, 
                       onClick={() => onAbrir(c)}
                       aria-label={`${c.marca} ${c.modelo}, ${formatPrice(c.preco)}`}
                       transition={SPRING}
-                      whileHover={{ y: -5 }}
-                      className="relative aspect-[1/2] w-full max-w-[76px] cursor-pointer rounded-[22%/11%] outline-none focus-visible:ring-2 focus-visible:ring-[#4c5cf5] focus-visible:ring-offset-4"
+                      whileHover={{ y: -10, rotateY: -18, rotateX: 8, scale: 1.06 }}
+                      style={{ transformPerspective: 600 }}
+                      className="relative aspect-[1/2] w-full max-w-[76px] cursor-pointer rounded-[22%/11%] outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-4"
                     >
                       <PhoneVisual celular={c} />
                     </motion.button>
@@ -145,9 +146,9 @@ export function PhoneShelf({ celulares, formatPrice, aberto, onAbrir, onFechar, 
 function ShelfLabel({ celular, formatPrice }: { celular: Celular; formatPrice: (n: number) => string }) {
   return (
     <>
-      <div className="truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8a8ea3]" title={celular.marca}>{celular.marca}</div>
-      <div className="mt-0.5 truncate text-[14px] font-medium leading-tight text-[#0f1020]" title={celular.modelo}>{celular.modelo}</div>
-      <div className="mt-0.5 text-[13px] tabular-nums text-[#5f6378]">
+      <div className="truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-subtle" title={celular.marca}>{celular.marca}</div>
+      <div className="mt-0.5 truncate text-[14px] font-medium leading-tight text-foreground" title={celular.modelo}>{celular.modelo}</div>
+      <div className="mt-0.5 text-[13px] tabular-nums text-muted">
         {celular.preco > 0 ? formatPrice(celular.preco) : "Preço não informado"}
       </div>
     </>
@@ -162,7 +163,7 @@ function ShelfLabel({ celular, formatPrice }: { celular: Celular; formatPrice: (
 function PhoneVisual({
   celular,
   src = celular.imagens[0]?.url,
-  ajuste = "cover",
+  ajuste = "contain",
 }: {
   celular: Celular;
   src?: string;
@@ -170,13 +171,13 @@ function PhoneVisual({
 }) {
   if (src) {
     return (
-      <span className="absolute inset-0 overflow-hidden rounded-[14%/7%] bg-white shadow-[0_18px_30px_-16px_rgba(15,16,32,0.45)] ring-1 ring-black/[0.06]">
+      <span className="absolute inset-0 overflow-hidden rounded-[14%/7%] bg-surface-solid shadow-[0_18px_30px_-16px_rgba(15,16,32,0.45)] ring-1 ring-line">
         {/* eslint-disable-next-line @next/next/no-img-element -- imagem servida pela API */}
         <img
           src={src}
           alt=""
           loading="lazy"
-          className={cn("foto-aparelho size-full", ajuste === "cover" ? "object-cover" : "object-contain")}
+          className={cn("foto-aparelho size-full", ajuste === "cover" ? "object-cover" : "object-contain p-[8%]")}
         />
       </span>
     );
@@ -284,7 +285,7 @@ function ProductModal({
         {/* o painel aparece em fade; o aparelho "voa" por cima dele */}
         <motion.div
           aria-hidden
-          className="absolute inset-0 rounded-[24px] bg-white shadow-[0_40px_90px_-30px_rgba(15,16,32,0.55)]"
+          className="absolute inset-0 rounded-[24px] bg-surface-solid shadow-[0_40px_90px_-30px_rgba(15,16,32,0.55)]"
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.98 }}
@@ -296,7 +297,7 @@ function ProductModal({
           type="button"
           onClick={onClose}
           aria-label="Fechar"
-          className="absolute right-3 top-3 z-20 grid size-9 cursor-pointer place-items-center rounded-full bg-white/90 text-[#0f1020] ring-1 ring-black/10 transition hover:bg-[#f1f2f7] focus-visible:outline-2 focus-visible:outline-[#4c5cf5]"
+          className="absolute right-3 top-3 z-20 grid size-9 cursor-pointer place-items-center rounded-full bg-surface-solid/90 text-foreground ring-1 ring-line-strong transition hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-accent"
         >
           <X className="size-4" strokeWidth={2.2} aria-hidden />
         </button>
@@ -309,23 +310,23 @@ function ProductModal({
           {...fade}
           className="relative px-6 pb-7 pt-6 sm:px-8 md:max-h-[calc(100dvh-3rem)] md:overflow-y-auto md:pt-10"
         >
-          <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#4c5cf5]">{celular.marca}</div>
-          <h2 className="mt-1 pr-8 text-[clamp(26px,3.4vw,36px)] font-semibold leading-[1.08] tracking-[-0.022em] text-[#0f1020]">
+          <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-accent-on-dark">{celular.marca}</div>
+          <h2 className="mt-1 pr-8 text-[clamp(26px,3.4vw,36px)] font-semibold leading-[1.08] tracking-[-0.022em] text-foreground">
             {celular.modelo}
           </h2>
-          <div className="mt-3 text-[22px] font-semibold tabular-nums tracking-tight text-[#0f1020]">
+          <div className="mt-3 text-[22px] font-semibold tabular-nums tracking-tight text-foreground">
             {celular.preco > 0 ? formatPrice(celular.preco) : "Preço não informado"}
           </div>
           {celular.descricao && (
-            <p className="mt-3 text-[15px] leading-[1.55] text-[#0f1020]/75">{celular.descricao}</p>
+            <p className="mt-3 text-[15px] leading-[1.55] text-foreground/75">{celular.descricao}</p>
           )}
 
           {specs.length > 0 && (
-            <dl className="mt-5 grid gap-x-4 gap-y-1 rounded-2xl bg-[#f6f7fb] p-4 text-[13px] sm:grid-cols-[110px_minmax(0,1fr)] sm:gap-y-2.5">
+            <dl className="mt-5 grid gap-x-4 gap-y-1 rounded-2xl bg-surface-soft p-4 text-[13px] sm:grid-cols-[110px_minmax(0,1fr)] sm:gap-y-2.5">
               {specs.map(([campo, rotulo]) => (
                 <div key={campo} className="contents">
-                  <dt className="text-[#8a8ea3]">{rotulo}</dt>
-                  <dd className="mb-2 break-words text-[#0f1020] sm:mb-0">{especificacoes?.[campo]}</dd>
+                  <dt className="text-subtle">{rotulo}</dt>
+                  <dd className="mb-2 break-words text-foreground sm:mb-0">{especificacoes?.[campo]}</dd>
                 </div>
               ))}
             </dl>
@@ -333,8 +334,8 @@ function ProductModal({
 
           {celular.dataCriacao && (
             <dl className="mt-4 flex items-baseline gap-1.5 text-[13px]">
-              <dt className="text-[#8a8ea3]">Cadastrado em</dt>
-              <dd className="font-medium tabular-nums text-[#5f6378]">
+              <dt className="text-subtle">Cadastrado em</dt>
+              <dd className="font-medium tabular-nums text-muted">
                 {new Date(celular.dataCriacao).toLocaleDateString("pt-BR")}
               </dd>
             </dl>

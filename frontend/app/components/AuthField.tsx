@@ -1,36 +1,47 @@
 "use client";
 
 import { useState, type ComponentProps, type ReactNode } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 type AuthFieldProps = ComponentProps<"input"> & {
   id: string;
   label: string;
   icon: ReactNode;
   error?: string;
+  /** Texto de ajuda fixo abaixo do campo (some quando há erro). */
+  hint?: string;
 };
 
-export function AuthField({ id, label, icon, error, type, ...props }: AuthFieldProps) {
+export function AuthField({ id, label, icon, error, hint, type, ...props }: AuthFieldProps) {
   const [visible, setVisible] = useState(false);
   const isPassword = type === "password";
   const errorId = `${id}-erro`;
+  const hintId = `${id}-dica`;
+  const describedBy = error ? errorId : hint ? hintId : undefined;
 
   return (
-    <div className="space-y-1.5">
-      <label htmlFor={id} className="text-[13px] font-semibold text-[#0f1020]">
+    <div className="auth-field">
+      <label htmlFor={id} className="text-label font-medium text-foreground">
         {label}
       </label>
       <div className="relative">
-        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#8a8ea3] [&_svg]:size-[18px]" aria-hidden>
+        <span
+          className={cn(
+            "pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 [&_svg]:size-[17px]",
+            error ? "text-error" : "text-subtle",
+          )}
+          aria-hidden
+        >
           {icon}
         </span>
         <Input
           id={id}
           type={isPassword && visible ? "text" : type}
           aria-invalid={error ? true : undefined}
-          aria-describedby={error ? errorId : undefined}
-          className={isPassword ? "pl-11 pr-12" : "pl-11"}
+          aria-describedby={describedBy}
+          className={isPassword ? "pl-10 pr-11" : "pl-10"}
           {...props}
         />
         {isPassword && (
@@ -39,16 +50,24 @@ export function AuthField({ id, label, icon, error, type, ...props }: AuthFieldP
             onClick={() => setVisible((v) => !v)}
             aria-label={visible ? "Ocultar senha" : "Mostrar senha"}
             aria-pressed={visible}
-            className="absolute right-1.5 top-1/2 grid size-9 -translate-y-1/2 cursor-pointer place-items-center rounded-lg text-[#5f6378] hover:bg-black/5 hover:text-[#0f1020]"
+            aria-controls={id}
+            className="absolute right-1 top-1/2 grid size-9 -translate-y-1/2 cursor-pointer place-items-center rounded-[8px] text-subtle transition-colors hover:bg-surface-soft hover:text-foreground focus-visible:outline-2 focus-visible:outline-accent"
           >
-            {visible ? <EyeOff className="size-[18px]" /> : <Eye className="size-[18px]" />}
+            {visible ? <EyeOff className="size-[17px]" aria-hidden /> : <Eye className="size-[17px]" aria-hidden />}
           </button>
         )}
       </div>
-      {error && (
-        <p id={errorId} className="text-[13px] text-[#c2392f]">
+      {error ? (
+        <p id={errorId} className="flex items-start gap-1.5 text-label text-error">
+          <AlertCircle className="mt-px size-3.5 shrink-0" aria-hidden />
           {error}
         </p>
+      ) : (
+        hint && (
+          <p id={hintId} className="text-label text-muted">
+            {hint}
+          </p>
+        )
       )}
     </div>
   );
@@ -56,8 +75,12 @@ export function AuthField({ id, label, icon, error, type, ...props }: AuthFieldP
 
 export function FormAlert({ children }: { children: ReactNode }) {
   return (
-    <div role="alert" className="rounded-xl border border-[#f3cfcb] bg-[#fff6f5] px-4 py-3 text-sm text-[#a3322a]">
-      {children}
+    <div
+      role="alert"
+      className="flex items-start gap-2.5 rounded-control border border-error-line bg-error-soft px-3.5 py-3 text-label text-error"
+    >
+      <AlertCircle className="mt-px size-4 shrink-0" aria-hidden />
+      <span>{children}</span>
     </div>
   );
 }

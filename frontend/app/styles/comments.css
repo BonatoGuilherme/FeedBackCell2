@@ -1,0 +1,498 @@
+/* Comentários: app/comments/page.tsx */
+
+.comments-page .back-link {
+  margin-bottom: var(--space-5);
+}
+
+/* ---------- sem celular escolhido ---------- */
+
+.comments-start {
+  display: grid;
+  max-width: 520px;
+  justify-items: center;
+  margin: var(--space-12) auto 0;
+  padding: var(--space-10) var(--space-8);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+
+.comments-start__icon,
+.comments-empty__icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: var(--radius-card);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.comments-start h1 {
+  margin: var(--space-4) 0 0;
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.02em;
+}
+
+.comments-start > p {
+  max-width: 40ch;
+  margin: var(--space-2) 0 var(--space-6);
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.comments-start .form-alert {
+  width: 100%;
+}
+
+.comments-start .comments-lookup {
+  width: 100%;
+  text-align: left;
+}
+
+/* ---------- busca por ID ---------- */
+
+.comments-lookup {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.comments-lookup label {
+  color: var(--foreground);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-medium);
+}
+
+.comments-lookup__row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.comments-lookup .search-field {
+  width: auto;
+  min-height: 40px;
+  flex: 1;
+}
+
+/* esconde as setas do input numérico */
+.comments-lookup input[type="number"] { appearance: textfield; }
+.comments-lookup input::-webkit-inner-spin-button,
+.comments-lookup input::-webkit-outer-spin-button { margin: 0; appearance: none; }
+
+/* ---------- cabeçalho com o celular ---------- */
+
+.comments-hero {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-8);
+  border-bottom: 1px solid var(--line);
+}
+
+.comments-hero__media {
+  display: grid;
+  width: 88px;
+  height: 88px;
+  flex: none;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  color: var(--subtle);
+}
+
+.comments-hero__media img {
+  width: 100%;
+  height: 100%;
+  padding: var(--space-2);
+  object-fit: contain;
+}
+
+.comments-hero__info {
+  min-width: 0;
+  flex: 1;
+}
+
+.comments-hero__info .eyebrow {
+  margin-bottom: var(--space-1);
+}
+
+.comments-hero h1 {
+  margin: 0;
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+}
+
+.comments-hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.comments-hero__meta span {
+  font-variant-numeric: tabular-nums;
+}
+
+.comments-hero__meta span + span::before {
+  margin-right: var(--space-2);
+  color: var(--line-strong);
+  content: "·";
+}
+
+.comments-hero__meta:empty {
+  display: none;
+}
+
+/* ---------- layout ---------- */
+
+.comments-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  align-items: start;
+  gap: var(--space-10);
+}
+
+.comments-main {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.comments-aside {
+  position: sticky;
+  top: calc(var(--header-height) + var(--space-6));
+  display: grid;
+  gap: var(--space-4);
+}
+
+.comments-aside__card {
+  padding: var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+
+.comments-aside__card h2 {
+  margin: 0 0 var(--space-3);
+  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.comments-aside__card ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-4);
+  color: var(--muted);
+  list-style: disc;
+  font-size: var(--font-size-label);
+  line-height: 1.55;
+}
+
+/* ---------- novo comentário ---------- */
+
+/* usa .form-field (forms.css) para label e textarea; aqui só o cartão e o rodapé */
+.comment-composer.form-field {
+  margin-bottom: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.comment-composer textarea {
+  min-height: 112px;
+  font-size: var(--font-size-body);
+  line-height: 1.6;
+}
+
+.comment-composer textarea[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 3px rgb(236 138 108 / 22%);
+}
+
+.comment-composer__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-1);
+}
+
+.comment-composer__hint {
+  flex: 1;
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--font-size-caption);
+}
+
+.comment-composer__hint.is-error {
+  color: var(--error);
+  font-weight: var(--font-weight-medium);
+}
+
+.comment-composer__count {
+  color: var(--muted);
+  font-size: var(--font-size-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.comment-composer__count.is-warning {
+  color: var(--error);
+}
+
+/* ---------- erro ---------- */
+
+.comments-alert {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--error-line);
+  border-radius: var(--radius-control);
+  background: var(--error-soft);
+  color: var(--error);
+}
+
+.comments-alert svg {
+  flex: none;
+}
+
+.comments-alert p {
+  flex: 1;
+  margin: 0;
+  font-size: var(--font-size-label);
+  line-height: 1.5;
+}
+
+/* ---------- lista ---------- */
+
+.comment-list {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  list-style: none;
+}
+
+.comment-item {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-5);
+}
+
+.comment-item + .comment-item {
+  border-top: 1px solid var(--line);
+}
+
+.comment-item__avatar {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.comment-item__body {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: var(--space-1);
+}
+
+.comment-item__header {
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.comment-item__header strong {
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comment-item__header time {
+  color: var(--muted);
+  font-size: var(--font-size-caption);
+  white-space: nowrap;
+}
+
+.comment-item__header time::before {
+  margin-right: var(--space-2);
+  color: var(--line-strong);
+  content: "·";
+}
+
+.comment-item__delete {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  margin: -4px -6px -4px auto;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--subtle);
+  cursor: pointer;
+  transition: background-color var(--duration) var(--ease), color var(--duration) var(--ease);
+}
+
+.comment-item__delete:hover {
+  background: var(--error-soft);
+  color: var(--error);
+}
+
+.comment-item__body > p {
+  max-width: 70ch;
+  margin: 0;
+  color: var(--foreground);
+  font-size: var(--font-size-body);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+/* ---------- carregando ---------- */
+
+.skeleton {
+  display: block;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--surface-soft) 0%, rgb(239 227 204 / 12%) 50%, var(--surface-soft) 100%);
+  background-size: 200% 100%;
+  animation: comments-shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton--avatar {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 50%;
+}
+
+.skeleton--line {
+  height: 12px;
+  margin: 4px 0;
+}
+
+@keyframes comments-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+/* ---------- vazio ---------- */
+
+.comments-empty {
+  display: grid;
+  justify-items: center;
+  padding: var(--space-12) var(--space-6);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-card);
+  text-align: center;
+}
+
+.comments-empty h3 {
+  margin: var(--space-4) 0 0;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+}
+
+.comments-empty p {
+  max-width: 46ch;
+  margin: var(--space-1) 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* ---------- responsivo ---------- */
+
+@media (max-width: 1024px) {
+  .comments-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+  }
+
+  .comments-aside {
+    position: static;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .comments-start {
+    margin-top: var(--space-6);
+    padding: var(--space-8) var(--space-5);
+  }
+
+  .comments-hero {
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-6);
+  }
+
+  .comments-hero__media {
+    width: 64px;
+    height: 64px;
+  }
+
+  .comments-hero__action {
+    width: 100%;
+  }
+
+  .comments-aside {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .comment-composer.form-field {
+    padding: var(--space-4);
+  }
+
+  .comment-composer__footer {
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .comment-composer__footer .button {
+    width: 100%;
+  }
+
+  .comment-item {
+    padding: var(--space-4);
+  }
+
+  .comments-alert {
+    flex-wrap: wrap;
+  }
+
+  .comments-alert p {
+    flex-basis: calc(100% - 30px);
+  }
+
+  .comments-alert .button {
+    margin-left: 30px;
+  }
+}

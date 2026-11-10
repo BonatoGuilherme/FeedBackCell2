@@ -1,0 +1,356 @@
+/*
+ * Base compartilhada: reset, layout, cards e botões.
+ * Campos ficam em forms.css e o cabeçalho em navigation.css.
+ * Os tokens ficam em app/globals.css.
+ */
+
+/* resets na camada base para não sobrescrever as classes do Tailwind */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    min-height: 100%;
+    background: var(--background);
+    /*
+     * Reserva sempre o espaço da barra de rolagem: ao abrir o modal do celular ou o
+     * menu (overflow: hidden no body), a barra some e a página "pulava" para o lado.
+     */
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    min-height: 100vh;
+    margin: 0;
+    overflow-x: hidden;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-body);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button {
+    color: inherit;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  ::selection {
+    background: rgb(201 151 63 / 32%);
+    color: var(--foreground);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- layout ---------- */
+
+.main-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 100vh;
+  padding: calc(var(--header-height) + var(--space-8)) var(--gutter) var(--space-10)
+    calc(var(--sidebar-width) + var(--gutter));
+}
+
+.page-shell {
+  width: min(100%, var(--content-width));
+  margin: 0 auto;
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-2);
+  color: var(--muted);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.4;
+}
+
+.page-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+}
+
+.page-heading h1 {
+  margin: 0;
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: calc(var(--font-size-h1) * 1.2);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+}
+
+.page-heading__description {
+  max-width: 600px;
+  margin: var(--space-2) 0 0;
+  color: var(--muted);
+  font-size: var(--font-size-body);
+  line-height: 1.6;
+}
+
+.section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+.section-heading .eyebrow {
+  margin-bottom: var(--space-1);
+}
+
+.section-heading h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: calc(var(--font-size-h2) * 1.25);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.3;
+}
+
+.section-heading__meta {
+  margin: 0 0 2px;
+  color: var(--muted);
+  font-size: var(--font-size-label);
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-4);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-medium);
+  transition: color var(--duration) var(--ease);
+}
+
+.back-link:hover {
+  color: var(--foreground);
+}
+
+/* ---------- cards ---------- */
+
+.card {
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius-card);
+  background: var(--glass-highlight), var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.card--padded {
+  padding: var(--space-6);
+}
+
+.card--interactive {
+  transition: border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
+}
+
+.card--interactive:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-md);
+}
+
+/* ---------- botões ---------- */
+
+.button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.2;
+  white-space: nowrap;
+  transition:
+    background-color var(--duration) var(--ease),
+    border-color var(--duration) var(--ease),
+    color var(--duration) var(--ease),
+    box-shadow var(--duration) var(--ease);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.button--sm {
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  font-size: var(--font-size-label);
+}
+
+.button--primary {
+  background: linear-gradient(180deg, var(--accent-hover), var(--accent));
+  box-shadow:
+    inset 0 1px 0 rgb(255 240 210 / 35%),
+    0 6px 20px -6px rgb(201 151 63 / 60%);
+  color: var(--on-accent);
+  font-weight: var(--font-weight-semibold);
+}
+
+.button--primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #e8c27c, var(--accent-hover));
+  box-shadow:
+    inset 0 1px 0 rgb(255 240 210 / 45%),
+    0 8px 28px -6px rgb(201 151 63 / 75%);
+}
+
+.button--secondary {
+  border-color: var(--line-strong);
+  background: var(--surface-soft);
+  box-shadow: var(--shadow-sm);
+  color: var(--foreground);
+}
+
+.button--secondary:hover:not(:disabled) {
+  border-color: var(--line-strong);
+  background: var(--surface-hover);
+}
+
+.button--text {
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+}
+
+.button--text:hover:not(:disabled) {
+  background: var(--surface-soft);
+  color: var(--foreground);
+}
+
+.button-spinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgb(26 18 9 / 30%);
+  border-top-color: var(--on-accent);
+  border-radius: 50%;
+  animation: spin 750ms linear infinite;
+}
+
+/* telas de toque: alvo mínimo de 44 px */
+@media (pointer: coarse) {
+  .button {
+    min-height: 44px;
+  }
+}
+
+/* Fundo desfocado de modal. Precisa estar no próprio elemento fixed: num
+   filho de um contêiner fixed com z-index o Chrome não desfoca a página. */
+.modal-backdrop {
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  backdrop-filter: blur(12px) saturate(120%);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- responsivo ---------- */
+
+@media (max-width: 860px) {
+  .main-content {
+    padding: calc(var(--header-height) + var(--space-8)) var(--gutter)
+      calc(var(--tabbar-height) + var(--space-12));
+  }
+}
+
+@media (max-width: 600px) {
+  .main-content {
+    padding: calc(var(--header-height) + var(--space-6)) var(--space-4)
+      calc(var(--tabbar-height) + var(--space-10));
+  }
+
+  .page-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+
+  .page-heading__description {
+    font-size: 14px;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+  }
+
+  .section-heading h2 {
+    font-size: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -14,10 +14,9 @@ export default function RegisterPage() {
     <AuthPageShell
       mode="register"
       title="Criar sua conta"
-      subtitle="Leva menos de um minuto."
-      securityText="Seus dados são processados com segurança"
+      subtitle="Com uma conta você avalia celulares e cadastra novos modelos."
     >
-      <form className="space-y-4" onSubmit={handleRegister} noValidate>
+      <form className="space-y-5" onSubmit={handleRegister} noValidate>
         {erro && <FormAlert>{erro}</FormAlert>}
 
         <AuthField
@@ -25,7 +24,7 @@ export default function RegisterPage() {
           label="Nome completo"
           autoComplete="name"
           required
-          placeholder="João Silva"
+          placeholder="Maria Souza"
           icon={<User />}
           value={nome}
           error={nome && !validations.nome ? "Mínimo de 3 caracteres" : undefined}
@@ -57,7 +56,7 @@ export default function RegisterPage() {
           type="password"
           autoComplete="new-password"
           required
-          placeholder="Mínimo de 6 caracteres"
+          hint="Use pelo menos 6 caracteres."
           icon={<Lock />}
           value={senha}
           error={senha && !validations.senha ? "Mínimo de 6 caracteres" : undefined}
@@ -70,7 +69,8 @@ export default function RegisterPage() {
         <Button
           type="submit"
           size="lg"
-          className="mt-2 w-full"
+          className="mt-1 w-full"
+          aria-busy={loading || undefined}
           disabled={loading || !validations.nome || !validations.email || !validations.senha}
         >
           {loading && <Loader2 className="size-4 animate-spin" aria-hidden />}

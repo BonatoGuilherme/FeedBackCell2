@@ -63,7 +63,7 @@ export function licencaCreativeCommons(texto: string): LicencaCreativeCommons | 
 }
 
 const LINK_CREDITO =
-  "rounded-sm text-[#5f6378] underline decoration-[#5f6378]/40 underline-offset-2 transition hover:text-[#0f1020] hover:decoration-current focus-visible:outline-2 focus-visible:outline-[#4c5cf5]";
+  "rounded-sm text-muted underline decoration-muted/40 underline-offset-2 transition hover:text-foreground hover:decoration-current focus-visible:outline-2 focus-visible:outline-accent";
 
 function LinkExterno({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -108,11 +108,21 @@ export function PhonePhoto({
   };
 
   return (
-    <div className="relative flex flex-col items-center gap-4 rounded-t-[24px] bg-[radial-gradient(90%_70%_at_50%_20%,#eef0ff,#f4f5f9_70%)] px-4 pb-5 pt-12 sm:px-6 md:max-h-[calc(100dvh-3rem)] md:justify-center md:overflow-y-auto md:rounded-l-[24px] md:rounded-tr-none md:py-10">
-      {modo === "3d" && modelo3d ? (
-        <motion.div
-          {...fade}
-          className={cn("aspect-[4/5] w-full max-w-[460px] overflow-hidden rounded-2xl bg-[#e9ebf3]", ALTURA_MIDIA)}
+    <div className="relative flex flex-col items-center gap-4 rounded-t-[24px] bg-[radial-gradient(90%_70%_at_50%_20%,rgba(201,151,63,0.16),transparent_70%)] px-4 pb-5 pt-12 sm:px-6 md:max-h-[calc(100dvh-3rem)] md:justify-center md:overflow-y-auto md:rounded-l-[24px] md:rounded-tr-none md:py-10">
+      {/*
+        O modelo 3D começa a carregar assim que o modal abre, escondido fora da
+        tela; ao clicar em "Ver em 3D" o mesmo iframe só aparece (sem recarregar).
+      */}
+      {modelo3d && (
+        <div
+          aria-hidden={modo !== "3d"}
+          className={cn(
+            "aspect-[4/5] w-full max-w-[460px] overflow-hidden rounded-2xl bg-surface-soft transition-opacity duration-300",
+            ALTURA_MIDIA,
+            modo === "3d"
+              ? "relative opacity-100"
+              : "pointer-events-none fixed left-[-200vw] top-0 h-[520px] w-[460px] opacity-0",
+          )}
         >
           <iframe
             title={`${celular.marca} ${celular.modelo} em 3D`}
@@ -120,16 +130,18 @@ export function PhonePhoto({
             allow="autoplay; fullscreen; xr-spatial-tracking"
             allowFullScreen
             referrerPolicy="strict-origin-when-cross-origin"
+            tabIndex={modo === "3d" ? 0 : -1}
             className="size-full border-0"
           />
-        </motion.div>
-      ) : atual ? (
+        </div>
+      )}
+      {modo === "3d" && modelo3d ? null : atual ? (
         // foto real: inteira (object-contain), num quadro retangular neutro que segue a
         // proporção da imagem — larga ocupa a largura; alta para na altura máxima
         <motion.div
           layoutId={`phone-${celular.idcelular}`}
           transition={SPRING}
-          className="relative flex min-h-40 w-full items-center justify-center overflow-hidden rounded-2xl bg-white shadow-[0_18px_40px_-22px_rgba(15,16,32,0.4)] ring-1 ring-black/[0.06]"
+          className="relative flex min-h-40 w-full items-center justify-center overflow-hidden rounded-2xl bg-surface-solid shadow-[0_18px_40px_-22px_rgba(15,16,32,0.4)] ring-1 ring-line"
         >
           {/* eslint-disable-next-line @next/next/no-img-element -- imagem servida pela API */}
           <img
@@ -152,7 +164,7 @@ export function PhonePhoto({
 
       <motion.div {...fade} className="flex w-full flex-col items-center gap-3">
         {modelo3d && (
-          <div className="inline-flex rounded-full bg-white p-1 ring-1 ring-black/[0.06]" role="group" aria-label="Visualização">
+          <div className="inline-flex rounded-full bg-surface-solid p-1 ring-1 ring-line" role="group" aria-label="Visualização">
             <ModoButton ativo={modo === "fotos"} onClick={() => setModo("fotos")}>
               <Images className="size-4" aria-hidden /> Fotos
             </ModoButton>
@@ -171,8 +183,8 @@ export function PhonePhoto({
                   aria-label={`Mostrar foto ${i + 1}`}
                   aria-pressed={i === foto}
                   className={cn(
-                    "size-14 cursor-pointer overflow-hidden rounded-xl bg-white ring-2 ring-offset-2 ring-offset-[#f4f5f9] transition",
-                    i === foto ? "ring-[#4c5cf5]" : "ring-transparent opacity-70 hover:opacity-100",
+                    "size-14 cursor-pointer overflow-hidden rounded-xl bg-surface-solid ring-2 ring-offset-2 ring-offset-surface-solid transition",
+                    i === foto ? "ring-accent" : "ring-transparent opacity-70 hover:opacity-100",
                   )}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element -- imagem servida pela API */}
@@ -183,11 +195,11 @@ export function PhonePhoto({
           </ul>
         )}
         {modo === "fotos" && imagens.length === 0 && (
-          <p className="text-sm text-[#8a8ea3]">Este aparelho ainda não tem fotos.</p>
+          <p className="text-sm text-subtle">Este aparelho ainda não tem fotos.</p>
         )}
         {/* a primeira foto é a da busca; a licença do Wikimedia exige o crédito e o link da licença */}
         {modo === "fotos" && foto === 0 && especificacoes?.creditoImagem && (
-          <p className="max-w-[420px] text-center text-[11px] leading-snug text-[#8a8ea3]">
+          <p className="max-w-[420px] text-center text-[11px] leading-snug text-subtle">
             <CreditoFoto texto={especificacoes.creditoImagem} url={especificacoes.creditoImagemUrl} />
           </p>
         )}
@@ -204,7 +216,7 @@ function ModoButton({ ativo, onClick, children }: { ativo: boolean; onClick: () 
       aria-pressed={ativo}
       className={cn(
         "inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition",
-        ativo ? "bg-[#0b0b10] text-white" : "text-[#5f6378] hover:text-[#0f1020]",
+        ativo ? "bg-accent text-on-accent" : "text-muted hover:text-foreground",
       )}
     >
       {children}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useSyncExternalStore } from "react";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import Navigation from "./Navigation";
 import {
@@ -33,11 +34,19 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
   if (hasSession !== true) {
     return (
-      <main className="app-loading-screen" role="status">
-        <span className="app-loading-screen__mark" aria-hidden="true">
-          F
-        </span>
-        <span>Verificando sessão…</span>
+      <main className="app-loading-screen">
+        <div className="app-loading-screen__card" role="status" aria-live="polite">
+          <span className="app-loading-screen__mark" aria-hidden="true">
+            <Image src="/brand-mark.svg" alt="" width={44} height={44} unoptimized priority />
+          </span>
+          <span className="app-loading-screen__name" aria-hidden="true">
+            FeedBack<span>CELL</span>
+          </span>
+          <span className="app-loading-screen__status">
+            <span className="app-loading-screen__spinner" aria-hidden="true" />
+            Verificando sua sessão…
+          </span>
+        </div>
       </main>
     );
   }

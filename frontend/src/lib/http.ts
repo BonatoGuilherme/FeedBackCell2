@@ -79,6 +79,16 @@ export async function apiFetch(caminho: string, { token, body, ...init }: Opcoes
   }
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const response = await fetch(`${API_BASE_URL}${caminho}`, { ...init, headers, body: corpo });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${caminho}`, { ...init, headers, body: corpo });
+  } catch (erro) {
+    // cancelamento (AbortController) segue como está; falha de rede vira mensagem em português
+    // no lugar do "Failed to fetch" / "NetworkError" cru do navegador
+    if (erro instanceof DOMException && erro.name === "AbortError") throw erro;
+    throw new Error("Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.", {
+      cause: erro,
+    });
+  }
   return readResponse(response, Boolean(token));
 }

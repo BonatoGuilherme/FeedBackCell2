@@ -11,8 +11,8 @@ export default function LoginPage() {
     useLogin();
 
   return (
-    <AuthPageShell mode="login" title="Entrar na sua conta" subtitle="Use seu e-mail e senha para continuar.">
-      <form className="space-y-4" onSubmit={handleLogin} noValidate>
+    <AuthPageShell mode="login" title="Entrar na sua conta" subtitle="Use seu e-mail e senha para acessar o catálogo.">
+      <form className="space-y-5" onSubmit={handleLogin} noValidate>
         {erro && <FormAlert>{erro}</FormAlert>}
 
         <AuthField
@@ -38,15 +38,14 @@ export default function LoginPage() {
           type="password"
           autoComplete="current-password"
           required
-          placeholder="••••••••"
-          icon={<Lock />}
+                    icon={<Lock />}
           value={senha}
           onChange={(e) => setSenha(e.target.value)}
         />
 
-        <Button type="submit" size="lg" className="mt-2 w-full" disabled={loading}>
+        <Button type="submit" size="lg" className="mt-1 w-full" disabled={loading} aria-busy={loading || undefined}>
           {loading && <Loader2 className="size-4 animate-spin" aria-hidden />}
-          {loading ? "Conectando…" : "Entrar"}
+          {loading ? "Entrando…" : "Entrar"}
         </Button>
       </form>
     </AuthPageShell>
