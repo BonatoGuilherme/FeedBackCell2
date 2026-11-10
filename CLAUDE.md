@@ -1,20 +1,20 @@
-# Ruflo — Claude Code Configuration
+# Ruflo — Configuração do Claude Code
 
-## Rules
+## Regras
 
-- Do what has been asked; nothing more, nothing less
-- NEVER create files unless absolutely necessary — prefer editing existing files
-- NEVER create documentation files unless explicitly requested
-- NEVER save working files or tests to root — use `/src`, `/tests`, `/docs`, `/config`, `/scripts`
-- ALWAYS read a file before editing it
-- NEVER commit secrets, credentials, or .env files
-- NEVER add a `Co-Authored-By` trailer to user commits unless this project's `.claude/settings.json` has `attribution.commit` set (#2078). The Claude Code Bash tool may suggest one in its default commit-message template — ignore it. `Co-Authored-By` is semantic authorship attribution under git/GitHub convention; the tool is the facilitator, not a co-author.
-- Keep files under 500 lines
-- Validate input at system boundaries
+- Faça o que foi pedido; nada a mais, nada a menos
+- NUNCA crie arquivos sem necessidade real — prefira editar os que já existem
+- NUNCA crie arquivos de documentação sem pedido explícito
+- NUNCA salve arquivos de trabalho ou testes na raiz — use `/src`, `/tests`, `/docs`, `/config`, `/scripts`
+- SEMPRE leia um arquivo antes de editá-lo
+- NUNCA commite segredos, credenciais ou arquivos `.env`
+- NUNCA adicione o trailer `Co-Authored-By` nos commits do usuário, a menos que o `.claude/settings.json` deste projeto tenha `attribution.commit` definido (#2078). O modelo padrão de mensagem de commit da ferramenta Bash do Claude Code pode sugerir esse trailer — ignore. Pela convenção do git/GitHub, `Co-Authored-By` indica autoria; a ferramenta é quem facilita, não coautora.
+- Mantenha os arquivos com menos de 500 linhas
+- Valide entradas nas fronteiras do sistema
 
 ## Front-end / UI
 
-- Em qualquer tarefa de UI no `frontend/` (criar, refazer ou reestilizar telas, componentes, layout, cores, tipografia, animações), carregar a skill `ui-ux-pro-max` antes de editar. Não precisa esperar o usuário digitar `/ui-ux-pro-max`.
+- Em qualquer tarefa de UI no `front  end/` (criar, refazer ou reestilizar telas, componentes, layout, cores, tipografia, animações), carregar a skill `ui-ux-pro-max` antes de editar. Não precisa esperar o usuário digitar `/ui-ux-pro-max`.
 - Usar só a `ui-ux-pro-max` como skill de design principal. Não misturar com `design-taste-frontend`, `ui-styling` ou `design-system`, a menos que o usuário peça.
 - Seguir o tema visual Renascença já existente (`frontend/app/styles/renaissance.css`, tokens em `globals.css`). Nada de introduzir um estilo novo sem pedido.
 - Ajustes triviais (um padding, um texto, um bug de lógica) não precisam da skill.
@@ -39,213 +39,217 @@ Pode haver mais de uma sessão do Claude trabalhando neste repositório ao mesmo
 - Antes de abrir PR, veja se já existe PR ou branch para a mesma coisa (outra sessão pode ter feito) para não duplicar trabalho.
 - Cada worktree tem as próprias dependências (`pnpm install` em `frontend/`). O `docker compose` usa portas da máquina: só um worktree por vez sobe a stack; combine com o usuário antes de subir ou derrubar containers.
 
-## Ruflo Capability Brain & Implementation Loop
+## Cérebro de capacidades do Ruflo e ciclo de implementação
 
-Ruflo is the coordination ledger and policy decision point. Claude Code is the
-executor: after a Ruflo coordination call, continue implementing the task.
+O Ruflo é o registro de coordenação e o ponto de decisão de políticas. O Claude
+Code é o executor: depois de uma chamada de coordenação ao Ruflo, continue
+implementando a tarefa.
 
-When it is registered, call
-`guidance_brain({ mode: "recommend", task: "..." })` before complex Ruflo
-work. Use its live registry instead of guessing tool names. Treat
-`registered`, `configured`, `reachable`, `healthy`, and `authorized`
-as separate facts. If the brain is unavailable, continue with the compatible
-`guidance_recommend` tool, CLI discovery, and repository instructions.
+Quando estiver registrado, chame
+`guidance_brain({ mode: "recommend", task: "..." })` antes de trabalhos
+complexos com o Ruflo. Use o registro ao vivo dele em vez de adivinhar nomes de
+ferramentas. Trate `registered`, `configured`, `reachable`, `healthy` e
+`authorized` como fatos separados. Se o cérebro não estiver disponível, siga
+com a ferramenta compatível `guidance_recommend`, a descoberta via CLI e as
+instruções do repositório.
 
-Follow the returned loop:
+Siga o ciclo retornado:
 
-1. Recall memory and ADR constraints.
-2. Inspect source, runtime, dependencies, policy, and health.
-3. Route to the smallest capable topology, agents, skills, and tools.
-4. Plan acceptance criteria, safety envelope, ownership, and validation.
-5. Execute in isolated scopes; the coding agent performs the work.
-6. Test focused, regression, and failure paths.
-7. Validate types, security, policy, compatibility, and artifacts.
-8. Benchmark a source-bound candidate against a source-bound baseline.
-9. Optimize measured bottlenecks without weakening safety.
-10. Bind claims and evidence to exact source/build receipts.
-11. Reconcile concurrent handoffs and disclose limitations.
-12. Publish only through a separately authorized release gate.
+1. Recuperar memória e restrições de ADRs.
+2. Inspecionar código-fonte, runtime, dependências, políticas e saúde.
+3. Rotear para a menor topologia, agentes, skills e ferramentas capazes.
+4. Planejar critérios de aceite, envelope de segurança, responsáveis e validação.
+5. Executar em escopos isolados; o agente de código faz o trabalho.
+6. Testar o caminho focado, a regressão e os caminhos de falha.
+7. Validar tipos, segurança, políticas, compatibilidade e artefatos.
+8. Comparar um candidato atrelado ao código com uma base atrelada ao código.
+9. Otimizar gargalos medidos sem enfraquecer a segurança.
+10. Atrelar afirmações e evidências a recibos exatos de código/build.
+11. Reconciliar entregas concorrentes e declarar limitações.
+12. Publicar só por um portão de release autorizado separadamente.
 
-### Concurrency and authority
+### Concorrência e autoridade
 
-- Never allow two writers in one worktree; give each writing agent an isolated
-  worktree and explicit file ownership.
-- Read-only research may run concurrently and report findings to the owner.
-- Only the integration owner edits shared manifests and lockfiles or reconciles
-  overlapping changes.
-- A child may drop capabilities but cannot add tools, network, secrets, spend,
-  concurrency, namespaces, or delegation depth.
-- A lease or claim coordinates ownership; it does not authorize a side effect.
-- Darwin, Flywheel, MetaHarness, memory, and neural systems may propose or
-  evaluate candidates but cannot self-promote or expand their SafetyEnvelope.
-- Bind tests, benchmarks, policy decisions, and release evidence to an exact
-  commit or immutable dirty-worktree snapshot.
+- Nunca permita dois escritores no mesmo worktree; dê a cada agente que escreve
+  um worktree isolado e posse explícita dos arquivos.
+- Pesquisa só de leitura pode rodar em paralelo e reportar ao responsável.
+- Só o responsável pela integração edita manifestos e lockfiles compartilhados
+  ou reconcilia mudanças sobrepostas.
+- Um filho pode abrir mão de capacidades, mas não pode adicionar ferramentas,
+  rede, segredos, gastos, concorrência, namespaces nem profundidade de delegação.
+- Um lease ou claim coordena a posse; ele não autoriza um efeito colateral.
+- Darwin, Flywheel, MetaHarness, memória e sistemas neurais podem propor ou
+  avaliar candidatos, mas não podem se autopromover nem ampliar o próprio
+  SafetyEnvelope.
+- Atrele testes, benchmarks, decisões de política e evidências de release a um
+  commit exato ou a um snapshot imutável do worktree sujo.
 
-## Agent Comms (SendMessage-First Coordination)
+## Comunicação entre agentes (coordenação via SendMessage)
 
-Named agents coordinate via `SendMessage`, not polling or shared state.
+Agentes nomeados se coordenam por `SendMessage`, não por polling nem estado compartilhado.
 
 ```
-Lead (you) ←→ architect ←→ developer ←→ tester ←→ reviewer
-              (named agents message each other directly)
+Líder (você) ←→ architect ←→ developer ←→ tester ←→ reviewer
+                (agentes nomeados trocam mensagens diretamente)
 ```
 
-### Spawning a Coordinated Team
+### Criando uma equipe coordenada
 
 ```javascript
-// ALL agents in ONE message, each knows WHO to message next
-Agent({ prompt: "Research the codebase. SendMessage findings to 'architect'.",
+// TODOS os agentes em UMA mensagem; cada um sabe para QUEM mandar a próxima
+Agent({ prompt: "Pesquise o código. Mande as descobertas por SendMessage para 'architect'.",
   subagent_type: "researcher", name: "researcher", run_in_background: true })
-Agent({ prompt: "Wait for 'researcher'. Design solution. SendMessage to 'coder'.",
+Agent({ prompt: "Espere o 'researcher'. Desenhe a solução. Mande por SendMessage para 'coder'.",
   subagent_type: "system-architect", name: "architect", run_in_background: true })
-Agent({ prompt: "Wait for 'architect'. Implement it. SendMessage to 'tester'.",
+Agent({ prompt: "Espere o 'architect'. Implemente. Mande por SendMessage para 'tester'.",
   subagent_type: "coder", name: "coder", run_in_background: true })
-Agent({ prompt: "Wait for 'coder'. Write tests. SendMessage results to 'reviewer'.",
+Agent({ prompt: "Espere o 'coder'. Escreva os testes. Mande os resultados para 'reviewer'.",
   subagent_type: "tester", name: "tester", run_in_background: true })
-Agent({ prompt: "Wait for 'tester'. Review code quality and security.",
+Agent({ prompt: "Espere o 'tester'. Revise qualidade e segurança do código.",
   subagent_type: "reviewer", name: "reviewer", run_in_background: true })
 
-// Kick off the pipeline
-SendMessage({ to: "researcher", summary: "Start", message: "[task context]" })
+// Dispara o pipeline
+SendMessage({ to: "researcher", summary: "Início", message: "[contexto da tarefa]" })
 ```
 
-### Patterns
+### Padrões
 
-| Pattern | Flow | Use When |
+| Padrão | Fluxo | Quando usar |
 |---------|------|----------|
-| **Pipeline** | A → B → C → D | Sequential dependencies (feature dev) |
-| **Fan-out** | Lead → A, B, C → Lead | Independent parallel work (research) |
-| **Supervisor** | Lead ↔ workers | Ongoing coordination (complex refactor) |
+| **Pipeline** | A → B → C → D | Dependências sequenciais (desenvolvimento de feature) |
+| **Fan-out** | Líder → A, B, C → Líder | Trabalho paralelo independente (pesquisa) |
+| **Supervisor** | Líder ↔ workers | Coordenação contínua (refatoração complexa) |
 
-### Rules
+### Regras
 
-- ALWAYS name agents — `name: "role"` makes them addressable
-- ALWAYS include comms instructions in prompts — who to message, what to send
-- Spawn ALL agents in ONE message with `run_in_background: true`
-- After spawning, continue independent local work; wait only when a dependency
-  genuinely blocks progress
-- Do not poll repeatedly — agents message back or complete automatically
-- Give every writing agent an isolated worktree and a non-overlapping file scope
+- SEMPRE dê nome aos agentes — `name: "papel"` os torna endereçáveis
+- SEMPRE inclua instruções de comunicação nos prompts — para quem mandar e o quê
+- Crie TODOS os agentes em UMA mensagem com `run_in_background: true`
+- Depois de criar, continue o trabalho local independente; espere só quando uma
+  dependência realmente bloquear o avanço
+- Não fique fazendo polling — os agentes respondem ou terminam sozinhos
+- Dê a cada agente que escreve um worktree isolado e um escopo de arquivos sem sobreposição
 
-## Swarm & Routing
+## Swarm e roteamento
 
-### Config
-- **Topology**: hierarchical-mesh (anti-drift)
-- **Max Agents**: 15
-- **Memory**: hybrid
-- **HNSW**: Enabled
-- **Neural**: Enabled
+### Configuração
+- **Topologia**: hierarchical-mesh (anti-desvio)
+- **Máximo de agentes**: 15
+- **Memória**: híbrida
+- **HNSW**: ativado
+- **Neural**: ativado
 
 ```bash
 npx @claude-flow/cli@latest swarm init --topology hierarchical --max-agents 8 --strategy specialized
 ```
 
-### Agent Routing
+### Roteamento de agentes
 
-| Task | Agents | Topology |
+| Tarefa | Agentes | Topologia |
 |------|--------|----------|
-| Bug Fix | researcher, coder, tester | hierarchical |
+| Correção de bug | researcher, coder, tester | hierarchical |
 | Feature | architect, coder, tester, reviewer | hierarchical |
-| Refactor | architect, coder, reviewer | hierarchical |
+| Refatoração | architect, coder, reviewer | hierarchical |
 | Performance | perf-engineer, coder | hierarchical |
-| Security | security-architect, auditor | hierarchical |
+| Segurança | security-architect, auditor | hierarchical |
 
-### When to Swarm
-- **YES**: 3+ files, new features, cross-module refactoring, API changes, security, performance
-- **NO**: single file edits, 1-2 line fixes, docs updates, config changes, questions
+### Quando usar swarm
+- **SIM**: 3+ arquivos, features novas, refatoração entre módulos, mudanças de API, segurança, performance
+- **NÃO**: edição de um arquivo só, correções de 1-2 linhas, atualização de docs, mudanças de config, perguntas
 
-### 3-Tier Model Routing
+### Roteamento de modelos em 3 níveis
 
-| Tier | Handler | Use Cases |
+| Nível | Executor | Casos de uso |
 |------|---------|-----------|
-| 1 | Agent Booster (WASM) | Simple transforms — skip LLM, use Edit directly |
-| 2 | Haiku | Simple tasks, low complexity |
-| 3 | Sonnet/Opus | Architecture, security, complex reasoning |
+| 1 | Agent Booster (WASM) | Transformações simples — pula o LLM, usa Edit direto |
+| 2 | Haiku | Tarefas simples, baixa complexidade |
+| 3 | Sonnet/Opus | Arquitetura, segurança, raciocínio complexo |
 
-## Memory & Learning
+## Memória e aprendizado
 
-### Before Any Task
+### Antes de qualquer tarefa
 ```bash
-npx @claude-flow/cli@latest memory search --query "[task keywords]" --namespace patterns
-npx @claude-flow/cli@latest hooks route --task "[task description]"
+npx @claude-flow/cli@latest memory search --query "[palavras-chave da tarefa]" --namespace patterns
+npx @claude-flow/cli@latest hooks route --task "[descrição da tarefa]"
 ```
 
-### After Success
+### Depois de um sucesso
 ```bash
-npx @claude-flow/cli@latest memory store --namespace patterns --key "[name]" --value "[what worked]"
+npx @claude-flow/cli@latest memory store --namespace patterns --key "[nome]" --value "[o que funcionou]"
 npx @claude-flow/cli@latest hooks post-task --task-id "[id]" --success true --store-results true
 ```
 
-### MCP Tools (use `ToolSearch("keyword")` to discover)
+### Ferramentas MCP (use `ToolSearch("palavra-chave")` para descobrir)
 
-| Category | Key Tools |
+| Categoria | Ferramentas principais |
 |----------|-----------|
-| **Memory** | `memory_store`, `memory_search`, `memory_search_unified` |
-| **Bridge** | `memory_import_claude`, `memory_bridge_status` |
+| **Memória** | `memory_store`, `memory_search`, `memory_search_unified` |
+| **Ponte** | `memory_import_claude`, `memory_bridge_status` |
 | **Swarm** | `swarm_init`, `swarm_status`, `swarm_health` |
-| **Agents** | `agent_spawn`, `agent_list`, `agent_status` |
+| **Agentes** | `agent_spawn`, `agent_list`, `agent_status` |
 | **Hooks** | `hooks_route`, `hooks_post-task`, `hooks_worker-dispatch` |
-| **Security** | `aidefence_scan`, `aidefence_is_safe`, `aidefence_has_pii` |
+| **Segurança** | `aidefence_scan`, `aidefence_is_safe`, `aidefence_has_pii` |
 | **Hive-Mind** | `hive-mind_init`, `hive-mind_consensus`, `hive-mind_spawn` |
 
-### Background Workers
+### Workers em segundo plano
 
-| Worker | When |
+| Worker | Quando |
 |--------|------|
-| `audit` | After security changes |
-| `optimize` | After performance work |
-| `testgaps` | After adding features |
-| `map` | Every 5+ file changes |
-| `document` | After API changes |
+| `audit` | Depois de mudanças de segurança |
+| `optimize` | Depois de trabalho de performance |
+| `testgaps` | Depois de adicionar features |
+| `map` | A cada 5+ arquivos alterados |
+| `document` | Depois de mudanças de API |
 
 ```bash
 npx @claude-flow/cli@latest hooks worker dispatch --trigger audit
 ```
 
-## Agents
+## Agentes
 
-**Core**: `coder`, `reviewer`, `tester`, `planner`, `researcher`
-**Architecture**: `system-architect`, `backend-dev`, `mobile-dev`
-**Security**: `security-architect`, `security-auditor`
+**Núcleo**: `coder`, `reviewer`, `tester`, `planner`, `researcher`
+**Arquitetura**: `system-architect`, `backend-dev`, `mobile-dev`
+**Segurança**: `security-architect`, `security-auditor`
 **Performance**: `performance-engineer`, `perf-analyzer`
-**Coordination**: `hierarchical-coordinator`, `mesh-coordinator`, `adaptive-coordinator`
+**Coordenação**: `hierarchical-coordinator`, `mesh-coordinator`, `adaptive-coordinator`
 **GitHub**: `pr-manager`, `code-review-swarm`, `issue-tracker`, `release-manager`
 
-Any string works as a custom agent type.
+Qualquer string serve como tipo de agente personalizado.
 
-## Build & Test
+## Build e testes
 
-- ALWAYS run tests after code changes
-- ALWAYS verify build succeeds before committing
+- SEMPRE rode os testes depois de mudar código
+- SEMPRE confirme que o build passa antes de commitar
 
 ```bash
 npm run build && npm test
 ```
 
-## CLI Quick Reference
+## Referência rápida da CLI
 
 ```bash
-npx @claude-flow/cli@latest init --wizard           # Setup
-npx @claude-flow/cli@latest swarm init --v3-mode     # Start swarm
-npx @claude-flow/cli@latest memory search --query "" # Vector search
-npx @claude-flow/cli@latest hooks route --task ""    # Route to agent
-npx @claude-flow/cli@latest doctor --fix             # Diagnostics
-npx @claude-flow/cli@latest security scan            # Security scan
+npx @claude-flow/cli@latest init --wizard           # Configuração
+npx @claude-flow/cli@latest swarm init --v3-mode     # Inicia o swarm
+npx @claude-flow/cli@latest memory search --query "" # Busca vetorial
+npx @claude-flow/cli@latest hooks route --task ""    # Roteia para um agente
+npx @claude-flow/cli@latest doctor --fix             # Diagnóstico
+npx @claude-flow/cli@latest security scan            # Varredura de segurança
 npx @claude-flow/cli@latest performance benchmark    # Benchmarks
 ```
 
-26 commands, 140+ subcommands. Use `--help` on any command for details.
+26 comandos, mais de 140 subcomandos. Use `--help` em qualquer comando para ver detalhes.
 
-## Setup
+## Instalação
 
 ```bash
 claude mcp add claude-flow -- npx -y ruflo@latest mcp start
 npx ruflo@latest doctor --fix
 ```
 
-> The background `daemon` is optional. It runs interval workers that each spawn
-> a headless `claude` session, so it consumes tokens continuously. Start it only
-> if you want those sweeps: `npx ruflo@latest daemon start` (self-stops after 12h
-> by default; `--ttl 0` to disable, `daemon status --all` to audit running daemons).
+> O `daemon` em segundo plano é opcional. Ele roda workers em intervalos, e cada
+> um abre uma sessão `claude` headless, então consome tokens o tempo todo. Só
+> inicie se quiser essas varreduras: `npx ruflo@latest daemon start` (para
+> sozinho depois de 12h por padrão; `--ttl 0` desativa, `daemon status --all`
+> mostra os daemons rodando).
 
-**Agent tool** handles execution (agents, files, code, git). **MCP tools** handle coordination (swarm, memory, hooks). **CLI** is the same via Bash.
+A **ferramenta Agent** cuida da execução (agentes, arquivos, código, git). As **ferramentas MCP** cuidam da coordenação (swarm, memória, hooks). A **CLI** faz o mesmo via Bash.
