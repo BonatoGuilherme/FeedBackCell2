@@ -16,7 +16,7 @@ import org.mockito.ArgumentCaptor;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-/** Evento feedbackcell.celular.especificacoes vindo do specs-service. */
+/** Resposta do specs-service (POST /eventos/celular-criado). */
 class AplicadorEspecificacoesTest {
 
     private final CelularRepositorio repo = mock(CelularRepositorio.class);

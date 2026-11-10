@@ -101,7 +101,7 @@ public class CelularesController {
             String modelo3d = texto(b.get("modelo3d"));
             long id = celulares.criar(c.marca, c.modelo, b.get("preco").numberValue(), c.descricao,
                     idusuario, spec, modelo3d);
-            // Busca assíncrona (specs-service via Kafka) do que veio faltando; nunca quebra a resposta.
+            // Busca assíncrona (specs-service) do que veio faltando; nunca quebra a resposta.
             if (spec == null || modelo3d == null) {
                 eventos.celularCriado(id, c.marca, c.modelo, spec == null, modelo3d == null);
             }
@@ -158,9 +158,9 @@ public class CelularesController {
         Long idusuario = auth.exigir(req).id();
         long idcelular = Parametros.idCelular(id);
         return Acao.executar("Erro ao deletar celular", () -> {
-            Map<String, Object> atual = idcelular > 0 ? celulares.porId(idcelular) : null;
-            if (atual == null) throw ErroApi.de(404, "Celular não encontrado");
-            if (!Objects.equals(atual.get("idusuario"), idusuario)) {
+            Long dono = idcelular > 0 ? celulares.idDono(idcelular) : null;
+            if (dono == null) throw ErroApi.de(404, "Celular não encontrado");
+            if (!Objects.equals(dono, idusuario)) {
                 throw ErroApi.de(403, "Você não tem permissão para deletar este celular");
             }
             celulares.excluir(idcelular);

@@ -1,6 +1,8 @@
 package br.com.feedbackcell.core.dados;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.LinkedHashMap;
@@ -12,6 +14,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.util.RawValue;
 
 /** celularModel do Node. */
 @Repository
@@ -28,11 +31,25 @@ public class CelularRepositorio {
     private final JdbcTemplate db;
     private final ObjectMapper json;
     private final RowMapper<Map<String, Object>> linha;
+    /** Listagens: o JSON de especificações vai como veio do MySQL, sem parse + reserialização. */
+    private final RowMapper<Map<String, Object>> linhaLista;
 
     public CelularRepositorio(JdbcTemplate db, ObjectMapper json) {
         this.db = db;
         this.json = json;
-        this.linha = (rs, i) -> {
+        this.linha = mapeador(rs -> Linhas.json(json, rs, "especificacoes"));
+        this.linhaLista = mapeador(rs -> {
+            String s = rs.getString("especificacoes");
+            return s == null ? null : new RawValue(s);
+        });
+    }
+
+    private interface Coluna {
+        Object ler(ResultSet rs) throws SQLException;
+    }
+
+    private static RowMapper<Map<String, Object>> mapeador(Coluna especificacoes) {
+        return (rs, i) -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("idcelular", rs.getLong("idcelular"));
             m.put("idusuario", rs.getLong("idusuario"));
@@ -41,7 +58,7 @@ public class CelularRepositorio {
             m.put("preco", Linhas.decimal(rs, "preco"));
             m.put("imagem", rs.getString("imagem"));
             m.put("descricao", rs.getString("descricao"));
-            m.put("especificacoes", Linhas.json(json, rs, "especificacoes"));
+            m.put("especificacoes", especificacoes.ler(rs));
             m.put("modelo3d", rs.getString("modelo3d"));
             m.put("likes", Linhas.inteiro(rs, "likes"));
             m.put("dislikes", Linhas.inteiro(rs, "dislikes"));
@@ -51,7 +68,7 @@ public class CelularRepositorio {
     }
 
     public List<Map<String, Object>> listar(int limit, long offset) {
-        return db.query(COLUNAS + " ORDER BY dataCriacao DESC, idcelular DESC LIMIT ? OFFSET ?", linha, limit, offset);
+        return db.query(COLUNAS + " ORDER BY dataCriacao DESC, idcelular DESC LIMIT ? OFFSET ?", linhaLista, limit, offset);
     }
 
     public long contar() {
@@ -63,8 +80,14 @@ public class CelularRepositorio {
         return r.isEmpty() ? null : r.get(0);
     }
 
+    /** Dono do celular, ou null se ele não existe (sem ler as colunas pesadas). */
+    public Long idDono(long id) {
+        List<Long> r = db.queryForList("SELECT idusuario FROM Celulares WHERE idcelular = ?", Long.class, id);
+        return r.isEmpty() ? null : r.get(0);
+    }
+
     public List<Map<String, Object>> doUsuario(long idusuario) {
-        return db.query(COLUNAS + " WHERE idusuario = ? ORDER BY dataCriacao DESC, idcelular DESC", linha, idusuario);
+        return db.query(COLUNAS + " WHERE idusuario = ? ORDER BY dataCriacao DESC, idcelular DESC", linhaLista, idusuario);
     }
 
     public long criar(String marca, String modelo, Number preco, String descricao, long idusuario,
@@ -97,7 +120,7 @@ public class CelularRepositorio {
     }
 
     /**
-     * Resultado da busca assíncrona (Kafka): grava só colunas que ainda estão NULL, para não
+     * Resultado da busca assíncrona (specs-service): grava só colunas que ainda estão NULL, para não
      * sobrescrever o que a pessoa escolheu. Devolve false se o celular não existe mais.
      */
     public boolean preencherSeVazio(long id, JsonNode especificacoes, String modelo3d) {

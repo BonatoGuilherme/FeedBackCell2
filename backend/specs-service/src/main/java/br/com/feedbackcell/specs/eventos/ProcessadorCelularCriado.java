@@ -18,19 +18,19 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 /**
- * Regra de negócio do evento feedbackcell.celular.criado: busca o que o celular precisa e monta
- * a resposta de feedbackcell.celular.especificacoes (com nulls quando nada é encontrado).
+ * Regra de negócio do POST /eventos/celular-criado: busca o que o celular precisa e monta a
+ * resposta {idcelular, especificacoes, modelo3d} (com nulls quando nada é encontrado).
  *
- * <p>O consumo usa {@code failure-strategy=ignore} e o core-api só recebe uma resposta por celular,
- * então uma falha temporária (rede, timeout, 5xx) viraria especificações NULL para sempre: por isso
- * repete a busca uma vez, só do que ainda falta, depois de {@code eventos.espera-repeticao}.
+ * <p>O core-api só recebe uma resposta por celular, então uma falha temporária (rede, timeout, 5xx)
+ * viraria especificações NULL para sempre: por isso repete a busca uma vez, só do que ainda falta,
+ * depois de {@code eventos.espera-repeticao}.
  */
 @ApplicationScoped
 public class ProcessadorCelularCriado {
 
     private static final Logger LOG = Logger.getLogger(ProcessadorCelularCriado.class);
 
-    /** Mensagem a publicar: chave = idcelular, valor = JSON. */
+    /** Resposta: chave = idcelular, valor = JSON. */
     public record Resposta(String chave, String valor) {
     }
 
@@ -51,12 +51,12 @@ public class ProcessadorCelularCriado {
         try {
             evento = json.readTree(mensagem);
         } catch (JsonProcessingException e) {
-            LOG.warn("Evento celular.criado com JSON inválido descartado");
+            LOG.warn("Evento celular-criado com JSON inválido descartado");
             return Optional.empty();
         }
         JsonNode id = evento == null ? null : evento.get("idcelular");
         if (id == null || !id.canConvertToInt() || !id.isIntegralNumber() || id.asInt() < 1) {
-            LOG.warn("Evento celular.criado sem idcelular válido descartado");
+            LOG.warn("Evento celular-criado sem idcelular válido descartado");
             return Optional.empty();
         }
         long idcelular = id.asLong();

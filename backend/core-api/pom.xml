@@ -32,10 +32,6 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-kafka</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
 
@@ -67,13 +63,13 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
 			<plugin>
-				<!-- testes nunca leem o .env real nem tentam falar com Kafka ou migrar o MySQL
+				<!-- testes nunca leem o .env real nem chamam o specs-service ou migram o MySQL
 				     (os repositórios são simulados) -->
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<systemPropertyVariables>
 						<APP_ENV_FILE>target/sem-env</APP_ENV_FILE>
-						<KAFKA_ENABLED>false</KAFKA_ENABLED>
+						<BUSCA_AUTOMATICA>false</BUSCA_AUTOMATICA>
 						<FLYWAY_ENABLED>false</FLYWAY_ENABLED>
 						<RATE_LIMIT_REDIS_URL></RATE_LIMIT_REDIS_URL>
 						<APP_ENV>test</APP_ENV>

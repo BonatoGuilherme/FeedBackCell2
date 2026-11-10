@@ -14,7 +14,15 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --system --uid 10001 --home /app app
 WORKDIR /app
-COPY --from=build /src/target/core-api.jar app.jar
+# Jar extraído (lib/ separada) carrega mais rápido que o fat jar e permite o cache de classes.
+COPY --from=build /src/target/core-api.jar /tmp/core-api.jar
+RUN java -Djarmode=tools -jar /tmp/core-api.jar extract --destination /app && rm /tmp/core-api.jar
+# Execução de treino (sobe o contexto e sai, sem banco/Redis) que grava o cache AppCDS das
+# classes carregadas: a JVM sobe ~40% mais rápido. Se o arquivo não servir, a JVM só o ignora.
+RUN APP_ENV_FILE=/nao-existe FLYWAY_ENABLED=false RATE_LIMIT_REDIS_URL= \
+    java -XX:ArchiveClassesAtExit=/app/app.jsa -Xlog:cds=off -Xlog:cds+dynamic=off \
+         -Dspring.context.exit=onRefresh -jar /app/core-api.jar > /dev/null \
+    && test -s /app/app.jsa
 USER app
 EXPOSE 8080
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "/app/app.jar"]
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-XX:+ExitOnOutOfMemoryError", "-XX:SharedArchiveFile=/app/app.jsa", "-Xlog:cds=off", "-jar", "/app/core-api.jar"]
