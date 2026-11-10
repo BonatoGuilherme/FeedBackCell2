@@ -259,8 +259,7 @@
     display: inline-flex;
   }
 
-  .app-crumbs,
-  .app-topbar__new {
+  .app-crumbs {
     display: none;
   }
 
