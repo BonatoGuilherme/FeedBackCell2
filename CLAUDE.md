@@ -8,7 +8,6 @@
 - NUNCA salve arquivos de trabalho ou testes na raiz — use `/src`, `/tests`, `/docs`, `/config`, `/scripts`
 - SEMPRE leia um arquivo antes de editá-lo
 - NUNCA commite segredos, credenciais ou arquivos `.env`
-- NUNCA adicione o trailer `Co-Authored-By` nos commits do usuário, a menos que o `.claude/settings.json` deste projeto tenha `attribution.commit` definido (#2078). O modelo padrão de mensagem de commit da ferramenta Bash do Claude Code pode sugerir esse trailer — ignore. Pela convenção do git/GitHub, `Co-Authored-By` indica autoria; a ferramenta é quem facilita, não coautora.
 - Mantenha os arquivos com menos de 500 linhas
 - Valide entradas nas fronteiras do sistema
 
@@ -113,7 +112,7 @@ SendMessage({ to: "researcher", summary: "Início", message: "[contexto da taref
 ```
 
 ### Padrões
-
+  
 | Padrão | Fluxo | Quando usar |
 |---------|------|----------|
 | **Pipeline** | A → B → C → D | Dependências sequenciais (desenvolvimento de feature) |
