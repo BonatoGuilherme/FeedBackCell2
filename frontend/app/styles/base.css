@@ -354,3 +354,31 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------- aviso de projeto de demonstração (app/components/DemoNotice.tsx) ---------- */
+
+.demo-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) 14px;
+  border: 1px solid rgb(230 194 122 / 28%);
+  border-radius: var(--radius-control);
+  background: var(--accent-soft);
+  color: var(--foreground);
+  font-size: var(--text-label);
+  line-height: var(--text-label--line-height);
+}
+
+.demo-notice__icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  margin-top: 1px;
+  color: var(--accent-on-dark);
+}
+
+.demo-notice__title {
+  color: var(--accent-on-dark);
+  font-weight: 600;
+}

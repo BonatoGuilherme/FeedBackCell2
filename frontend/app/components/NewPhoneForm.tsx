@@ -288,8 +288,8 @@ export default function NewPhoneForm() {
             title="Fotos"
             description={
               imagemApi
-                ? `A foto encontrada na busca já entra como capa. Você pode adicionar mais ${maxFotos}.`
-                : `Até ${MAX_FOTOS} fotos. A primeira vira a capa do anúncio.`
+                ? `A foto encontrada na busca já entra como capa. Você pode adicionar mais ${maxFotos}. As fotos ficam públicas: evite imagens com pessoas, documentos ou localização.`
+                : `Até ${MAX_FOTOS} fotos. A primeira vira a capa do anúncio. As fotos ficam públicas: evite imagens com pessoas, documentos ou localização.`
             }
           >
             <PhotoPicker

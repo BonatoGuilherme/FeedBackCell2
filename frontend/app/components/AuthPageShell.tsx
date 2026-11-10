@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Camera, Cpu, MessageSquareText } from "lucide-react";
 
 import { PhoneOrbit } from "@/components/ui/phone-orbit";
+import DemoNotice from "./DemoNotice";
 
 type AuthPageShellProps = {
   children: ReactNode;
@@ -49,6 +50,8 @@ export default function AuthPageShell({ children, mode, title, subtitle }: AuthP
               </h1>
               <p className="mt-2 text-body text-muted">{subtitle}</p>
             </header>
+
+            <DemoNotice className="mb-6" />
 
             {children}
 
