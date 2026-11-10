@@ -116,10 +116,6 @@ export default function Navigation() {
             <i aria-hidden />
             Ao vivo
           </span>
-          <Link href="/items/new" className="button button--primary button--sm app-topbar__new">
-            <Plus className="size-4" aria-hidden />
-            Novo
-          </Link>
           <button type="button" className="app-topbar__logout" onClick={handleLogout} aria-label="Sair">
             <LogOut className="size-[17px]" strokeWidth={1.7} aria-hidden />
           </button>

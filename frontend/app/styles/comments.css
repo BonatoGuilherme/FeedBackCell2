@@ -77,11 +77,6 @@
   flex: 1;
 }
 
-/* esconde as setas do input numérico */
-.comments-lookup input[type="number"] { appearance: textfield; }
-.comments-lookup input::-webkit-inner-spin-button,
-.comments-lookup input::-webkit-outer-spin-button { margin: 0; appearance: none; }
-
 /* ---------- cabeçalho com o celular ---------- */
 
 .comments-hero {

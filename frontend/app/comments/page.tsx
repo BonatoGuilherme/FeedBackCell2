@@ -242,7 +242,7 @@ export default function CommentsPage() {
   const pertoDoLimite = caracteres >= MAX_CHARS - 50;
 
   const buscaPorId = (
-    <form className="comments-lookup" onSubmit={buscarComentarios}>
+    <form className="comments-lookup" onSubmit={buscarComentarios} noValidate>
       <label htmlFor="celular-id">
         {celularCarregado === null ? "ID do celular" : "Trocar de celular"}
       </label>

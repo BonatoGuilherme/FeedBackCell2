@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useRef, useState, type FormEvent, type ReactNode } from "react";
 import { AlertCircle, Check, Circle } from "lucide-react";
 import AppIcon from "./AppIcon";
 import { ModeloAutocomplete, PhoneSpecsResult, useSpecsLookup } from "./PhoneSpecsLookup";
@@ -35,6 +35,7 @@ export default function NewPhoneForm() {
   const [progresso, setProgresso] = useState("");
   // depois da primeira tentativa de envio, os campos inválidos ficam marcados
   const [tentou, setTentou] = useState(false);
+  const focouInvalido = useRef(false);
   const specs = useSpecsLookup();
   const escolhido = specs.selecionado;
   // a foto da busca (HD quando houver) vira a primeira foto do celular e conta no limite
@@ -160,7 +161,17 @@ export default function NewPhoneForm() {
         <form
           className="phone-form card"
           onSubmit={handleSubmit}
-          onInvalidCapture={() => setTentou(true)}
+          onInvalidCapture={(event) => {
+            // os erros aparecem embaixo de cada campo; sem o balão do navegador
+            // ("Please fill in this field"), só leva o foco ao primeiro inválido
+            event.preventDefault();
+            if (!focouInvalido.current) {
+              focouInvalido.current = true;
+              (event.target as HTMLElement).focus();
+              requestAnimationFrame(() => (focouInvalido.current = false));
+            }
+            setTentou(true);
+          }}
           aria-busy={loading}
         >
           {erro && (
