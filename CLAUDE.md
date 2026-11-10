@@ -14,7 +14,7 @@
 
 ## Front-end / UI
 
-- Em qualquer tarefa de UI no `front  end/` (criar, refazer ou reestilizar telas, componentes, layout, cores, tipografia, animações), carregar a skill `ui-ux-pro-max` antes de editar. Não precisa esperar o usuário digitar `/ui-ux-pro-max`.
+- Em qualquer tarefa de UI no `frontend/` (criar, refazer ou reestilizar telas, componentes, layout, cores, tipografia, animações), carregar a skill `ui-ux-pro-max` antes de editar. Não precisa esperar o usuário digitar `/ui-ux-pro-max`.
 - Usar só a `ui-ux-pro-max` como skill de design principal. Não misturar com `design-taste-frontend`, `ui-styling` ou `design-system`, a menos que o usuário peça.
 - Seguir o tema visual Renascença já existente (`frontend/app/styles/renaissance.css`, tokens em `globals.css`). Nada de introduzir um estilo novo sem pedido.
 - Ajustes triviais (um padding, um texto, um bug de lógica) não precisam da skill.
