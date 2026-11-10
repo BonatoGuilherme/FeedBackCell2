@@ -1,181 +1,150 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+/**
+ * Navegação em formato de painel:
+ * - desktop: menu lateral fino só com ícones (rótulo aparece ao passar o mouse)
+ *   e barra de topo com o caminho da página e as ações;
+ * - celular: barra de topo compacta e barra de abas fixa embaixo.
+ * O item ativo é marcado por uma pílula que "estica" (useSlidePill, com GSAP).
+ */
+
+import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Home, LayoutGrid, LogOut, Menu, MessageSquare, Plus, X } from "lucide-react";
+import { Home, LayoutGrid, LogOut, MessageSquare, Plus } from "lucide-react";
 import { expireSession } from "@/src/lib/session";
+import { useSlidePill } from "@/components/ui/use-slide-pill";
 
 const links = [
   { href: "/", label: "Início", icon: Home },
   { href: "/catalog", label: "Catálogo", icon: LayoutGrid },
   { href: "/comments", label: "Comentários", icon: MessageSquare },
+  { href: "/items/new", label: "Adicionar celular", short: "Adicionar", icon: Plus },
 ];
 
-const ADD_HREF = "/items/new";
+const titles: Record<string, string> = {
+  "/": "Painel",
+  "/catalog": "Catálogo",
+  "/comments": "Comentários",
+  "/items/new": "Novo celular",
+};
+
+function activeHref(pathname: string) {
+  const match = links
+    .filter((l) => pathname === l.href || (l.href !== "/" && pathname.startsWith(l.href)))
+    .sort((a, b) => b.href.length - a.href.length)[0];
+  return match?.href ?? null;
+}
 
 export default function Navigation() {
   const pathname = usePathname();
   const router = useRouter();
-  const reduce = useReducedMotion();
-  const [open, setOpen] = useState(false);
-  const [lastPath, setLastPath] = useState(pathname);
-  const toggleRef = useRef<HTMLButtonElement>(null);
-  const firstLinkRef = useRef<HTMLAnchorElement>(null);
+  const active = activeHref(pathname);
 
-  // fecha ao trocar de página
-  if (lastPath !== pathname) {
-    setLastPath(pathname);
-    setOpen(false);
-  }
-
-  useEffect(() => {
-    if (!open) return;
-    firstLinkRef.current?.focus();
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setOpen(false);
-        toggleRef.current?.focus();
-      }
-    };
-    // ao voltar para a largura de desktop o painel deixa de existir
-    const desktop = window.matchMedia("(min-width: 861px)");
-    const onResize = () => {
-      if (desktop.matches) setOpen(false);
-    };
-    window.addEventListener("keydown", onKey);
-    desktop.addEventListener("change", onResize);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", onKey);
-      desktop.removeEventListener("change", onResize);
-    };
-  }, [open]);
+  const railRef = useRef<HTMLUListElement>(null);
+  const railPill = useRef<HTMLSpanElement>(null);
+  const tabsRef = useRef<HTMLUListElement>(null);
+  const tabsPill = useRef<HTMLSpanElement>(null);
+  useSlidePill(railRef, railPill, active, "y");
+  useSlidePill(tabsRef, tabsPill, active, "x");
 
   function handleLogout() {
     expireSession();
     router.replace("/login");
   }
 
-  const isActive = (href: string) =>
-    pathname === href || (href !== "/" && pathname.startsWith(href));
+  const title = titles[active ?? ""] ?? "FeedBackCELL";
 
   return (
     <>
-      <header className="site-header">
-        <div className="site-header__inner">
-          <Link href="/" className="site-brand" aria-label="FeedBackCELL, início">
-            <span className="site-brand__mark">
-              <Image src="/icons8-celular-100.png" alt="" width={20} height={20} unoptimized priority />
-            </span>
-            <span aria-hidden>
-              FeedBack<strong>CELL</strong>
-            </span>
-          </Link>
+      {/* menu lateral (desktop) */}
+      <aside className="app-rail" aria-label="Navegação principal">
+        <Link href="/" className="app-rail__brand" aria-label="FeedBackCELL, início">
+          <Image src="/brand-mark.svg" alt="" width={44} height={44} unoptimized priority />
+        </Link>
 
-          <nav className="site-nav" aria-label="Navegação principal">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="site-nav__link"
-                aria-current={isActive(link.href) ? "page" : undefined}
-              >
-                {link.label}
-              </Link>
+        <nav className="app-rail__nav">
+          <ul ref={railRef} className="app-rail__list">
+            <span ref={railPill} className="app-pill" aria-hidden />
+            {links.map(({ href, label, icon: Icon }) => (
+              <li key={href}>
+                <Link
+                  href={href}
+                  data-pill-key={href}
+                  className="app-rail__link"
+                  aria-current={active === href ? "page" : undefined}
+                  aria-label={label}
+                >
+                  <Icon className="size-[19px]" strokeWidth={1.7} aria-hidden />
+                  <span className="app-rail__tip" role="tooltip">
+                    {label}
+                  </span>
+                </Link>
+              </li>
             ))}
-          </nav>
+          </ul>
+        </nav>
 
-          <div className="site-actions">
-            <Link
-              href={ADD_HREF}
-              className="button button--primary button--sm"
-              aria-current={isActive(ADD_HREF) ? "page" : undefined}
-            >
-              <Plus className="size-4" aria-hidden />
-              Adicionar celular
-            </Link>
-            <button type="button" className="button button--text button--sm" onClick={handleLogout}>
-              <LogOut className="size-4" aria-hidden />
-              Sair
-            </button>
-          </div>
+        <button type="button" className="app-rail__link app-rail__logout" onClick={handleLogout} aria-label="Sair">
+          <LogOut className="size-[18px]" strokeWidth={1.7} aria-hidden />
+          <span className="app-rail__tip" role="tooltip">
+            Sair
+          </span>
+        </button>
+      </aside>
 
-          <button
-            ref={toggleRef}
-            type="button"
-            className="site-menu-toggle"
-            onClick={() => setOpen((v) => !v)}
-            aria-expanded={open}
-            aria-controls="menu-principal"
-            aria-label={open ? "Fechar menu" : "Abrir menu"}
-          >
-            {open ? <X className="size-5" aria-hidden /> : <Menu className="size-5" aria-hidden />}
+      {/* barra de topo */}
+      <header className="app-topbar">
+        <Link href="/" className="app-topbar__brand" aria-label="FeedBackCELL, início">
+          <span className="app-topbar__mark">
+            <Image src="/brand-mark.svg" alt="" width={30} height={30} unoptimized priority />
+          </span>
+          <span>
+            FeedBack<em>CELL</em>
+          </span>
+        </Link>
+
+        <nav className="app-crumbs" aria-label="Você está em">
+          <span>FeedBackCELL</span>
+          <span aria-hidden>/</span>
+          <span aria-current="page">{title}</span>
+        </nav>
+
+        <div className="app-topbar__actions">
+          <span className="app-live" title="Catálogo sincronizado">
+            <i aria-hidden />
+            Ao vivo
+          </span>
+          <Link href="/items/new" className="button button--primary button--sm app-topbar__new">
+            <Plus className="size-4" aria-hidden />
+            Novo
+          </Link>
+          <button type="button" className="app-topbar__logout" onClick={handleLogout} aria-label="Sair">
+            <LogOut className="size-[17px]" strokeWidth={1.7} aria-hidden />
           </button>
         </div>
       </header>
 
-      <AnimatePresence>
-        {open && (
-          <>
-            <motion.div
-              key="scrim"
-              className="site-scrim"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18 }}
-              onClick={() => setOpen(false)}
-              aria-hidden
-            />
-            <motion.div
-              key="panel"
-              id="menu-principal"
-              className="site-mobile-panel"
-              initial={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
-              transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
-            >
-              <nav aria-label="Menu principal">
-                <ul>
-                  {[...links, { href: ADD_HREF, label: "Adicionar celular", icon: Plus }].map((link, i) => {
-                    const Icon = link.icon;
-                    return (
-                      <li key={link.href}>
-                        <Link
-                          ref={i === 0 ? firstLinkRef : undefined}
-                          href={link.href}
-                          className="site-mobile-panel__link"
-                          aria-current={isActive(link.href) ? "page" : undefined}
-                        >
-                          <Icon className="size-[18px]" aria-hidden />
-                          {link.label}
-                        </Link>
-                      </li>
-                    );
-                  })}
-                  <li aria-hidden className="site-mobile-panel__divider" />
-                  <li>
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="site-mobile-panel__link site-mobile-panel__link--danger"
-                    >
-                      <LogOut className="size-[18px]" aria-hidden />
-                      Sair
-                    </button>
-                  </li>
-                </ul>
-              </nav>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      {/* abas (celular) */}
+      <nav className="app-tabs" aria-label="Navegação principal">
+        <ul ref={tabsRef} className="app-tabs__list">
+          <span ref={tabsPill} className="app-pill" aria-hidden />
+          {links.map(({ href, label, short, icon: Icon }) => (
+            <li key={href}>
+              <Link
+                href={href}
+                data-pill-key={href}
+                className="app-tabs__link"
+                aria-current={active === href ? "page" : undefined}
+              >
+                <Icon className="size-5" strokeWidth={1.7} aria-hidden />
+                <span>{short ?? label}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
     </>
   );
 }

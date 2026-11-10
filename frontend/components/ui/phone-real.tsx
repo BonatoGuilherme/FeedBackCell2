@@ -124,7 +124,7 @@ function Studio() {
         <Lightformer form="rect" intensity={3} position={[0, 2.5, 3]} scale={[6, 1.4, 1]} />
         <Lightformer form="rect" intensity={2} position={[-3, 0.5, 1]} rotation-y={Math.PI / 2} scale={[4, 2, 1]} />
         <Lightformer form="rect" intensity={1.4} position={[3, -0.5, 1]} rotation-y={-Math.PI / 2} scale={[4, 1.2, 1]} />
-        <Lightformer form="ring" color="#8b9bff" intensity={1.2} position={[0, -2, -3]} scale={2.5} />
+        <Lightformer form="ring" color="#e6b86a" intensity={1.2} position={[0, -2, -3]} scale={2.5} />
       </Environment>
     </>
   );
@@ -183,10 +183,10 @@ function homeScreenTexture() {
   c.height = 1170;
   const g = c.getContext("2d")!;
   const grad = g.createRadialGradient(140, 160, 40, 270, 500, 1100);
-  grad.addColorStop(0, "#7d8aff");
-  grad.addColorStop(0.3, "#4c5cf5");
-  grad.addColorStop(0.65, "#2a1f6b");
-  grad.addColorStop(1, "#07070b");
+  grad.addColorStop(0, "#f0cf8a");
+  grad.addColorStop(0.3, "#c9973f");
+  grad.addColorStop(0.65, "#5a3417");
+  grad.addColorStop(1, "#0b0703");
   g.fillStyle = grad;
   g.fillRect(0, 0, c.width, c.height);
   g.fillStyle = "rgba(255,255,255,0.85)";
@@ -196,7 +196,7 @@ function homeScreenTexture() {
   g.fillStyle = "#fff";
   g.font = "600 150px system-ui, sans-serif";
   g.fillText("9:41", 270, 330);
-  const colors = ["#22c55e", "#0f172a", "#ef4444", "#f59e0b", "#0ea5e9", "#8b5cf6", "#ec4899", "#14b8a6"];
+  const colors = ["#6fa58e", "#2b2016", "#b4643a", "#c9973f", "#6f8fbf", "#7a4a6b", "#d9a07a", "#4f7c6b"];
   colors.forEach((color, i) => {
     const col = i % 4;
     const row = Math.floor(i / 4);

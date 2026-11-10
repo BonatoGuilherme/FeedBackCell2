@@ -37,7 +37,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <main className="app-loading-screen">
         <div className="app-loading-screen__card" role="status" aria-live="polite">
           <span className="app-loading-screen__mark" aria-hidden="true">
-            <Image src="/icons8-celular-100.png" alt="" width={22} height={22} unoptimized priority />
+            <Image src="/brand-mark.svg" alt="" width={44} height={44} unoptimized priority />
           </span>
           <span className="app-loading-screen__name" aria-hidden="true">
             FeedBack<span>CELL</span>

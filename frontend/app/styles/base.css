@@ -63,7 +63,8 @@
   }
 
   ::selection {
-    background: rgb(76 92 245 / 18%);
+    background: rgb(201 151 63 / 32%);
+    color: var(--foreground);
   }
 
   :focus-visible {
@@ -86,9 +87,12 @@
 /* ---------- layout ---------- */
 
 .main-content {
+  position: relative;
+  z-index: 1;
   width: 100%;
   min-height: 100vh;
-  padding: calc(var(--header-height) + var(--space-8)) var(--gutter) var(--space-10);
+  padding: calc(var(--header-height) + var(--space-8)) var(--gutter) var(--space-10)
+    calc(var(--sidebar-width) + var(--gutter));
 }
 
 .page-shell {
@@ -115,10 +119,11 @@
 .page-heading h1 {
   margin: 0;
   color: var(--foreground);
-  font-size: var(--font-size-h1);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: -0.025em;
-  line-height: 1.15;
+  font-family: var(--font-display);
+  font-size: calc(var(--font-size-h1) * 1.2);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
 }
 
 .page-heading__description {
@@ -143,9 +148,10 @@
 
 .section-heading h2 {
   margin: 0;
-  font-size: var(--font-size-h2);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: -0.02em;
+  font-family: var(--font-display);
+  font-size: calc(var(--font-size-h2) * 1.25);
+  font-weight: 600;
+  letter-spacing: -0.005em;
   line-height: 1.3;
 }
 
@@ -174,10 +180,10 @@
 /* ---------- cards ---------- */
 
 .card {
-  border: 1px solid var(--line);
+  border: 1px solid var(--glass-edge);
   border-radius: var(--radius-card);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
+  background: var(--glass-highlight), var(--surface);
+  box-shadow: var(--shadow-md);
 }
 
 .card--padded {
@@ -233,18 +239,24 @@
 }
 
 .button--primary {
-  background: var(--accent);
-  box-shadow: var(--shadow-sm);
-  color: #fff;
+  background: linear-gradient(180deg, var(--accent-hover), var(--accent));
+  box-shadow:
+    inset 0 1px 0 rgb(255 240 210 / 35%),
+    0 6px 20px -6px rgb(201 151 63 / 60%);
+  color: var(--on-accent);
+  font-weight: var(--font-weight-semibold);
 }
 
 .button--primary:hover:not(:disabled) {
-  background: var(--accent-hover);
+  background: linear-gradient(180deg, #e8c27c, var(--accent-hover));
+  box-shadow:
+    inset 0 1px 0 rgb(255 240 210 / 45%),
+    0 8px 28px -6px rgb(201 151 63 / 75%);
 }
 
 .button--secondary {
-  border-color: var(--line);
-  background: var(--surface);
+  border-color: var(--line-strong);
+  background: var(--surface-soft);
   box-shadow: var(--shadow-sm);
   color: var(--foreground);
 }
@@ -268,8 +280,8 @@
 .button-spinner {
   width: 15px;
   height: 15px;
-  border: 2px solid rgb(255 255 255 / 45%);
-  border-top-color: #fff;
+  border: 2px solid rgb(26 18 9 / 30%);
+  border-top-color: var(--on-accent);
   border-radius: 50%;
   animation: spin 750ms linear infinite;
 }
@@ -298,13 +310,15 @@
 
 @media (max-width: 860px) {
   .main-content {
-    padding: calc(var(--header-height) + var(--space-8)) var(--gutter) var(--space-12);
+    padding: calc(var(--header-height) + var(--space-8)) var(--gutter)
+      calc(var(--tabbar-height) + var(--space-12));
   }
 }
 
 @media (max-width: 600px) {
   .main-content {
-    padding: calc(var(--header-height) + var(--space-6)) var(--space-4) var(--space-10);
+    padding: calc(var(--header-height) + var(--space-6)) var(--space-4)
+      calc(var(--tabbar-height) + var(--space-10));
   }
 
   .page-heading {

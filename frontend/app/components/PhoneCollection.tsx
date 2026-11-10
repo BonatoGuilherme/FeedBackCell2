@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import AppIcon from "./AppIcon";
 import { PhoneShelf } from "@/components/ui/phone-shelf";
+import { TiltCard } from "@/components/ui/tilt-card";
+import { Reveal, RevealItem } from "@/components/ui/reveal";
 import {
   buscarCelular,
   listarCelulares,
@@ -23,20 +25,20 @@ const currency = new Intl.NumberFormat("pt-BR", {
 function PhoneCard({ celular }: { celular: Celular }) {
   const cover = celular.imagens[0]?.url;
   return (
-    <article className="group relative overflow-hidden rounded-[22px] bg-white ring-1 ring-black/[0.06] transition-[box-shadow,transform] duration-200 hover:-translate-y-1 hover:shadow-[0_24px_50px_-30px_rgba(15,16,32,0.45)] has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#4c5cf5]">
-      <div className="relative aspect-[4/3] overflow-hidden bg-[radial-gradient(80%_80%_at_50%_0%,#e7e9ff,#eef0f6_70%)]">
+    <TiltCard className="phone-card card group relative overflow-hidden rounded-[22px] has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent">
+      <div className="relative aspect-[4/3] overflow-hidden bg-[radial-gradient(80%_80%_at_50%_0%,rgba(201,151,63,0.2),rgba(239,227,204,0.03)_70%)]">
         {cover ? (
           // eslint-disable-next-line @next/next/no-img-element -- imagem servida pela API
           <img
             src={cover}
             alt={`${celular.marca} ${celular.modelo}`}
             loading="lazy"
-            className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+            className="foto-aparelho size-full object-contain p-5 transition-transform duration-500 group-hover:scale-[1.06]"
           />
         ) : (
           <div className="grid size-full place-items-center" aria-hidden="true">
-            <span className="h-[78%] aspect-[1/2] rounded-[22%/11%] bg-[#1f2027] p-[4%] shadow-[0_20px_30px_-16px_rgba(15,16,32,0.6)] transition-transform duration-500 group-hover:-rotate-3">
-              <span className="block size-full rounded-[18%/9%] bg-[linear-gradient(160deg,#6d7bff,#2a1f6b_60%,#0b0b10)]" />
+            <span className="h-[78%] aspect-[1/2] rounded-[22%/11%] bg-[#3b2818] p-[4%] shadow-[0_20px_30px_-16px_rgba(15,16,32,0.6)] transition-transform duration-500 group-hover:-rotate-3">
+              <span className="block size-full rounded-[18%/9%] bg-[linear-gradient(160deg,#e6c27a,#7a4a1c_60%,#120c06)]" />
             </span>
           </div>
         )}
@@ -48,14 +50,14 @@ function PhoneCard({ celular }: { celular: Celular }) {
       </div>
       <div className="flex items-end justify-between gap-3 p-4">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a8ea3]">{celular.marca}</p>
-          <h3 className="truncate text-[16px] font-semibold text-[#0f1020]">{celular.modelo}</h3>
-          <p className="mt-0.5 text-[14px] tabular-nums text-[#5f6378]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">{celular.marca}</p>
+          <h3 className="truncate text-[16px] font-semibold text-foreground">{celular.modelo}</h3>
+          <p className="mt-0.5 text-[14px] tabular-nums text-muted">
             {celular.preco > 0 ? currency.format(celular.preco) : "Preço não informado"}
           </p>
         </div>
         <Link
-          className="relative z-[2] shrink-0 rounded-full bg-[#0b0b10] px-3.5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-[#4c5cf5]"
+          className="relative z-[2] shrink-0 rounded-full bg-accent px-3.5 py-2 text-[13px] font-semibold text-on-accent transition-colors hover:bg-accent-hover"
           href={`/comments?celular=${celular.idcelular}`}
         >
           Comentários
@@ -67,7 +69,7 @@ function PhoneCard({ celular }: { celular: Celular }) {
         aria-label={`Ver ${celular.marca} ${celular.modelo}`}
         className="absolute inset-0 z-[1] rounded-[22px] outline-none"
       />
-    </article>
+    </TiltCard>
   );
 }
 
@@ -200,41 +202,6 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
   if (isOverview) {
     return (
       <div className="page-shell overview-page">
-        <section className="pb-10 pt-6 sm:pt-12">
-          <p className="mb-5 inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-[13px] font-medium text-[#5f6378] ring-1 ring-black/[0.06]">
-            <span className="size-2 rounded-full bg-[#4c5cf5]" aria-hidden="true" />
-            {paginacao
-              ? `${paginacao.totalItems} ${paginacao.totalItems === 1 ? "celular" : "celulares"} no catálogo`
-              : "Catálogo de celulares"}
-          </p>
-          <h1 className="max-w-[16ch] text-[clamp(40px,7vw,88px)] font-semibold leading-[0.98] tracking-[-0.035em] text-[#0f1020]">
-            Os melhores celulares,{" "}
-            <span className="bg-[linear-gradient(90deg,#4c5cf5,#8b5cf6)] bg-clip-text text-transparent">
-              em um só lugar.
-            </span>
-          </h1>
-          <p className="mt-5 max-w-[52ch] text-[18px] leading-relaxed text-[#5f6378]">
-            Uma galeria de aparelhos com fotos reais e opiniões de quem usa. Compare, comente e
-            escolha o próximo.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              className="inline-flex h-12 items-center gap-2 rounded-xl bg-[#0b0b10] px-5 text-[15px] font-semibold text-white transition-colors hover:bg-black"
-              href="/catalog"
-            >
-              Explorar catálogo
-              <AppIcon name="arrow" size={17} />
-            </Link>
-            <Link
-              className="inline-flex h-12 items-center gap-2 rounded-xl bg-white px-5 text-[15px] font-semibold text-[#0f1020] ring-1 ring-black/10 transition-colors hover:bg-[#f7f8fb]"
-              href="/items/new"
-            >
-              <AppIcon name="plus" size={18} />
-              Adicionar celular
-            </Link>
-          </div>
-        </section>
-
         <section className="overview-catalog" aria-labelledby="latest-phones-title">
           <div className="section-heading">
             <div>
@@ -272,14 +239,13 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
           ) : celulares.length === 0 ? (
             <EmptyState onRetry={atualizarLista} />
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            <Reveal className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4" stagger={0.06}>
               {celulares.map((celular) => (
-                <PhoneCard
-                  key={celular.idcelular}
-                  celular={celular}
-                />
+                <RevealItem key={celular.idcelular}>
+                  <PhoneCard celular={celular} />
+                </RevealItem>
               ))}
-            </div>
+            </Reveal>
           )}
         </section>
       </div>

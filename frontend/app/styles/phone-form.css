@@ -438,8 +438,8 @@ a.phone-specs__credit:hover { color: var(--foreground); }
   padding: 6px var(--space-3);
   transform: translateX(-50%);
   border-radius: var(--radius-pill);
-  background: var(--ink);
-  color: #fff;
+  background: var(--surface-solid);
+  color: var(--foreground);
   font-size: var(--font-size-label);
   font-weight: var(--font-weight-medium);
 }

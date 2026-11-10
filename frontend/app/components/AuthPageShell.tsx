@@ -3,14 +3,9 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { Camera, Cpu, MessageSquareText } from "lucide-react";
 
-// three.js só no navegador e carregado sob demanda
-const PhoneReal = dynamic(() => import("@/components/ui/phone-real"), {
-  ssr: false,
-  loading: () => <div className="auth-brand__phone" aria-hidden />,
-});
+import { PhoneOrbit } from "@/components/ui/phone-orbit";
 
 type AuthPageShellProps = {
   children: ReactNode;
@@ -41,7 +36,7 @@ export default function AuthPageShell({ children, mode, title, subtitle }: AuthP
           <div className="w-full max-w-[380px]">
             <Link href="/login" className="auth-logo" aria-label="FeedBackCELL, página de entrada">
               <span className="auth-logo__mark">
-                <Image src="/icons8-celular-100.png" alt="" width={20} height={20} unoptimized priority />
+                <Image src="/brand-mark.svg" alt="" width={32} height={32} unoptimized priority />
               </span>
               <span className="auth-logo__name">
                 FeedBack<span className="text-accent">CELL</span>
@@ -84,7 +79,7 @@ export default function AuthPageShell({ children, mode, title, subtitle }: AuthP
           </p>
 
           <div className="auth-brand__stage">
-            <PhoneReal className="auth-brand__phone" label="Celular em 3D girando. Arraste para girar." />
+            <PhoneOrbit className="auth-brand__orbit" modo="3d" />
           </div>
 
           <ul className="auth-brand__features">

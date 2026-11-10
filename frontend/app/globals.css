@@ -9,6 +9,7 @@
 @import "./styles/phone-form.css";
 @import "./styles/comments.css";
 @import "./styles/home.css";
+@import "./styles/renaissance.css";
 
 /*
  * Design tokens do FeedBackCELL.
@@ -16,42 +17,58 @@
  * listadas no @theme abaixo) em vez de valores soltos.
  */
 :root {
-  color-scheme: light;
+  color-scheme: dark;
+
+  /*
+   * Paleta "Renascença": tons das pinturas de Leonardo da Vinci.
+   * Fundo bistre (tinta sépia escura), vidro cor de pergaminho, ocre dourado como
+   * destaque, verdete e azul-lápis como apoio, vermelhão para erros.
+   */
 
   /* cores: superfícies */
-  --background: #f4f5f9;
-  --surface: #ffffff;
-  --surface-soft: #eef0f5;
-  --surface-hover: #f8f9fb;
-  --line: #e2e4ec;
-  --line-strong: #cdd0dc;
+  --background: #110c07;
+  --surface: rgb(36 26 17 / 78%);
+  --surface-solid: #1d150d;
+  --surface-soft: rgb(239 227 204 / 6%);
+  --surface-hover: rgb(239 227 204 / 10%);
+  --line: rgb(239 227 204 / 11%);
+  --line-strong: rgb(239 227 204 / 22%);
 
   /* cores: texto */
-  --foreground: #0f1020;
-  --muted: #5b5f73;
-  --subtle: #8a8ea3; /* só ícones e placeholders, não para texto corrido */
+  --foreground: #efe3cc;
+  --muted: #bba98a;
+  --subtle: #8c7b62; /* só ícones e placeholders, não para texto corrido */
 
   /* cores: marca e estados */
-  --accent: #4c5cf5;
-  --accent-hover: #3d4ce0;
-  --accent-soft: #eef0ff;
-  --accent-on-dark: #9aa6ff;
-  --ink: #0b0b10;
-  --success: #15803d;
-  --success-soft: #ecfdf3;
-  --error: #c2392f;
-  --error-soft: #fff5f4;
-  --error-line: #f3cfcb;
-  --focus-ring: rgb(76 92 245 / 32%);
+  --accent: #c9973f;
+  --accent-hover: #ddb062;
+  --accent-soft: rgb(201 151 63 / 15%);
+  --accent-on-dark: #e6c27a;
+  --on-accent: #1a1209;
+  --ink: #0b0805;
+  --lapis: #6f8fbf;
+  --verdigris: #6fa58e;
+  --sienna: #b4643a;
+  --success: #8cc4a6;
+  --success-soft: rgb(111 165 142 / 16%);
+  --error: #ec8a6c;
+  --error-soft: rgb(190 70 45 / 16%);
+  --error-line: rgb(236 138 108 / 38%);
+  --focus-ring: rgb(201 151 63 / 40%);
 
   /* aliases antigos, mantidos para o CSS das páginas */
   --accent-strong: var(--accent-hover);
-  --accent-2: #8b5cf6;
+  --accent-2: var(--lapis);
   --sidebar: var(--ink);
-  --sidebar-muted: #a3a7bb;
+  --sidebar-muted: #a3937a;
   --danger: var(--error);
 
-  /* espaçamento: escala de 4 px */
+  /* vidro dos cards */
+  --glass-blur: 18px;
+  --glass-edge: rgb(239 227 204 / 14%);
+  --glass-highlight: linear-gradient(180deg, rgb(239 227 204 / 7%), rgb(239 227 204 / 0%) 40%);
+
+/* espaçamento: escala de 4 px */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -65,6 +82,7 @@
 
   /* tipografia */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --font-size-caption: 12px;
   --font-size-label: 13px;
@@ -91,11 +109,14 @@
 
   /* layout e movimento */
   --header-height: 64px;
+  --sidebar-width: 76px;
+  --tabbar-height: 64px;
   --content-width: 1240px;
   --gutter: clamp(16px, 4vw, 40px);
   --ease: cubic-bezier(0.2, 0, 0, 1);
   --duration-fast: 120ms;
   --duration: 180ms;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* utilidades do Tailwind geradas a partir dos tokens (ex.: bg-surface, text-muted, border-line) */
@@ -114,6 +135,11 @@
   --color-accent-soft: var(--accent-soft);
   --color-accent-on-dark: var(--accent-on-dark);
   --color-ink: var(--ink);
+  --color-on-accent: var(--on-accent);
+  --color-surface-solid: var(--surface-solid);
+  --color-lapis: var(--lapis);
+  --color-verdigris: var(--verdigris);
+  --color-sienna: var(--sienna);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
   --color-error: var(--error);
@@ -122,6 +148,7 @@
 
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-cormorant), Georgia, serif;
 
   /* rounded-control, rounded-card, rounded-panel */
   --radius-control: 10px;

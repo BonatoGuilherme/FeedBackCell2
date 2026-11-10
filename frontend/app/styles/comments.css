@@ -220,7 +220,7 @@
 }
 
 .comment-composer textarea[aria-invalid="true"]:focus {
-  box-shadow: 0 0 0 3px rgb(194 57 47 / 18%);
+  box-shadow: 0 0 0 3px rgb(236 138 108 / 22%);
 }
 
 .comment-composer__footer {
@@ -380,7 +380,7 @@
 .skeleton {
   display: block;
   border-radius: 6px;
-  background: linear-gradient(90deg, var(--surface-soft) 0%, #f6f7fa 50%, var(--surface-soft) 100%);
+  background: linear-gradient(90deg, var(--surface-soft) 0%, rgb(239 227 204 / 12%) 50%, var(--surface-soft) 100%);
   background-size: 200% 100%;
   animation: comments-shimmer 1.4s ease-in-out infinite;
 }
