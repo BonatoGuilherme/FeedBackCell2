@@ -20,6 +20,25 @@
 - Ajustes triviais (um padding, um texto, um bug de lógica) não precisam da skill.
 - Depois de mudanças visuais, conferir o resultado no navegador.
 
+## Vários terminais (worktrees)
+
+Pode haver mais de uma sessão do Claude trabalhando neste repositório ao mesmo tempo. Cada sessão tem um papel; descubra o seu pela pasta e pela branch (`git worktree list`, `git branch --show-current`) ou pergunte ao usuário.
+
+| Papel | Pasta | Pode mexer em |
+|---|---|---|
+| Tech lead | `FeedBackCELL Next.js/` (principal, na `master`) | Arquivos compartilhados, revisão, merge |
+| Dev back | worktree `../FeedBackCELL-back` | Só `backend/` |
+| Dev front | worktree `../FeedBackCELL-front` | Só `frontend/` |
+| QA | worktree `../FeedBackCELL-qa` | Testes e correções pequenas, sempre via PR |
+
+- Uma sessão por pasta. Nunca trabalhe na pasta de outra sessão, nem troque a branch da pasta principal se você não é o tech lead.
+- Devs e QA criam a própria branch no próprio worktree (`git worktree add ../FeedBackCELL-back -b feat/<tarefa>`), abrem PR para a `master` e não mergeiam.
+- Só o tech lead mergeia na `master`, apaga branches e remove worktrees (`git worktree remove <pasta>`) depois do merge.
+- Arquivos compartilhados (`docker-compose*.yml`, `README.md`, `CLAUDE.md`, `.github/`, `infra/`, `package.json` e lockfiles) são do tech lead. Um dev que precisar mudar um deles pede ao tech lead ou avisa o usuário antes.
+- Antes de commitar: confira `git branch --show-current` e `git status`, faça `git add` só dos arquivos da sua tarefa (nunca `git add .`/`-A`) e revise `git diff --cached --stat`. Mudanças staged que não são suas ficam de fora.
+- Antes de abrir PR, veja se já existe PR ou branch para a mesma coisa (outra sessão pode ter feito) para não duplicar trabalho.
+- Cada worktree tem as próprias dependências (`pnpm install` em `frontend/`). O `docker compose` usa portas da máquina: só um worktree por vez sobe a stack; combine com o usuário antes de subir ou derrubar containers.
+
 ## Ruflo Capability Brain & Implementation Loop
 
 Ruflo is the coordination ledger and policy decision point. Claude Code is the
