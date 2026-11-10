@@ -255,7 +255,7 @@ A CI (`.github/workflows/ci.yml`) roda `mvnw verify` nos dois serviços Java, li
 
 ### Deploy rápido (servidor Linux + HTTPS)
 
-1. **Servidor**: Linux (ex.: Ubuntu 24.04) com pelo menos **8 GB de RAM** (os limites do Compose somam cerca de 4,5 GB) e 20 GB de disco. Libere as portas 22, 80 e 443 no firewall.
+1. **Servidor**: Linux (ex.: Ubuntu 24.04) com pelo menos **4 GB de RAM** (8 GB para ter folga; os limites do Compose somam cerca de 3,5 GB) e 20 GB de disco. Libere as portas 22, 80 e 443 no firewall.
 2. **DNS**: crie um registro `A` do domínio apontando para o IP do servidor e espere propagar (`nslookup <domínio>`).
 3. **Docker**: `curl -fsSL https://get.docker.com | sh` (instala o Docker com o plugin compose).
 4. **Código e subida**:
@@ -298,7 +298,7 @@ Checklist antes de expor a aplicação:
 
    Pare o core-api durante uma restauração (`docker compose stop core-api`) e suba de novo depois; o Flyway valida o histórico de migrações restaurado.
 9. **Escala**: `docker compose up -d --scale core-api=N --scale frontend=M`. O nginx redescobre as réplicas pelo DNS do Docker. Cada réplica do core-api abre até `DB_POOL_SIZE` conexões; respeite `DB_POOL_SIZE × réplicas + reservas (backup, administração, margem) < DB_MAX_CONNECTIONS` e ajuste ambos no `.env` antes de escalar. Os limites de memória/CPU do Compose valem por réplica; confira se o host comporta a soma. O specs-service roda com uma réplica (o cache de buscas fica em memória e a cota da MobileAPI é por chave).
-10. **Limites**: com uma réplica de cada serviço, os limites de memória do Compose somam cerca de 4,5 GB; reserve isso no host além do sistema operacional. Monitore com `docker stats` e ajuste as variáveis `*_MEM_LIMIT`.
+10. **Limites**: com uma réplica de cada serviço, os limites de memória do Compose somam cerca de 3,5 GB; reserve isso no host além do sistema operacional. Monitore com `docker stats` e ajuste as variáveis `*_MEM_LIMIT`.
 
 O Compose faz balanceamento e escala dentro de **um único host**, não alta disponibilidade: o host, o MySQL e o Redis são pontos únicos de falha.
 
