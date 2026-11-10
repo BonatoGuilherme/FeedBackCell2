@@ -115,6 +115,6 @@ public class ComentariosController {
     }
 
     private boolean existeCelular(long id) {
-        return id <= Integer.MAX_VALUE && celulares.porId(id) != null;
+        return id <= Integer.MAX_VALUE && celulares.idDono(id) != null;
     }
 }

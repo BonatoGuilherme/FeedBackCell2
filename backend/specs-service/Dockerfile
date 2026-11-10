@@ -23,4 +23,4 @@ COPY --from=build --chown=app /src/target/quarkus-app/quarkus/ quarkus/
 USER app
 EXPOSE 8081
 ENV QUARKUS_HTTP_HOST=0.0.0.0
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-Djava.util.logging.manager=org.jboss.logmanager.LogManager", "-jar", "/app/quarkus-run.jar"]
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-XX:+ExitOnOutOfMemoryError", "-Djava.util.logging.manager=org.jboss.logmanager.LogManager", "-jar", "/app/quarkus-run.jar"]

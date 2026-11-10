@@ -1,8 +1,6 @@
 package br.com.feedbackcell.specs;
 
 import static io.restassured.RestAssured.given;
-import static org.awaitility.Awaitility.await;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
@@ -16,18 +14,12 @@ import br.com.feedbackcell.specs.busca.EspecificacoesService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.test.junit.QuarkusTest;
-import io.smallrye.reactive.messaging.kafka.Record;
-import io.smallrye.reactive.messaging.memory.InMemoryConnector;
-import io.smallrye.reactive.messaging.memory.InMemorySink;
-import io.smallrye.reactive.messaging.memory.InMemorySource;
-import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
-import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-/** REST + fluxo Kafka (conector em memória), sem rede nem broker. */
+/** REST + POST /eventos/celular-criado, sem rede. */
 @QuarkusTest
 class ServicoTest {
 
@@ -36,12 +28,10 @@ class ServicoTest {
 
     @Inject HttpFalsoBean http;
     @Inject EspecificacoesService service;
-    @Inject @Any InMemoryConnector conector;
 
     @BeforeEach
     void limpar() {
         service.limparCache();
-        conector.sink("celular-especificacoes").clear();
         http.responder(c -> c.url().contains("mobileapi")
                 ? Resposta.ok("{\"devices\":[{\"name\":\"Galaxy S24\",\"manufacturer_name\":\"Samsung\",\"screen_resolution\":\"1080 x 2340\"}]}")
                 : c.url().contains("sketchfab")
@@ -78,14 +68,10 @@ class ServicoTest {
     }
 
     private JsonNode publicar(String evento) throws Exception {
-        InMemorySource<String> entrada = conector.source("celular-criado");
-        InMemorySink<Record<String, String>> saida = conector.sink("celular-especificacoes");
-        entrada.send(evento);
-        await().atMost(Duration.ofSeconds(10)).until(() -> saida.received().size() == 1);
-        Record<String, String> r = saida.received().get(0).getPayload();
-        JsonNode valor = JSON.readTree(r.value());
-        assertEquals(valor.get("idcelular").asText(), r.key());
-        return valor;
+        String corpo = given().contentType("application/json").body(evento)
+                .when().post("/eventos/celular-criado")
+                .then().statusCode(200).contentType("application/json").extract().asString();
+        return JSON.readTree(corpo);
     }
 
     @Test
@@ -121,13 +107,18 @@ class ServicoTest {
     }
 
     @Test
-    void eventoInvalidoEhDescartadoSemTravarOConsumo() throws Exception {
-        conector.source("celular-criado").send("isso não é json");
-        conector.source("celular-criado").send("{\"marca\":\"sem id\"}");
+    void eventoInvalidoDa400() throws Exception {
+        given().contentType("application/json").body("isso não é json").when().post("/eventos/celular-criado")
+                .then().statusCode(400).body("erro", equalTo("Evento inválido"));
+        given().contentType("application/json").body("{\"marca\":\"sem id\"}").when().post("/eventos/celular-criado")
+                .then().statusCode(400);
         JsonNode r = publicar("{\"idcelular\":5,\"marca\":\"Samsung\",\"modelo\":\"Galaxy S24\","
                 + "\"precisaEspecificacoes\":false,\"precisaModelo3d\":true}");
         assertEquals(5, r.get("idcelular").asInt());
-        given().when().get("/q/health/ready").then().statusCode(200)
-                .body("checks.name", contains("SmallRye Reactive Messaging - readiness check"));
+    }
+
+    @Test
+    void readinessUpSemKafka() {
+        given().when().get("/q/health/ready").then().statusCode(200).body("status", equalTo("UP"));
     }
 }

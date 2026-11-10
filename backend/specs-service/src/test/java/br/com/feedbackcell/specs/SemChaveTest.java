@@ -11,18 +11,15 @@ import jakarta.inject.Inject;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
-/** KAFKA_ENABLED=false: sobe, fica pronto (readiness UP) e o REST continua funcionando. */
+/** Sem MOBILEAPI_KEY: sobe, fica pronto (readiness UP) e a busca devolve só o aviso. */
 @QuarkusTest
-@TestProfile(KafkaDesligadoTest.SemKafka.class)
-class KafkaDesligadoTest {
+@TestProfile(SemChaveTest.SemChave.class)
+class SemChaveTest {
 
-    public static class SemKafka implements QuarkusTestProfile {
+    public static class SemChave implements QuarkusTestProfile {
         @Override
         public Map<String, String> getConfigOverrides() {
-            return Map.of(
-                    "mp.messaging.incoming.celular-criado.enabled", "false",
-                    "mp.messaging.outgoing.celular-especificacoes.enabled", "false",
-                    "mobileapi.key", "");
+            return Map.of("mobileapi.key", "");
         }
     }
 

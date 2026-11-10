@@ -1,6 +1,6 @@
-# Somente desenvolvimento: publica MySQL, Redis e Kafka em 127.0.0.1 para rodar
+# Somente desenvolvimento: publica MySQL e Redis em 127.0.0.1 para rodar
 # core-api/specs-service/frontend fora do Docker. Não use em produção.
-#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d mysql redis kafka kafka-init
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d mysql redis
 # (Não se chama docker-compose.override.yml de propósito: esse nome é carregado
 # automaticamente e exporia o banco num `docker compose up` de produção.)
 services:
@@ -12,11 +12,3 @@ services:
     ports:
       - "127.0.0.1:${REDIS_HOST_PORT:-6379}:6379"
 
-  kafka:
-    environment:
-      # Listener extra para o host: localhost:29092 (KAFKA_BOOTSTRAP_SERVERS fora do Docker).
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,HOST://:29092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,HOST://localhost:${KAFKA_HOST_PORT:-29092}
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,HOST:PLAINTEXT
-    ports:
-      - "127.0.0.1:${KAFKA_HOST_PORT:-29092}:29092"

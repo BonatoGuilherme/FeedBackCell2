@@ -50,8 +50,6 @@ jobs:
         working-directory: backend/core-api
       - run: ./mvnw -B verify
         working-directory: backend/core-api
-        env:
-          KAFKA_ENABLED: "false"
 
   specs-service:
     name: specs-service (Quarkus) verify
@@ -69,8 +67,6 @@ jobs:
         working-directory: backend/specs-service
       - run: ./mvnw -B verify
         working-directory: backend/specs-service
-        env:
-          KAFKA_ENABLED: "false"
 
   compose:
     name: Docker Compose config and image build

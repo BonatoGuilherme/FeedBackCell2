@@ -139,9 +139,9 @@ public class ImagensController {
     }
 
     private void verificarDono(long idcelular, Long idusuario) {
-        Map<String, Object> celular = idcelular <= Integer.MAX_VALUE ? celulares.porId(idcelular) : null;
-        if (celular == null) throw ErroApi.de(404, "Celular não encontrado");
-        if (!Objects.equals(celular.get("idusuario"), idusuario)) {
+        Long dono = idcelular <= Integer.MAX_VALUE ? celulares.idDono(idcelular) : null;
+        if (dono == null) throw ErroApi.de(404, "Celular não encontrado");
+        if (!Objects.equals(dono, idusuario)) {
             throw ErroApi.de(403, "Você não tem permissão para alterar este celular");
         }
     }

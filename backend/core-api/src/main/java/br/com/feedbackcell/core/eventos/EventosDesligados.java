@@ -5,9 +5,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-/** KAFKA_ENABLED=false: nada é publicado (testes e desenvolvimento sem Kafka). */
+/** BUSCA_AUTOMATICA=false: nenhuma busca é pedida (testes e desenvolvimento sem specs-service). */
 @Component
-@ConditionalOnProperty(name = "app.kafka.enabled", havingValue = "false", matchIfMissing = true)
+@ConditionalOnProperty(name = "app.busca-automatica", havingValue = "false", matchIfMissing = true)
 public class EventosDesligados implements EventosCelular {
 
     private static final Logger LOG = LoggerFactory.getLogger(EventosDesligados.class);
@@ -15,6 +15,6 @@ public class EventosDesligados implements EventosCelular {
     @Override
     public void celularCriado(long idcelular, String marca, String modelo,
                               boolean precisaEspecificacoes, boolean precisaModelo3d) {
-        LOG.debug("Kafka desligado; celular {} não terá busca automática de especificações", idcelular);
+        LOG.debug("Busca automática desligada; celular {} fica sem especificações automáticas", idcelular);
     }
 }

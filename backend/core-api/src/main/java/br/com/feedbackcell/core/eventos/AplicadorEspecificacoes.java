@@ -12,7 +12,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * Aplica um evento feedbackcell.celular.especificacoes: valida como o Joi do POST /celulares
+ * Aplica a resposta do specs-service (POST /eventos/celular-criado): valida como o Joi do POST /celulares
  * e grava só nas colunas ainda NULL. Mensagens inválidas são descartadas (com log), nunca reprocessadas.
  */
 @Component

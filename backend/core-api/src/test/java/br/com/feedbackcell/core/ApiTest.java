@@ -99,6 +99,33 @@ class ApiTest {
                          "paginacao":{"paginaAtual":1,"totalPaginas":1,"totalItems":1,"itemsPorPagina":10}}""", true));
     }
 
+    /** A listagem repassa o JSON de especificações do MySQL sem reprocessar; sai como objeto. */
+    @Test
+    void listaRepassaEspecificacoesComoObjeto() throws Exception {
+        Map<String, Object> c = new LinkedHashMap<>();
+        c.put("idcelular", 1L);
+        c.put("especificacoes", new tools.jackson.databind.util.RawValue("{\"tela\": \"6.1\\\"\", \"cores\": [\"azul\"]}"));
+        when(celulares.listar(10, 0)).thenReturn(List.of(c));
+        when(celulares.contar()).thenReturn(1L);
+        when(imagens.idsPorCelulares(List.of(1L))).thenReturn(Map.of());
+        mvc.perform(get("/celulares"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.celulares[0].especificacoes.tela").value("6.1\""))
+                .andExpect(jsonPath("$.celulares[0].especificacoes.cores[0]").value("azul"));
+    }
+
+    @Test
+    void excluirCelularConsultaSoODono() throws Exception {
+        when(celulares.idDono(8)).thenReturn(9L);
+        mvc.perform(delete("/celulares/8").header("Authorization", bearer(3)))
+                .andExpect(status().isForbidden());
+        when(celulares.idDono(8)).thenReturn(3L);
+        mvc.perform(delete("/celulares/8").header("Authorization", bearer(3)))
+                .andExpect(status().isOk());
+        verify(celulares).excluir(8L);
+        verify(celulares, never()).porId(anyLong());
+    }
+
     @Test
     void paginacaoInvalidaNaoConsultaOBanco() throws Exception {
         mvc.perform(get("/celulares").param("limit", "101"))
@@ -202,7 +229,7 @@ class ApiTest {
 
     @Test
     void criarComentarioDevolveIdcelularNumerico() throws Exception {
-        when(celulares.porId(5)).thenReturn(celular(5, 9));
+        when(celulares.idDono(5)).thenReturn(9L);
         when(comentarios.criar(5L, 3L, "Muito bom")).thenReturn(11L);
         mvc.perform(post("/comentarios/5").header("Authorization", bearer(3)).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"texto\":\" Muito bom \"}"))
@@ -247,7 +274,7 @@ class ApiTest {
 
     @Test
     void limiteDeFotosPorCelular() throws Exception {
-        when(celulares.porId(1)).thenReturn(celular(1, 3));
+        when(celulares.idDono(1)).thenReturn(3L);
         when(imagens.contar(1)).thenReturn(10);
         byte[] jpeg = {(byte) 0xff, (byte) 0xd8, (byte) 0xff, 0, 0, 0, 0, 0, 0, 0, 0, 0};
         mvc.perform(post("/celulares/1/imagens").header("Authorization", bearer(3))

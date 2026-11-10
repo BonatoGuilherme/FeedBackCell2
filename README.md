@@ -7,7 +7,7 @@
 ![Next.js](https://img.shields.io/badge/next.js-16-black)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
-Plataforma full-stack de feedback sobre celulares: frontend **Next.js**, API **Spring Boot** (core-api), serviço de especificações **Quarkus** (specs-service), **Kafka**, **MySQL** e **Redis**, tudo orquestrado com **Docker Compose** atrás de um proxy **Nginx**.
+Plataforma full-stack de feedback sobre celulares: frontend **Next.js**, API **Spring Boot** (core-api), serviço de especificações **Quarkus** (specs-service), **MySQL** e **Redis**, tudo orquestrado com **Docker Compose** atrás de um proxy **Nginx**.
 
 ---
 
@@ -19,7 +19,7 @@ FeedBackCELL é um projeto full-stack educacional para coletar avaliações e op
 
 - [x] Cadastro, login, logout no cliente e verificação de token JWT.
 - [x] CRUD de celulares com checagem de propriedade, paginação e fotos (até 5 MB cada).
-- [x] Especificações automáticas: ao criar um celular, o core-api publica um evento no Kafka; o specs-service busca as especificações e devolve outro evento que o core-api aplica no banco. Também há busca síncrona em `/celulares/especificacoes`.
+- [x] Especificações automáticas: ao criar um celular, o core-api pede em segundo plano (HTTP interno, `POST /eventos/celular-criado`) que o specs-service busque o que falta e aplica a resposta no banco. Também há busca síncrona em `/celulares/especificacoes`.
 - [x] Comentários por celular e listagem dos comentários do usuário.
 - [x] Perfil, troca de senha, exclusão de conta e listagem de usuários restrita a administradores.
 - [x] Rate limiting compartilhado entre réplicas (Redis) e validação de entrada na API.
@@ -33,7 +33,6 @@ FeedBackCELL é um projeto full-stack educacional para coletar avaliações e op
 | Frontend | Next.js 16, TypeScript |
 | API pública (`core-api`, :8080) | Java 21, Spring Boot, Flyway |
 | Especificações (`specs-service`, :8081, interno) | Java 21, Quarkus, SmallRye Reactive Messaging |
-| Mensageria | Apache Kafka 4 (KRaft, sem ZooKeeper) |
 | Banco de dados | MySQL 8.0 |
 | Rate limit | Redis 7.4 |
 | Proxy | Nginx 1.28 |
@@ -45,12 +44,11 @@ navegador ──► proxy (nginx :80, publicado em APP_PORT)
                 ├── /          ──► frontend (Next.js :3000)
                 ├── /api/*     ──► core-api (:8080) ──► MySQL, Redis
                 └── /health, /readyz ──► core-api
-core-api ──► Kafka: feedbackcell.celular.criado ──► specs-service
-specs-service ──► Kafka: feedbackcell.celular.especificacoes ──► core-api
 core-api ──► HTTP interno ──► specs-service (busca síncrona, até 30 s)
+core-api ──► HTTP interno, em segundo plano ──► specs-service (celular criado → especificações)
 ```
 
-O specs-service não publica portas nem passa pelo proxy. Os tópicos são criados pelo serviço `kafka-init` (auto-criação desligada no broker).
+O specs-service não publica portas nem passa pelo proxy.
 
 ---
 
@@ -61,12 +59,12 @@ O specs-service não publica portas nem passa pelo proxy. Os tópicos são criad
 ├── frontend/                  # Next.js (App Router + TypeScript)
 ├── backend/
 │   ├── core-api/              # Spring Boot: API pública + migrações Flyway
-│   └── specs-service/         # Quarkus: busca de especificações via Kafka/HTTP
+│   └── specs-service/         # Quarkus: busca de especificações (HTTP interno)
 ├── infra/
 │   ├── nginx/default.conf     # Proxy reverso (headers de segurança, gzip, timeouts)
 │   └── backup/                # Imagem e script de backup do MySQL
 ├── docker-compose.yml         # Stack de produção (só o proxy publica porta)
-├── docker-compose.dev.yml     # Extra de dev: MySQL/Redis/Kafka em 127.0.0.1
+├── docker-compose.dev.yml     # Extra de dev: MySQL/Redis em 127.0.0.1
 ├── docker-compose.https.yml   # Extra de produção: HTTPS com Let's Encrypt no nginx
 ├── .env.example               # Modelo de variáveis; copiar para .env
 └── README.md
@@ -97,10 +95,10 @@ Na primeira subida o core-api cria o schema com Flyway; em bancos que já existi
 * API → http://localhost:3000/api
 * Saúde → http://localhost:3000/health (liveness) e http://localhost:3000/readyz (prontidão: banco, Redis)
 
-Em produção nenhum outro serviço fica acessível do host. Para desenvolvimento, `docker-compose.dev.yml` publica MySQL em `127.0.0.1:3307`, Redis em `127.0.0.1:6379` e Kafka em `127.0.0.1:29092`:
+Em produção nenhum outro serviço fica acessível do host. Para desenvolvimento, `docker-compose.dev.yml` publica MySQL em `127.0.0.1:3307` e Redis em `127.0.0.1:6379`:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d mysql redis kafka kafka-init
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d mysql redis
 ```
 
 O arquivo de dev não se chama `docker-compose.override.yml` de propósito: esse nome é carregado automaticamente e exporia o banco num `docker compose up` de produção.
@@ -168,9 +166,8 @@ RATE_LIMIT_WINDOW_MS=60000
 TRUST_PROXY=1
 ADMIN_USER_IDS=
 
-# Kafka / especificações
-KAFKA_ENABLED=true
-KAFKA_TOPIC_PARTITIONS=3
+# Especificações
+BUSCA_AUTOMATICA=true
 MOBILEAPI_KEY=
 
 # Proxy
@@ -186,10 +183,10 @@ BACKUP_INTERVAL_SECONDS=86400
 BACKUP_RETENTION_DAYS=30
 ```
 
-* `DB_HOST`, `DB_PORT`, `RATE_LIMIT_REDIS_URL`, `KAFKA_BOOTSTRAP_SERVERS` e `SPECS_SERVICE_URL` são definidos pelo Compose para os nomes internos (`mysql`, `redis`, `kafka`, `specs-service`). Fora do Docker o core-api usa `localhost` e lê o `.env` da raiz.
+* `DB_HOST`, `DB_PORT`, `RATE_LIMIT_REDIS_URL` e `SPECS_SERVICE_URL` são definidos pelo Compose para os nomes internos (`mysql`, `redis`, `specs-service`). Fora do Docker o core-api usa `localhost` e lê o `.env` da raiz.
 * `ADMIN_USER_IDS` aceita IDs separados por vírgula. Vazio, `/usuarios` responde HTTP 503; usuários fora da lista recebem HTTP 403.
 * `MOBILEAPI_KEY` é opcional: sem ela o specs-service segue só com o modelo 3D e a foto HD e registra um aviso.
-* Limites de recursos por serviço podem ser ajustados com `CORE_API_MEM_LIMIT`, `CORE_API_CPUS`, `SPECS_SERVICE_MEM_LIMIT`, `KAFKA_MEM_LIMIT`, `KAFKA_HEAP_OPTS`, `MYSQL_MEM_LIMIT`, `FRONTEND_MEM_LIMIT` (padrões em `docker-compose.yml`).
+* Limites de recursos por serviço podem ser ajustados com `CORE_API_MEM_LIMIT`, `CORE_API_CPUS`, `SPECS_SERVICE_MEM_LIMIT`, `MYSQL_MEM_LIMIT`, `FRONTEND_MEM_LIMIT` (padrões em `docker-compose.yml`).
 
 ### Frontend
 
@@ -214,7 +211,7 @@ docker compose logs -f core-api specs-service
 docker compose down
 ```
 
-**Não use `docker compose down -v`**: isso apaga os volumes do banco, do Kafka e dos backups.
+**Não use `docker compose down -v`**: isso apaga os volumes do banco e dos backups.
 
 ---
 
@@ -224,7 +221,6 @@ Testes do core-api e do specs-service (Maven Wrapper, Java 21). No PowerShell:
 
 ```powershell
 Set-Location backend/core-api
-$env:KAFKA_ENABLED = "false"
 .\mvnw.cmd -B verify
 
 Set-Location ../specs-service
@@ -234,11 +230,10 @@ Set-Location ../specs-service
 Para rodar o core-api fora do Docker, suba as dependências com o arquivo de dev e aponte as variáveis para o host:
 
 ```powershell
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d mysql redis kafka kafka-init
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d mysql redis
 Set-Location backend/core-api
 $env:DB_PORT = "3307"
 $env:RATE_LIMIT_REDIS_URL = "redis://127.0.0.1:6379"
-$env:KAFKA_BOOTSTRAP_SERVERS = "localhost:29092"
 $env:SPECS_SERVICE_URL = "http://localhost:8081"
 .\mvnw.cmd spring-boot:run
 ```
@@ -277,7 +272,7 @@ Checklist antes de expor a aplicação:
      O proxy publica 80 e 443, redireciona HTTP para HTTPS e envia HSTS. O serviço `certbot` renova o certificado sozinho e o nginx recarrega a cada 6 h. Use sempre os dois arquivos nos comandos `docker compose` desse servidor.
    * **TLS num proxy/load balancer externo** (Cloudflare, Caddy, ALB): use só o `docker-compose.yml`, `APP_BIND_ADDRESS=127.0.0.1` se o proxy estiver no mesmo host (o HTTP não fica aberto à Internet), ative HSTS nele e some 1 ao `TRUST_PROXY`.
 6. **Subida**: `docker compose up -d --build` (com HTTPS no nginx, inclua `-f docker-compose.https.yml`; nunca o arquivo de dev). O core-api aplica as migrações Flyway no startup; acompanhe com `docker compose logs -f core-api`.
-7. **Healthchecks**: confirme `docker compose ps` com todos os serviços `healthy` (o `kafka-init` termina com `exited (0)`), `curl -f https://<domínio>/health` (liveness) e `curl -f https://<domínio>/readyz` (banco e Redis). Use `/readyz` no load balancer.
+7. **Healthchecks**: confirme `docker compose ps` com todos os serviços `healthy`, `curl -f https://<domínio>/health` (liveness) e `curl -f https://<domínio>/readyz` (banco e Redis). Use `/readyz` no load balancer.
 8. **Backup e restauração**: o serviço `backup` grava dumps comprimidos e verificados no volume `feedbackcellnextjs_mysql_backups` (intervalo `BACKUP_INTERVAL_SECONDS`, retenção `BACKUP_RETENTION_DAYS`). Copie-os para fora do host e teste a restauração periodicamente:
 
    ```bash
@@ -288,10 +283,10 @@ Checklist antes de expor a aplicação:
    ```
 
    Pare o core-api durante uma restauração (`docker compose stop core-api`) e suba de novo depois; o Flyway valida o histórico de migrações restaurado.
-9. **Escala**: `docker compose up -d --scale core-api=N --scale frontend=M`. O nginx redescobre as réplicas pelo DNS do Docker. Cada réplica do core-api abre até `DB_POOL_SIZE` conexões; respeite `DB_POOL_SIZE × réplicas + reservas (backup, administração, margem) < DB_MAX_CONNECTIONS` e ajuste ambos no `.env` antes de escalar. Os limites de memória/CPU do Compose valem por réplica; confira se o host comporta a soma. O specs-service roda com uma réplica (o tópico tem `KAFKA_TOPIC_PARTITIONS` partições, que limita o paralelismo do consumo).
+9. **Escala**: `docker compose up -d --scale core-api=N --scale frontend=M`. O nginx redescobre as réplicas pelo DNS do Docker. Cada réplica do core-api abre até `DB_POOL_SIZE` conexões; respeite `DB_POOL_SIZE × réplicas + reservas (backup, administração, margem) < DB_MAX_CONNECTIONS` e ajuste ambos no `.env` antes de escalar. Os limites de memória/CPU do Compose valem por réplica; confira se o host comporta a soma. O specs-service roda com uma réplica (o cache de buscas fica em memória e a cota da MobileAPI é por chave).
 10. **Limites**: com uma réplica de cada serviço, os limites de memória do Compose somam cerca de 4,5 GB; reserve isso no host além do sistema operacional. Monitore com `docker stats` e ajuste as variáveis `*_MEM_LIMIT`.
 
-O Compose faz balanceamento e escala dentro de **um único host**, não alta disponibilidade: o host, o MySQL, o Redis e o broker Kafka (fator de replicação 1) são pontos únicos de falha.
+O Compose faz balanceamento e escala dentro de **um único host**, não alta disponibilidade: o host, o MySQL e o Redis são pontos únicos de falha.
 
 ---
 

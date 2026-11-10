@@ -103,7 +103,7 @@ public class EspecificacoesService {
 
     void avisarSemChave(@Observes StartupEvent inicio) {
         if (chaveMobileApi.isEmpty()) {
-            LOG.warn("MOBILEAPI_KEY não configurada: as buscas (REST e Kafka) seguem sem especificações, só com modelo 3D e foto HD.");
+            LOG.warn("MOBILEAPI_KEY não configurada: as buscas seguem sem especificações, só com modelo 3D e foto HD.");
         }
     }
 
