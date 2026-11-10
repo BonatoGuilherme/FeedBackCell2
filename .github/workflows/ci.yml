@@ -113,7 +113,9 @@ jobs:
               openssl req -x509 -nodes -newkey rsa:2048 -days 1 -subj /CN=ci.example.com \
                 -keyout "$d/privkey.pem" -out "$d/fullchain.pem" 2>/dev/null
               /docker-entrypoint.sh nginx -t'
-      - name: Lint backup script
-        run: sh -n infra/backup/backup.sh
+      - name: Lint shell scripts
+        run: |
+          sh -n infra/backup/backup.sh
+          bash -n scripts/deploy.sh
       - name: Build images
         run: docker compose build
