@@ -1,6 +1,6 @@
-# Stack de produção. Só o proxy publica porta no host; MySQL, Redis, core-api,
-# specs-service e frontend ficam na rede interna. Para desenvolvimento (MySQL/Redis
-# acessíveis em 127.0.0.1) some o arquivo de dev:
+# Stack de produção. Só o proxy publica porta no host; MySQL, core-api,
+# specs-service e frontend ficam na rede interna. Para desenvolvimento (MySQL
+# acessível em 127.0.0.1) some o arquivo de dev:
 #   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 #
 # Segredos obrigatórios (DB_*, JWT_SECRET) são validados na interpolação: o compose
@@ -46,25 +46,6 @@ services:
           memory: ${MYSQL_MEM_LIMIT:-1g}
     logging: *default-logging
 
-  redis:
-    image: redis:7.4-alpine
-    restart: unless-stopped
-    # Só contadores do rate limit: sem persistência e com teto de memória.
-    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "192mb", "--maxmemory-policy", "allkeys-lru"]
-    networks:
-      - feedbackcell-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 256m
-    logging: *default-logging
-
   # API pública (Spring Boot). Aplica o schema com Flyway no startup.
   core-api:
     build:
@@ -81,7 +62,6 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no .env}
       DB_NAME: ${DB_NAME:?defina DB_NAME no .env}
       JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env (mínimo 32 caracteres)}
-      RATE_LIMIT_REDIS_URL: redis://redis:6379
       TRUST_PROXY: ${TRUST_PROXY:-1}
       BUSCA_AUTOMATICA: ${BUSCA_AUTOMATICA:-true}
       SPECS_SERVICE_URL: http://specs-service:8081
@@ -90,8 +70,6 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-}
     depends_on:
       mysql:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     networks:
       - feedbackcell-network

@@ -48,7 +48,7 @@ public class LimiteFiltro extends OncePerRequestFilter {
         try {
             c = armazem.incrementar(ipCliente(req, config.trustProxy()), config.rateLimitJanelaMs());
         } catch (RuntimeException e) {
-            // passOnStoreError: false — sem o Redis a requisição falha
+            // passOnStoreError: false — erro no contador faz a requisição falhar
             LOG.error("Erro no armazenamento do rate limit:", e);
             res.setStatus(500);
             res.setContentType("application/json;charset=UTF-8");

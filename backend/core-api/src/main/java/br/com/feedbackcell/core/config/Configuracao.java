@@ -30,7 +30,6 @@ public class Configuracao {
     private final int trustProxy;
     private final int rateLimit;
     private final long rateLimitJanelaMs;
-    private final String redisUrl;
     private final String specsServiceUrl;
 
     public Configuracao(
@@ -43,7 +42,6 @@ public class Configuracao {
             @Value("${app.trust-proxy}") String trustProxy,
             @Value("${app.rate-limit.limit}") String rateLimit,
             @Value("${app.rate-limit.window-ms}") String rateLimitJanelaMs,
-            @Value("${app.rate-limit.redis-url}") String redisUrl,
             @Value("${app.specs-service-url}") String specsServiceUrl) {
         this.producao = "production".equalsIgnoreCase(env.trim());
         this.jwtSecret = jwtSecret;
@@ -57,11 +55,7 @@ public class Configuracao {
         this.trustProxy = inteiroNaoNegativo("TRUST_PROXY", trustProxy.isBlank() ? "1" : trustProxy);
         this.rateLimit = (int) inteiroPositivo("RATE_LIMIT", rateLimit, 100);
         this.rateLimitJanelaMs = inteiroPositivo("RATE_LIMIT_WINDOW_MS", rateLimitJanelaMs, 60_000);
-        this.redisUrl = redisUrl.isBlank() ? null : redisUrl.trim();
         this.specsServiceUrl = specsServiceUrl.replaceAll("/+$", "");
-        if (producao && this.redisUrl == null) {
-            throw new IllegalStateException("RATE_LIMIT_REDIS_URL is required in production");
-        }
         validarSegredoJwt(producao, jwtSecret);
     }
 
@@ -131,6 +125,5 @@ public class Configuracao {
     public int trustProxy() { return trustProxy; }
     public int rateLimit() { return rateLimit; }
     public long rateLimitJanelaMs() { return rateLimitJanelaMs; }
-    public String redisUrl() { return redisUrl; }
     public String specsServiceUrl() { return specsServiceUrl; }
 }

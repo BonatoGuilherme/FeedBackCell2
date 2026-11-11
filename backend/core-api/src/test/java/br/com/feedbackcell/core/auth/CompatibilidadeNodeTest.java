@@ -26,7 +26,7 @@ class CompatibilidadeNodeTest {
     private static final String HASH_BCRYPTJS = "$2b$04$1U9gx04rC9xF5aA1htUtHOy3LtBS9x9436nWu0fcq/dLjs2RZtqpy";
 
     private static Configuracao config(String segredo, String expiracao) {
-        return new Configuracao("development", segredo, expiracao, "4", "", "", "1", "100", "60000", "", "http://x");
+        return new Configuracao("development", segredo, expiracao, "4", "", "", "1", "100", "60000", "http://x");
     }
 
     private final Jwt jwt = new Jwt(config("segredo-de-teste", "24h"), new ObjectMapper());
