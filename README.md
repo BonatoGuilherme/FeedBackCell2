@@ -32,7 +32,7 @@ FeedBackCELL é um projeto full-stack educacional para coletar avaliações e op
 |--------|------------|
 | Frontend | Next.js 16, TypeScript |
 | API pública (`core-api`, :8080) | Java 21, Spring Boot, Flyway |
-| Especificações (`specs-service`, :8081, interno) | Java 21, Quarkus, SmallRye Reactive Messaging |
+| Especificações (`specs-service`, :8081, interno) | Java 21, Quarkus REST (Jackson), SmallRye Health |
 | Banco de dados | MySQL 8.0 |
 | Rate limit | Redis 7.4 |
 | Proxy | Nginx 1.28 |
