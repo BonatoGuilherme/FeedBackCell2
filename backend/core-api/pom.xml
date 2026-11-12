@@ -40,10 +40,6 @@
 			<artifactId>spring-security-crypto</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>io.lettuce</groupId>
-			<artifactId>lettuce-core</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>com.mysql</groupId>
 			<artifactId>mysql-connector-j</artifactId>
 			<scope>runtime</scope>
@@ -71,7 +67,6 @@
 						<APP_ENV_FILE>target/sem-env</APP_ENV_FILE>
 						<BUSCA_AUTOMATICA>false</BUSCA_AUTOMATICA>
 						<FLYWAY_ENABLED>false</FLYWAY_ENABLED>
-						<RATE_LIMIT_REDIS_URL></RATE_LIMIT_REDIS_URL>
 						<APP_ENV>test</APP_ENV>
 					</systemPropertyVariables>
 				</configuration>

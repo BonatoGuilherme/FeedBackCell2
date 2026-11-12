@@ -1,8 +1,13 @@
 package br.com.feedbackcell.core.limite;
 
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.stereotype.Component;
 
-/** Fallback local (só fora de produção), como o MemoryStore do express-rate-limit. */
+/**
+ * Contador do rate limit em memória, como o MemoryStore do express-rate-limit. Cada réplica do
+ * core-api conta à parte: com N réplicas, o limite efetivo por cliente fica até N vezes maior.
+ */
+@Component
 public class ArmazemMemoria implements ArmazemLimite {
 
     private record Janela(long total, long expiraEm) {

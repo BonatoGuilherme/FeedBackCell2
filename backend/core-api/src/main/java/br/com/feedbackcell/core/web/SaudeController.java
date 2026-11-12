@@ -9,7 +9,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** /health (vivo) e /readyz (MySQL + armazenamento do rate limit prontos). */
+/** /health (vivo) e /readyz (MySQL e contador do rate limit prontos). */
 @RestController
 public class SaudeController {
 

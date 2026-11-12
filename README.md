@@ -7,7 +7,7 @@
 ![Next.js](https://img.shields.io/badge/next.js-16-black)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
-Plataforma full-stack de feedback sobre celulares: frontend **Next.js**, API **Spring Boot** (core-api), serviço de especificações **Quarkus** (specs-service), **MySQL** e **Redis**, tudo orquestrado com **Docker Compose** atrás de um proxy **Nginx**.
+Plataforma full-stack de feedback sobre celulares: frontend **Next.js**, API **Spring Boot** (core-api), serviço de especificações **Quarkus** (specs-service), **MySQL**, tudo orquestrado com **Docker Compose** atrás de um proxy **Nginx**.
 
 ---
 
@@ -22,7 +22,7 @@ FeedBackCELL é um projeto full-stack educacional para coletar avaliações e op
 - [x] Especificações automáticas: ao criar um celular, o core-api pede em segundo plano (HTTP interno, `POST /eventos/celular-criado`) que o specs-service busque o que falta e aplica a resposta no banco. Também há busca síncrona em `/celulares/especificacoes`.
 - [x] Comentários por celular e listagem dos comentários do usuário.
 - [x] Perfil, troca de senha, exclusão de conta e listagem de usuários restrita a administradores.
-- [x] Rate limiting compartilhado entre réplicas (Redis) e validação de entrada na API.
+- [x] Rate limiting por cliente (contador em memória no core-api) e validação de entrada na API.
 
 ---
 
@@ -34,7 +34,6 @@ FeedBackCELL é um projeto full-stack educacional para coletar avaliações e op
 | API pública (`core-api`, :8080) | Java 21, Spring Boot, Flyway |
 | Especificações (`specs-service`, :8081, interno) | Java 21, Quarkus REST (Jackson), SmallRye Health |
 | Banco de dados | MySQL 8.0 |
-| Rate limit | Redis 7.4 |
 | Proxy | Nginx 1.28 |
 
 ### Fluxo
@@ -42,7 +41,7 @@ FeedBackCELL é um projeto full-stack educacional para coletar avaliações e op
 ```text
 navegador ──► proxy (nginx :80, publicado em APP_PORT)
                 ├── /          ──► frontend (Next.js :3000)
-                ├── /api/*     ──► core-api (:8080) ──► MySQL, Redis
+                ├── /api/*     ──► core-api (:8080) ──► MySQL
                 └── /health, /readyz ──► core-api
 core-api ──► HTTP interno ──► specs-service (busca síncrona, até 30 s)
 core-api ──► HTTP interno, em segundo plano ──► specs-service (celular criado → especificações)
@@ -64,7 +63,7 @@ O specs-service não publica portas nem passa pelo proxy.
 │   ├── nginx/default.conf     # Proxy reverso (headers de segurança, gzip, timeouts)
 │   └── backup/                # Imagem e script de backup do MySQL
 ├── docker-compose.yml         # Stack de produção (só o proxy publica porta)
-├── docker-compose.dev.yml     # Extra de dev: MySQL/Redis em 127.0.0.1
+├── docker-compose.dev.yml     # Extra de dev: MySQL em 127.0.0.1
 ├── docker-compose.https.yml   # Extra de produção: HTTPS com Let's Encrypt no nginx
 ├── .env.example               # Modelo de variáveis; copiar para .env
 └── README.md
@@ -93,12 +92,12 @@ Na primeira subida o core-api cria o schema com Flyway; em bancos que já existi
 
 * Aplicação (frontend e API pelo proxy) → http://localhost:3000
 * API → http://localhost:3000/api
-* Saúde → http://localhost:3000/health (liveness) e http://localhost:3000/readyz (prontidão: banco, Redis)
+* Saúde → http://localhost:3000/health (liveness) e http://localhost:3000/readyz (prontidão: banco)
 
-Em produção nenhum outro serviço fica acessível do host. Para desenvolvimento, `docker-compose.dev.yml` publica MySQL em `127.0.0.1:3307` e Redis em `127.0.0.1:6379`:
+Em produção nenhum outro serviço fica acessível do host. Para desenvolvimento, `docker-compose.dev.yml` publica o MySQL em `127.0.0.1:3307`:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d mysql redis
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d mysql
 ```
 
 O arquivo de dev não se chama `docker-compose.override.yml` de propósito: esse nome é carregado automaticamente e exporia o banco num `docker compose up` de produção.
@@ -112,7 +111,7 @@ Pelo proxy, prefixe com `/api` (ex.: `POST /api/auth/login`). Direto no core-api
 | Método | Endpoint | Descrição | Autenticação |
 |--------|----------|-----------|--------------|
 | GET | `/health` | Liveness | Não |
-| GET | `/readyz` | Prontidão (MySQL e Redis) | Não |
+| GET | `/readyz` | Prontidão (MySQL) | Não |
 | POST | `/auth/register` | Cadastrar novo usuário | Não |
 | POST | `/auth/login` | Autenticar e retornar JWT | Não |
 | POST | `/auth/logout` | Resposta de logout no cliente | Não |
@@ -183,7 +182,7 @@ BACKUP_INTERVAL_SECONDS=86400
 BACKUP_RETENTION_DAYS=30
 ```
 
-* `DB_HOST`, `DB_PORT`, `RATE_LIMIT_REDIS_URL` e `SPECS_SERVICE_URL` são definidos pelo Compose para os nomes internos (`mysql`, `redis`, `specs-service`). Fora do Docker o core-api usa `localhost` e lê o `.env` da raiz.
+* `DB_HOST`, `DB_PORT` e `SPECS_SERVICE_URL` são definidos pelo Compose para os nomes internos (`mysql`, `specs-service`). Fora do Docker o core-api usa `localhost` e lê o `.env` da raiz.
 * `ADMIN_USER_IDS` aceita IDs separados por vírgula. Vazio, `/usuarios` responde HTTP 503; usuários fora da lista recebem HTTP 403.
 * `MOBILEAPI_KEY` é opcional: sem ela o specs-service segue só com o modelo 3D e a foto HD e registra um aviso.
 * Limites de recursos por serviço podem ser ajustados com `CORE_API_MEM_LIMIT`, `CORE_API_CPUS`, `SPECS_SERVICE_MEM_LIMIT`, `MYSQL_MEM_LIMIT`, `FRONTEND_MEM_LIMIT` (padrões em `docker-compose.yml`).
@@ -230,10 +229,9 @@ Set-Location ../specs-service
 Para rodar o core-api fora do Docker, suba as dependências com o arquivo de dev e aponte as variáveis para o host:
 
 ```powershell
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d mysql redis
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d mysql
 Set-Location backend/core-api
 $env:DB_PORT = "3307"
-$env:RATE_LIMIT_REDIS_URL = "redis://127.0.0.1:6379"
 $env:SPECS_SERVICE_URL = "http://localhost:8081"
 .\mvnw.cmd spring-boot:run
 ```
@@ -286,7 +284,7 @@ Checklist antes de expor a aplicação:
      O proxy publica 80 e 443, redireciona HTTP para HTTPS e envia HSTS. O serviço `certbot` renova o certificado sozinho e o nginx recarrega a cada 6 h. Use sempre os dois arquivos nos comandos `docker compose` desse servidor.
    * **TLS num proxy/load balancer externo** (Cloudflare, Caddy, ALB): use só o `docker-compose.yml`, `APP_BIND_ADDRESS=127.0.0.1` se o proxy estiver no mesmo host (o HTTP não fica aberto à Internet), ative HSTS nele e some 1 ao `TRUST_PROXY`.
 6. **Subida**: `docker compose up -d --build` (com HTTPS no nginx, inclua `-f docker-compose.https.yml`; nunca o arquivo de dev). O core-api aplica as migrações Flyway no startup; acompanhe com `docker compose logs -f core-api`.
-7. **Healthchecks**: confirme `docker compose ps` com todos os serviços `healthy`, `curl -f https://<domínio>/health` (liveness) e `curl -f https://<domínio>/readyz` (banco e Redis). Use `/readyz` no load balancer.
+7. **Healthchecks**: confirme `docker compose ps` com todos os serviços `healthy`, `curl -f https://<domínio>/health` (liveness) e `curl -f https://<domínio>/readyz` (banco). Use `/readyz` no load balancer.
 8. **Backup e restauração**: o serviço `backup` grava dumps comprimidos e verificados no volume `feedbackcellnextjs_mysql_backups` (intervalo `BACKUP_INTERVAL_SECONDS`, retenção `BACKUP_RETENTION_DAYS`). Copie-os para fora do host e teste a restauração periodicamente:
 
    ```bash
@@ -297,10 +295,10 @@ Checklist antes de expor a aplicação:
    ```
 
    Pare o core-api durante uma restauração (`docker compose stop core-api`) e suba de novo depois; o Flyway valida o histórico de migrações restaurado.
-9. **Escala**: `docker compose up -d --scale core-api=N --scale frontend=M`. O nginx redescobre as réplicas pelo DNS do Docker. Cada réplica do core-api abre até `DB_POOL_SIZE` conexões; respeite `DB_POOL_SIZE × réplicas + reservas (backup, administração, margem) < DB_MAX_CONNECTIONS` e ajuste ambos no `.env` antes de escalar. Os limites de memória/CPU do Compose valem por réplica; confira se o host comporta a soma. O specs-service roda com uma réplica (o cache de buscas fica em memória e a cota da MobileAPI é por chave).
-10. **Limites**: com uma réplica de cada serviço, os limites de memória do Compose somam cerca de 3,5 GB; reserve isso no host além do sistema operacional. Monitore com `docker stats` e ajuste as variáveis `*_MEM_LIMIT`.
+9. **Escala**: `docker compose up -d --scale core-api=N --scale frontend=M`. O nginx redescobre as réplicas pelo DNS do Docker. Cada réplica do core-api abre até `DB_POOL_SIZE` conexões; respeite `DB_POOL_SIZE × réplicas + reservas (backup, administração, margem) < DB_MAX_CONNECTIONS` e ajuste ambos no `.env` antes de escalar. Os limites de memória/CPU do Compose valem por réplica; confira se o host comporta a soma. O rate limit conta em memória em cada réplica do core-api: com N réplicas, o limite efetivo por cliente fica até N vezes maior. O specs-service roda com uma réplica (o cache de buscas fica em memória e a cota da MobileAPI é por chave).
+10. **Limites**: com uma réplica de cada serviço, os limites de memória do Compose somam cerca de 3,2 GB; reserve isso no host além do sistema operacional. Monitore com `docker stats` e ajuste as variáveis `*_MEM_LIMIT`.
 
-O Compose faz balanceamento e escala dentro de **um único host**, não alta disponibilidade: o host, o MySQL e o Redis são pontos únicos de falha.
+O Compose faz balanceamento e escala dentro de **um único host**, não alta disponibilidade: o host e o MySQL são pontos únicos de falha.
 
 ---
 

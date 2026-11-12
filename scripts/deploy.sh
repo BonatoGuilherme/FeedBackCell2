@@ -108,7 +108,7 @@ done
 # ---------------------------------------------------------------- verificação
 info "Verificando https://$DOMAIN"
 curl -fsS "https://$DOMAIN/health" >/dev/null || erro "/health não respondeu."
-curl -fsS "https://$DOMAIN/readyz" >/dev/null || erro "/readyz falhou (banco ou Redis)."
+curl -fsS "https://$DOMAIN/readyz" >/dev/null || erro "/readyz falhou (banco)."
 curl -fsS -o /dev/null "https://$DOMAIN/" || erro "o frontend não respondeu."
 
 "${COMPOSE[@]}" ps

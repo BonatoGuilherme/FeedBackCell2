@@ -12,7 +12,7 @@ class ConfiguracaoTest {
 
     private static Configuracao config(String env, String segredo) {
         return new Configuracao(env, segredo, "24h", "10", "", "", "1", "100", "60000",
-                "redis://redis:6379", "http://specs");
+                "http://specs");
     }
 
     @Test
@@ -29,12 +29,5 @@ class ConfiguracaoTest {
     void foraDeProducaoSegredoFracoSoAvisa() {
         assertThatCode(() -> config("development", "")).doesNotThrowAnyException();
         assertThatCode(() -> config("test", "segredo-de-teste")).doesNotThrowAnyException();
-    }
-
-    @Test
-    void producaoContinuaExigindoRedis() {
-        assertThatThrownBy(() -> new Configuracao("production", SEGREDO_FORTE, "24h", "10", "", "", "1",
-                "100", "60000", "", "http://specs"))
-                .hasMessage("RATE_LIMIT_REDIS_URL is required in production");
     }
 }
