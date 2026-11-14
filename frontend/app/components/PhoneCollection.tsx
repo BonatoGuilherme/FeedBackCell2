@@ -97,7 +97,7 @@ function EmptyState({ onRetry }: { onRetry?: () => void }) {
 
 export default function PhoneCollection({ variant }: PhoneCollectionProps) {
   const isOverview = variant === "overview";
-  const limit = isOverview ? 8 : 12;
+  const limit = isOverview ? 8 : 24;
   const [pagina, setPagina] = useState(1);
   const [busca, setBusca] = useState("");
   const [marcaSelecionada, setMarcaSelecionada] = useState("Todas as marcas");
