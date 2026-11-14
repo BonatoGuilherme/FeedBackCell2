@@ -8,6 +8,11 @@
   margin-top: 45px;
 }
 
+/* o catálogo usa a largura toda da janela (as outras telas seguem em --content-width) */
+.page-shell.catalog-page {
+  width: 100%;
+}
+
 /* catálogo compacto: cabeçalho, busca e filtros ocupam pouca altura */
 .catalog-page .page-heading {
   align-items: center;

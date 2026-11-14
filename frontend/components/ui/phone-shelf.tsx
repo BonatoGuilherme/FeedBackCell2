@@ -9,7 +9,7 @@
  * pelo pai (o catálogo abre direto o celular de /catalog?celular=ID).
  */
 
-import { useEffect, useRef, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
@@ -50,22 +50,28 @@ function hash(text: string) {
 const frameOf = (c: Celular) => FRAMES[hash(c.marca.toLowerCase()) % FRAMES.length];
 const screenOf = (c: Celular) => SCREENS[hash(c.modelo.toLowerCase()) % SCREENS.length];
 
-// aparelhos por prateleira: 3 no celular, 4 no tablet, 6 no desktop
-const CONSULTA_DESKTOP = "(min-width: 1024px)";
-const CONSULTA_TABLET = "(min-width: 640px)";
+// Aparelhos por prateleira: quantos couberem na largura da própria prateleira
+// (cada um ocupa pelo menos LARGURA_MINIMA), nunca menos de 2. Assim a grade
+// preenche a tela em monitores largos e encolhe no celular.
+const LARGURA_MINIMA = 174;
+const COLUNAS_MINIMAS = 2;
+const COLUNAS_INICIAIS = 6;
 
-function assinarLargura(avisar: () => void) {
-  const consultas = [CONSULTA_DESKTOP, CONSULTA_TABLET].map((q) => window.matchMedia(q));
-  consultas.forEach((m) => m.addEventListener("change", avisar));
-  return () => consultas.forEach((m) => m.removeEventListener("change", avisar));
-}
+function useColunas(ref: RefObject<HTMLElement | null>) {
+  const [colunas, setColunas] = useState(COLUNAS_INICIAIS);
 
-function useColunas() {
-  return useSyncExternalStore(
-    assinarLargura,
-    () => (window.matchMedia(CONSULTA_DESKTOP).matches ? 6 : window.matchMedia(CONSULTA_TABLET).matches ? 4 : 3),
-    () => 6,
-  );
+  useEffect(() => {
+    const elemento = ref.current;
+    if (!elemento) return;
+    const observador = new ResizeObserver(([entrada]) => {
+      const largura = entrada.contentRect.width;
+      setColunas(Math.max(COLUNAS_MINIMAS, Math.floor(largura / LARGURA_MINIMA)));
+    });
+    observador.observe(elemento);
+    return () => observador.disconnect();
+  }, [ref]);
+
+  return colunas;
 }
 
 type PhoneShelfProps = {
@@ -81,14 +87,15 @@ type PhoneShelfProps = {
 
 export function PhoneShelf({ celulares, formatPrice, aberto, onAbrir, onFechar, className }: PhoneShelfProps) {
   const openId = aberto?.idcelular ?? null;
-  const colunas = useColunas();
+  const prateleiraRef = useRef<HTMLDivElement>(null);
+  const colunas = useColunas(prateleiraRef);
   const grade = { gridTemplateColumns: `repeat(${colunas}, minmax(0, 1fr))` };
   const rows: Celular[][] = [];
   for (let i = 0; i < celulares.length; i += colunas) rows.push(celulares.slice(i, i + colunas));
 
   return (
     <LayoutGroup>
-      <div className={cn("relative", className)}>
+      <div ref={prateleiraRef} className={cn("relative", className)}>
         {rows.map((row, r) => (
           <section key={r} aria-label={`Prateleira ${r + 1}`} className="relative mb-6 last:mb-0">
             <div className="relative z-10 grid items-end gap-4 px-2 sm:gap-6 sm:px-6" style={grade}>
@@ -97,10 +104,10 @@ export function PhoneShelf({ celulares, formatPrice, aberto, onAbrir, onFechar, 
                   {/* sombra de chão sob o aparelho (no lugar da prateleira branca) */}
                   <span
                     aria-hidden
-                    className="pointer-events-none absolute -bottom-2.5 left-1/2 h-4 w-[min(100%,96px)] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgba(201,151,63,0.35),transparent)]"
+                    className="pointer-events-none absolute -bottom-2.5 left-1/2 h-4 w-[min(100%,112px)] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgba(201,151,63,0.35),transparent)]"
                   />
                   {openId === c.idcelular ? (
-                    <div className="aspect-[1/2] w-full max-w-[76px]" />
+                    <div className="aspect-[1/2] w-full max-w-[92px]" />
                   ) : (
                     <motion.button
                       layoutId={`phone-${c.idcelular}`}
@@ -110,7 +117,7 @@ export function PhoneShelf({ celulares, formatPrice, aberto, onAbrir, onFechar, 
                       transition={SPRING}
                       whileHover={{ y: -10, rotateY: -18, rotateX: 8, scale: 1.06 }}
                       style={{ transformPerspective: 600 }}
-                      className="relative aspect-[1/2] w-full max-w-[76px] cursor-pointer rounded-[22%/11%] outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-4"
+                      className="relative aspect-[1/2] w-full max-w-[92px] cursor-pointer rounded-[22%/11%] outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-4"
                     >
                       <PhoneVisual celular={c} />
                     </motion.button>
