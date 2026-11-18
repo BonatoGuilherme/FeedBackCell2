@@ -66,8 +66,10 @@ public class EspecificacoesController {
                 .append("&modelo=").append(URLEncoder.encode(modelo, StandardCharsets.UTF_8));
         if ("1".equals(req.getParameter("somente3d"))) url.append("&somente3d=1");
 
-        HttpRequest pedido = HttpRequest.newBuilder(URI.create(url.toString())).GET().timeout(TIMEOUT)
-                .header("Accept", "application/json").build();
+        HttpRequest.Builder construtor = HttpRequest.newBuilder(URI.create(url.toString())).GET().timeout(TIMEOUT)
+                .header("Accept", "application/json");
+        if (!config.specsToken().isEmpty()) construtor.header("X-Internal-Token", config.specsToken());
+        HttpRequest pedido = construtor.build();
         try {
             HttpResponse<String> resposta = http.send(pedido, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return ResponseEntity.status(resposta.statusCode()).contentType(MediaType.APPLICATION_JSON)

@@ -28,6 +28,8 @@ class EventosHttpTest {
 
     private final AplicadorEspecificacoes aplicador = mock(AplicadorEspecificacoes.class);
     private final List<String> recebidos = new CopyOnWriteArrayList<>();
+    private final List<String> tokensRecebidos = new CopyOnWriteArrayList<>();
+    private String token = "";
     private HttpServer servidor;
     private EventosHttp eventos;
 
@@ -35,6 +37,7 @@ class EventosHttpTest {
         AtomicInteger chamada = new AtomicInteger();
         servidor = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         servidor.createContext("/eventos/celular-criado", troca -> {
+            tokensRecebidos.add(String.valueOf(troca.getRequestHeaders().getFirst("X-Internal-Token")));
             recebidos.add(new String(troca.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
             int s = status[Math.min(chamada.getAndIncrement(), status.length - 1)];
             byte[] corpo = (s == 200 ? RESPOSTA : "{}").getBytes(StandardCharsets.UTF_8);
@@ -43,7 +46,7 @@ class EventosHttpTest {
             troca.close();
         });
         servidor.start();
-        eventos = new EventosHttp(aplicador, JSON, "http://127.0.0.1:" + servidor.getAddress().getPort());
+        eventos = new EventosHttp(aplicador, JSON, "http://127.0.0.1:" + servidor.getAddress().getPort(), token);
         eventos.esperaRepeticao = Duration.ZERO;
     }
 
@@ -67,6 +70,23 @@ class EventosHttpTest {
     }
 
     @Test
+    void mandaOTokenInternoQuandoConfigurado() throws Exception {
+        token = "segredo";
+        subir(200);
+        eventos.celularCriado(12, "Samsung", "Galaxy S24", false, true);
+        verify(aplicador, timeout(5000)).aplicar(RESPOSTA);
+        assertThat(tokensRecebidos).containsExactly("segredo");
+    }
+
+    @Test
+    void semTokenNaoMandaOHeader() throws Exception {
+        subir(200);
+        eventos.celularCriado(12, "Samsung", "Galaxy S24", false, true);
+        verify(aplicador, timeout(5000)).aplicar(RESPOSTA);
+        assertThat(tokensRecebidos).containsExactly("null");
+    }
+
+    @Test
     void repeteUmaVezDepoisDe5xx() throws Exception {
         subir(503, 200);
         eventos.celularCriado(12, "Samsung", "Galaxy S24", true, true);
@@ -85,7 +105,7 @@ class EventosHttpTest {
 
     @Test
     void specsServiceForaDoArNaoQuebraNada() {
-        eventos = new EventosHttp(aplicador, JSON, "http://127.0.0.1:1");
+        eventos = new EventosHttp(aplicador, JSON, "http://127.0.0.1:1", "");
         eventos.esperaRepeticao = Duration.ZERO;
         eventos.celularCriado(12, "Samsung", "Galaxy S24", true, true);
         verify(aplicador, after(1000).never()).aplicar(ArgumentMatchers.anyString());

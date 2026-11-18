@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * POST /eventos/celular-criado — o core-api avisa que um celular foi criado sem especificações
  * e/ou modelo 3D; a resposta traz {@code {idcelular, especificacoes, modelo3d, ocorridoEm}}.
- * Interno: sem autenticação e não exposto pelo nginx.
+ * Interno: só o core-api chama; com SPECS_TOKEN exige o header (TokenInternoFiltro).
  */
 @Path("/eventos/celular-criado")
 public class CelularCriadoResource {
