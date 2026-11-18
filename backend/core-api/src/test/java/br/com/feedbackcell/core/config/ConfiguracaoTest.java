@@ -12,7 +12,7 @@ class ConfiguracaoTest {
 
     private static Configuracao config(String env, String segredo) {
         return new Configuracao(env, segredo, "24h", "10", "", "", "1", "100", "60000",
-                "http://specs");
+                "http://specs", "");
     }
 
     @Test

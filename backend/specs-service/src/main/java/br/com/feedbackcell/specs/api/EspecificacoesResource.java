@@ -13,7 +13,7 @@ import org.jboss.logging.Logger;
 
 /**
  * GET /especificacoes?marca=&modelo=[&q=][&somente3d=1] — mesmas regras de especificacoesController.js.
- * Interno: sem autenticação e não exposto pelo nginx (o core-api faz o proxy autenticado).
+ * Interno: só o core-api chama (proxy autenticado); com SPECS_TOKEN exige o header (TokenInternoFiltro).
  */
 @Path("/especificacoes")
 @Produces(MediaType.APPLICATION_JSON)

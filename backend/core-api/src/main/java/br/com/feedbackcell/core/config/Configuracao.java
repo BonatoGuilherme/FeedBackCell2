@@ -31,6 +31,7 @@ public class Configuracao {
     private final int rateLimit;
     private final long rateLimitJanelaMs;
     private final String specsServiceUrl;
+    private final String specsToken;
 
     public Configuracao(
             @Value("${app.env}") String env,
@@ -42,7 +43,8 @@ public class Configuracao {
             @Value("${app.trust-proxy}") String trustProxy,
             @Value("${app.rate-limit.limit}") String rateLimit,
             @Value("${app.rate-limit.window-ms}") String rateLimitJanelaMs,
-            @Value("${app.specs-service-url}") String specsServiceUrl) {
+            @Value("${app.specs-service-url}") String specsServiceUrl,
+            @Value("${app.specs-token}") String specsToken) {
         this.producao = "production".equalsIgnoreCase(env.trim());
         this.jwtSecret = jwtSecret;
         this.jwtExpiracao = jwtExpiracao.isBlank() ? "24h" : jwtExpiracao.trim();
@@ -56,6 +58,7 @@ public class Configuracao {
         this.rateLimit = (int) inteiroPositivo("RATE_LIMIT", rateLimit, 100);
         this.rateLimitJanelaMs = inteiroPositivo("RATE_LIMIT_WINDOW_MS", rateLimitJanelaMs, 60_000);
         this.specsServiceUrl = specsServiceUrl.replaceAll("/+$", "");
+        this.specsToken = specsToken.trim();
         validarSegredoJwt(producao, jwtSecret);
     }
 
@@ -126,4 +129,6 @@ public class Configuracao {
     public int rateLimit() { return rateLimit; }
     public long rateLimitJanelaMs() { return rateLimitJanelaMs; }
     public String specsServiceUrl() { return specsServiceUrl; }
+    /** Segredo enviado ao specs-service no header X-Internal-Token; vazio = não envia. */
+    public String specsToken() { return specsToken; }
 }

@@ -41,6 +41,7 @@ public class EventosHttp implements EventosCelular, AutoCloseable {
     private final AplicadorEspecificacoes aplicador;
     private final ObjectMapper json;
     private final URI destino;
+    private final String token;
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
     private final ThreadPoolExecutor envio = new ThreadPoolExecutor(2, 2, 0, TimeUnit.MILLISECONDS,
             new ArrayBlockingQueue<>(500), r -> {
@@ -51,13 +52,14 @@ public class EventosHttp implements EventosCelular, AutoCloseable {
 
     @Autowired
     public EventosHttp(AplicadorEspecificacoes aplicador, ObjectMapper json, Configuracao config) {
-        this(aplicador, json, config.specsServiceUrl());
+        this(aplicador, json, config.specsServiceUrl(), config.specsToken());
     }
 
-    EventosHttp(AplicadorEspecificacoes aplicador, ObjectMapper json, String specsServiceUrl) {
+    EventosHttp(AplicadorEspecificacoes aplicador, ObjectMapper json, String specsServiceUrl, String token) {
         this.aplicador = aplicador;
         this.json = json;
         this.destino = URI.create(specsServiceUrl + "/eventos/celular-criado");
+        this.token = token;
     }
 
     @Override
@@ -81,9 +83,11 @@ public class EventosHttp implements EventosCelular, AutoCloseable {
     }
 
     private void enviar(long idcelular, String evento) {
-        HttpRequest pedido = HttpRequest.newBuilder(destino).timeout(TIMEOUT)
+        HttpRequest.Builder construtor = HttpRequest.newBuilder(destino).timeout(TIMEOUT)
                 .header("Content-Type", "application/json").header("Accept", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(evento, StandardCharsets.UTF_8)).build();
+                .POST(HttpRequest.BodyPublishers.ofString(evento, StandardCharsets.UTF_8));
+        if (!token.isEmpty()) construtor.header("X-Internal-Token", token);
+        HttpRequest pedido = construtor.build();
         for (int tentativa = 1; tentativa <= 2; tentativa++) {
             String falha;
             try {
