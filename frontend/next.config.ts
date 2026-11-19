@@ -9,6 +9,15 @@ const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: raiz,
   turbopack: { root: raiz },
+  // links antigos: os comentários agora ficam na página de cada celular
+  async redirects() {
+    const comId = [{ type: "query" as const, key: "celular", value: "(?<id>[1-9][0-9]{0,9})" }];
+    return [
+      { source: "/comments", has: comId, destination: "/celulares/:id#comentarios", permanent: false },
+      { source: "/comments", destination: "/catalog", permanent: false },
+      { source: "/catalog", has: comId, destination: "/celulares/:id", permanent: false },
+    ];
+  },
 };
 
 export default nextConfig;

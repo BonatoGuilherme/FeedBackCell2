@@ -12,25 +12,25 @@ import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, LayoutGrid, LogOut, MessageSquare, Plus } from "lucide-react";
+import { Home, LayoutGrid, LogOut, Plus } from "lucide-react";
 import { expireSession } from "@/src/lib/session";
 import { useSlidePill } from "@/components/ui/use-slide-pill";
 
 const links = [
   { href: "/", label: "Início", icon: Home },
   { href: "/catalog", label: "Catálogo", icon: LayoutGrid },
-  { href: "/comments", label: "Comentários", icon: MessageSquare },
   { href: "/items/new", label: "Adicionar celular", short: "Adicionar", icon: Plus },
 ];
 
 const titles: Record<string, string> = {
   "/": "Painel",
   "/catalog": "Catálogo",
-  "/comments": "Comentários",
   "/items/new": "Novo celular",
 };
 
 function activeHref(pathname: string) {
+  // a página de um celular faz parte do catálogo
+  if (pathname.startsWith("/celulares/")) return "/catalog";
   const match = links
     .filter((l) => pathname === l.href || (l.href !== "/" && pathname.startsWith(l.href)))
     .sort((a, b) => b.href.length - a.href.length)[0];

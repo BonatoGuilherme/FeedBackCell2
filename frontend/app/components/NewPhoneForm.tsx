@@ -18,16 +18,10 @@ import {
 import { PhotoPicker, type PickedPhoto } from "@/components/ui/photo-picker";
 import { getToken } from "@/src/lib/session";
 
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
-
 export default function NewPhoneForm() {
   const router = useRouter();
   const [marca, setMarca] = useState("");
   const [modelo, setModelo] = useState("");
-  const [preco, setPreco] = useState("");
   const [descricao, setDescricao] = useState("");
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
@@ -58,12 +52,6 @@ export default function NewPhoneForm() {
       return;
     }
 
-    const precoNumerico = Number(preco);
-    if (!Number.isFinite(precoNumerico) || precoNumerico < 0) {
-      setErro("Informe um preço válido, igual ou maior que zero.");
-      return;
-    }
-
     setLoading(true);
     try {
       let especificacoes = null;
@@ -78,7 +66,6 @@ export default function NewPhoneForm() {
         {
           marca: marca.trim(),
           modelo: modelo.trim(),
-          preco: precoNumerico,
           descricao: descricao.trim(),
           especificacoes,
           modelo3d: uid3d,
@@ -126,18 +113,13 @@ export default function NewPhoneForm() {
     }
   }
 
-  const precoValido = preco !== "" && Number.isFinite(Number(preco)) && Number(preco) >= 0;
-  const precoFormatado = precoValido ? currency.format(Number(preco)) : "Preço não informado";
-
   // mesmas regras do envio, mostradas junto de cada campo
   const erroMarca = tentou && marca.trim().length < 2 ? "Informe a marca (mínimo de 2 caracteres)." : "";
   const erroModelo = tentou && modelo.trim().length < 2 ? "Informe o modelo (mínimo de 2 caracteres)." : "";
-  const erroPreco = tentou && !precoValido ? "Informe um preço igual ou maior que zero." : "";
 
   const totalFotos = fotos.length + (imagemApi ? 1 : 0);
   const checklist: [string, boolean][] = [
     ["Marca e modelo", marca.trim().length >= 2 && modelo.trim().length >= 2],
-    ["Preço", precoValido],
     ["Especificações", Boolean(escolhido)],
     [totalFotos > 0 ? `${totalFotos} foto${totalFotos > 1 ? "s" : ""}` : "Fotos", totalFotos > 0],
   ];
@@ -229,35 +211,10 @@ export default function NewPhoneForm() {
           </FormSection>
 
           <FormSection
-            id="secao-preco"
-            title="Preço e descrição"
-            description="O preço aparece no catálogo; a descrição é opcional."
+            id="secao-descricao"
+            title="Descrição"
+            description="Opcional. Aparece na página do celular, acima das especificações."
           >
-            <div className="form-field phone-form__price">
-              <label htmlFor="preco">
-                Preço <span className="phone-form__required" aria-hidden="true">*</span>
-              </label>
-              <div className="input-prefix">
-                <span aria-hidden="true">R$</span>
-                <input
-                  id="preco"
-                  name="preco"
-                  type="number"
-                  min="0"
-                  max="99999999.99"
-                  step="0.01"
-                  inputMode="decimal"
-                  placeholder="0,00"
-                  required
-                  aria-invalid={erroPreco ? true : undefined}
-                  aria-describedby={erroPreco ? "preco-erro" : undefined}
-                  value={preco}
-                  onChange={(event) => setPreco(event.target.value)}
-                />
-              </div>
-              {erroPreco && <FieldError id="preco-erro">{erroPreco}</FieldError>}
-            </div>
-
             <div className="form-field">
               <div className="phone-form__label-row">
                 <label htmlFor="descricao">
@@ -278,7 +235,7 @@ export default function NewPhoneForm() {
                 onChange={(event) => setDescricao(event.target.value)}
               />
               <span id="descricao-dica" className="phone-form__hint">
-                Escreva o que um comprador precisa saber sobre o aparelho.
+                Conte o que vale saber sobre o aparelho.
               </span>
             </div>
           </FormSection>
@@ -372,9 +329,7 @@ export default function NewPhoneForm() {
           <div className="phone-preview__details">
             <p className="phone-preview__brand">{marca.trim() || "Marca"}</p>
             <p className="phone-preview__model">{modelo.trim() || "Modelo do celular"}</p>
-            <p className={precoValido ? "phone-preview__price" : "phone-preview__price is-empty"}>
-              {precoFormatado}
-            </p>
+            <p className="phone-preview__price is-empty">Sem avaliações</p>
             {descricao.trim() && (
               <p className="phone-preview__description">{descricao.trim()}</p>
             )}

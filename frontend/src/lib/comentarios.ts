@@ -5,8 +5,13 @@ export type Comentario = {
   idusuario: number;
   Nome: string;
   texto: string;
+  /** Nota de 1 a 5; null nos comentários feitos antes da nota existir. */
+  nota: number | null;
   dataCriacao: string;
 };
+
+export const NOTA_MIN = 1;
+export const NOTA_MAX = 5;
 
 export type ListaComentarios = {
   comentarios: Comentario[];
@@ -33,6 +38,10 @@ function parseComentario(value: unknown): Comentario {
     idusuario: Number(value.idusuario),
     Nome: typeof value.Nome === "string" ? value.Nome : "Usuário",
     texto: value.texto,
+    nota:
+      Number.isInteger(value.nota) && Number(value.nota) >= NOTA_MIN && Number(value.nota) <= NOTA_MAX
+        ? Number(value.nota)
+        : null,
     dataCriacao:
       typeof value.dataCriacao === "string" ? value.dataCriacao : "",
   };
@@ -75,9 +84,10 @@ export async function listarComentarios(
 export async function criarComentario(
   idcelular: number,
   texto: string,
+  nota: number,
   token: string,
 ): Promise<void> {
-  await apiFetch(`/comentarios/${idcelular}`, { method: "POST", token, body: { texto } });
+  await apiFetch(`/comentarios/${idcelular}`, { method: "POST", token, body: { texto, nota } });
 }
 
 export async function excluirComentario(

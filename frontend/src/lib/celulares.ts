@@ -15,8 +15,11 @@ export type Celular = {
   idusuario?: number;
   marca: string;
   modelo: string;
-  preco: number;
   descricao: string;
+  /** Média das notas (1 a 5) dos comentários, ou null se ninguém avaliou. */
+  notaMedia: number | null;
+  /** Quantos comentários têm nota. */
+  avaliacoes: number;
   dataCriacao?: string | null;
   imagens: CelularImagem[];
   especificacoes: Especificacoes | null;
@@ -60,26 +63,29 @@ function parseCelular(value: unknown): Celular {
     (typeof value.idcelular !== "number" &&
       typeof value.idcelular !== "string") ||
     typeof value.marca !== "string" ||
-    typeof value.modelo !== "string" ||
-    (typeof value.preco !== "number" && typeof value.preco !== "string")
+    typeof value.modelo !== "string"
   ) {
     throw new Error("A API retornou dados de celular em um formato inválido.");
   }
 
-  const preco = Number(value.preco);
   const idcelular = Number(value.idcelular);
-
-  if (!Number.isFinite(preco) || !Number.isInteger(idcelular)) {
-    throw new Error("A API retornou preço ou identificador inválido.");
+  if (!Number.isInteger(idcelular)) {
+    throw new Error("A API retornou um identificador de celular inválido.");
   }
+  const notaMedia = Number(value.notaMedia);
+  const avaliacoes = Number(value.avaliacoes);
 
   return {
     idcelular,
     idusuario: typeof value.idusuario === "number" ? value.idusuario : undefined,
     marca: value.marca,
     modelo: value.modelo,
-    preco,
     descricao: typeof value.descricao === "string" ? value.descricao : "",
+    notaMedia:
+      value.notaMedia != null && Number.isFinite(notaMedia) && notaMedia >= 1 && notaMedia <= 5
+        ? notaMedia
+        : null,
+    avaliacoes: Number.isSafeInteger(avaliacoes) && avaliacoes > 0 ? avaliacoes : 0,
     dataCriacao:
       typeof value.dataCriacao === "string" ? value.dataCriacao : null,
     imagens: parseImagens(value.imagens),
@@ -142,7 +148,7 @@ export async function listarCelulares(
 }
 
 export async function criarCelular(
-  celular: Pick<Celular, "marca" | "modelo" | "preco" | "descricao"> &
+  celular: Pick<Celular, "marca" | "modelo" | "descricao"> &
     Partial<Pick<Celular, "especificacoes" | "modelo3d">>,
   token: string,
 ): Promise<Celular> {
