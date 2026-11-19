@@ -1,6 +1,5 @@
 package br.com.feedbackcell.core.dados;
 
-import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -22,12 +21,6 @@ public final class Linhas {
     public static String data(ResultSet rs, String coluna) throws SQLException {
         Timestamp t = rs.getTimestamp(coluna);
         return t == null ? null : ISO_JS.format(t.toInstant());
-    }
-
-    /** DECIMAL chega como texto no mysql2 ("1999.90"). */
-    public static String decimal(ResultSet rs, String coluna) throws SQLException {
-        BigDecimal d = rs.getBigDecimal(coluna);
-        return d == null ? null : d.toPlainString();
     }
 
     public static Integer inteiro(ResultSet rs, String coluna) throws SQLException {

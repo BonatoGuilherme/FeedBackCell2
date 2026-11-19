@@ -100,6 +100,28 @@ class ApiTest {
     }
 
     /** A listagem repassa o JSON de especificações do MySQL sem reprocessar; sai como objeto. */
+    /** Sem preço; a média e a contagem de notas vêm do repositório (SQL testado à parte). */
+    @Test
+    void listaTrazNotaMediaEAvaliacoesSemPreco() throws Exception {
+        Map<String, Object> com = new LinkedHashMap<>(Map.of("idcelular", 1L));
+        com.put("notaMedia", 4.3);
+        com.put("avaliacoes", 3);
+        Map<String, Object> sem = new LinkedHashMap<>(Map.of("idcelular", 2L));
+        sem.put("notaMedia", null);
+        sem.put("avaliacoes", 0);
+        when(celulares.listar(10, 0)).thenReturn(List.of(com, sem));
+        when(celulares.contar()).thenReturn(2L);
+        when(imagens.idsPorCelulares(List.of(1L, 2L))).thenReturn(Map.of());
+        mvc.perform(get("/celulares"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.celulares[0].notaMedia").value(4.3))
+                .andExpect(jsonPath("$.celulares[0].avaliacoes").value(3))
+                .andExpect(jsonPath("$.celulares[0].preco").doesNotExist())
+                .andExpect(jsonPath("$.celulares[1].notaMedia").value(org.hamcrest.Matchers.nullValue()))
+                .andExpect(jsonPath("$.celulares[1].avaliacoes").value(0));
+    }
+
+    /** A listagem repassa o JSON de especificações do MySQL sem reprocessar; sai como objeto. */
     @Test
     void listaRepassaEspecificacoesComoObjeto() throws Exception {
         Map<String, Object> c = new LinkedHashMap<>();
@@ -166,23 +188,24 @@ class ApiTest {
 
     @Test
     void criarCelularSemEspecificacoesPublicaEvento() throws Exception {
-        when(celulares.criar(eq("Samsung"), eq("Galaxy S24"), any(), eq(""), eq(3L), isNull(), isNull()))
+        when(celulares.criar(eq("Samsung"), eq("Galaxy S24"), eq(""), eq(3L), isNull(), isNull()))
                 .thenReturn(42L);
+        // "preco" ainda pode chegar de um cliente antigo: é ignorado e não volta na resposta
         mvc.perform(post("/celulares").header("Authorization", bearer(3)).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"marca\":\" Samsung \",\"modelo\":\"Galaxy S24\",\"preco\":\"10\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(content().json("""
                         {"mensagem":"Celular criado com sucesso","celular":{"idcelular":42,"marca":"Samsung",
-                         "modelo":"Galaxy S24","preco":10,"descricao":"","especificacoes":null,"modelo3d":null,
-                         "idusuario":3}}""", true));
+                         "modelo":"Galaxy S24","descricao":"","especificacoes":null,"modelo3d":null,
+                         "idusuario":3,"notaMedia":null,"avaliacoes":0}}""", true));
         verify(eventos).celularCriado(42L, "Samsung", "Galaxy S24", true, true);
     }
 
     @Test
     void criarCelularCompletoNaoPublicaEvento() throws Exception {
-        when(celulares.criar(anyString(), anyString(), any(), anyString(), anyLong(), any(), anyString())).thenReturn(1L);
+        when(celulares.criar(anyString(), anyString(), anyString(), anyLong(), any(), anyString())).thenReturn(1L);
         mvc.perform(post("/celulares").header("Authorization", bearer(3)).contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"marca\":\"Apple\",\"modelo\":\"iPhone 15\",\"preco\":1,"
+                        .content("{\"marca\":\"Apple\",\"modelo\":\"iPhone 15\","
                                 + "\"especificacoes\":{\"nome\":\"iPhone 15\"},\"modelo3d\":\"0123456789abcdef0123456789abcdef\"}"))
                 .andExpect(status().isCreated());
         verifyNoInteractions(eventos);
@@ -195,7 +218,7 @@ class ApiTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().json("""
                         {"erro":"Validação falhou","detalhes":["\\"marca\\" length must be at least 2 characters long",
-                         "\\"modelo\\" is required","\\"preco\\" is required"]}""", true));
+                         "\\"modelo\\" is required"]}""", true));
     }
 
     @Test
@@ -209,7 +232,7 @@ class ApiTest {
         when(celulares.porId(2)).thenReturn(celular(2, 9));
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/celulares/2")
                         .header("Authorization", bearer(3)).contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"marca\":\"Apple\",\"modelo\":\"iPhone\",\"preco\":1}"))
+                        .content("{\"marca\":\"Apple\",\"modelo\":\"iPhone\"}"))
                 .andExpect(status().isForbidden())
                 .andExpect(content().json("{\"erro\":\"Você não tem permissão para atualizar este celular\"}", true));
     }
@@ -220,24 +243,79 @@ class ApiTest {
         when(celulares.porId(7)).thenReturn(celular(7, 3));
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/celulares/007")
                         .header("Authorization", bearer(3)).contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"marca\":\"Apple\",\"modelo\":\"iPhone 15\",\"preco\":1}"))
+                        .content("{\"marca\":\"Apple\",\"modelo\":\"iPhone 15\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.celular.idcelular").value(7))
-                .andExpect(jsonPath("$.celular.idcelular").isNumber());
-        verify(celulares).atualizar(eq(7L), eq("Apple"), eq("iPhone 15"), any(), eq(""), isNull(), isNull());
+                .andExpect(jsonPath("$.celular.idcelular").isNumber())
+                .andExpect(jsonPath("$.celular.preco").doesNotExist());
+        verify(celulares).atualizar(eq(7L), eq("Apple"), eq("iPhone 15"), eq(""), isNull(), isNull());
+    }
+
+    /** Editar não mexe nas notas: a resposta repete a média e a contagem que o celular já tinha. */
+    @Test
+    void atualizarCelularMantemNotaMediaEAvaliacoes() throws Exception {
+        Map<String, Object> atual = celular(7, 3);
+        atual.put("notaMedia", 3.5);
+        atual.put("avaliacoes", 2);
+        when(celulares.porId(7)).thenReturn(atual);
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/celulares/7")
+                        .header("Authorization", bearer(3)).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"marca\":\"Apple\",\"modelo\":\"iPhone 15\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.celular.notaMedia").value(3.5))
+                .andExpect(jsonPath("$.celular.avaliacoes").value(2));
     }
 
     @Test
     void criarComentarioDevolveIdcelularNumerico() throws Exception {
         when(celulares.idDono(5)).thenReturn(9L);
-        when(comentarios.criar(5L, 3L, "Muito bom")).thenReturn(11L);
+        when(comentarios.criar(5L, 3L, "Muito bom", 4)).thenReturn(11L);
         mvc.perform(post("/comentarios/5").header("Authorization", bearer(3)).contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"texto\":\" Muito bom \"}"))
+                        .content("{\"texto\":\" Muito bom \",\"nota\":4}"))
                 .andExpect(status().isCreated())
                 .andExpect(content().json("""
                         {"mensagem":"Comentário criado com sucesso",
-                         "comentario":{"idcomentario":11,"idcelular":5,"idusuario":3,"texto":"Muito bom"}}""", true))
+                         "comentario":{"idcomentario":11,"idcelular":5,"idusuario":3,"texto":"Muito bom","nota":4}}""", true))
                 .andExpect(jsonPath("$.comentario.idcelular").isNumber());
+    }
+
+    @Test
+    void comentarioSemNotaDa400() throws Exception {
+        mvc.perform(post("/comentarios/5").header("Authorization", bearer(3)).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"texto\":\"Muito bom\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().json("{\"erro\":\"Nota é obrigatória (use um número inteiro de 1 a 5)\"}", true));
+        verifyNoInteractions(comentarios);
+    }
+
+    /** Fora de 1..5, não inteiro ou em texto: 400 antes de tocar no banco. */
+    @Test
+    void notaForaDe1a5OuNaoInteiraDa400() throws Exception {
+        for (String nota : new String[]{"0", "6", "2.5", "\"4\"", "-1"}) {
+            mvc.perform(post("/comentarios/5").header("Authorization", bearer(3)).contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"texto\":\"Muito bom\",\"nota\":" + nota + "}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().json("{\"erro\":\"Nota deve ser um número inteiro de 1 a 5\"}", true));
+        }
+        verifyNoInteractions(comentarios);
+    }
+
+    /** Comentários antigos (nota NULL) saem com nota null nas listagens. */
+    @Test
+    void comentariosDoCelularDevolvemNotaOuNull() throws Exception {
+        when(celulares.idDono(5)).thenReturn(9L);
+        Map<String, Object> novo = new LinkedHashMap<>(Map.of("idcomentario", 2L));
+        novo.put("texto", "Ótimo");
+        novo.put("nota", 5);
+        Map<String, Object> antigo = new LinkedHashMap<>(Map.of("idcomentario", 1L));
+        antigo.put("texto", "Antigo");
+        antigo.put("nota", null);
+        when(comentarios.doCelular(5L, 10, 0)).thenReturn(List.of(novo, antigo));
+        when(comentarios.contarDoCelular(5L)).thenReturn(2L);
+        mvc.perform(get("/comentarios/5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.comentarios[0].nota").value(5))
+                .andExpect(jsonPath("$.comentarios[1].nota").value(org.hamcrest.Matchers.nullValue()));
     }
 
     @Test

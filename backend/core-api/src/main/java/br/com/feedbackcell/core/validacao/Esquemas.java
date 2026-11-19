@@ -1,6 +1,5 @@
 package br.com.feedbackcell.core.validacao;
 
-import static br.com.feedbackcell.core.validacao.Esquema.numero;
 import static br.com.feedbackcell.core.validacao.Esquema.objeto;
 import static br.com.feedbackcell.core.validacao.Esquema.texto;
 
@@ -27,7 +26,6 @@ public final class Esquemas {
     public static final Esquema CELULAR = Esquema.de(
             texto("marca").min(2).max(100).obrigatorio(),
             texto("modelo").min(2).max(100).obrigatorio(),
-            numero("preco").min("0").max("99999999.99").obrigatorio(),
             texto("descricao").max(500).permiteVazio(),
             objeto("especificacoes", ESPECIFICACOES).permiteNull(),
             texto("modelo3d").padrao("^[0-9a-f]{32}$", "/^[0-9a-f]{32}$/").permiteNull());
