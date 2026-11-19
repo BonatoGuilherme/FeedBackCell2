@@ -1,0 +1,621 @@
+/*
+ * Carrossel orbital da página do celular (components/ui/phone-carousel.tsx).
+ * O desenho é um palco de 960 x 520 que escala para caber na largura do painel;
+ * abaixo de 640 px de largura do próprio carrossel, vira uma coluna.
+ */
+
+.orb-root {
+  position: relative;
+  width: 100%;
+  height: min(calc(100cqw * 520 / 960), 78svh);
+  min-height: 420px;
+  overflow: hidden;
+  container-type: inline-size;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.orb-wrap {
+  container-type: inline-size;
+}
+
+.orb-root:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -4px;
+  border-radius: 24px;
+}
+
+.orb-canvas {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 960px;
+  height: 520px;
+  transform: translate(-50%, -50%) scale(var(--orb-s, 1));
+  transform-origin: 50% 50%;
+}
+
+.orb-arc {
+  position: absolute;
+  inset: 0;
+  width: 960px;
+  height: 520px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.orb-btn {
+  appearance: none;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.orb-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+.orb-btn:disabled {
+  cursor: default;
+  opacity: 0.3;
+}
+
+/* contador no lugar do pager: "03" grande sobre o total (fica dentro da faixa,
+   mas no desktop sobe para a esquerda do aparelho) */
+.orb-count {
+  position: absolute;
+  left: -72px;
+  top: -228px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  color: var(--muted);
+}
+
+.orb-count strong {
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.orb-count i {
+  display: block;
+  width: 1px;
+  height: 26px;
+  background: var(--line-strong);
+}
+
+.orb-count span {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.orb-plates {
+  position: absolute;
+  left: 130px;
+  top: 60px;
+  width: 245px;
+  height: 290px;
+  touch-action: pan-y;
+}
+
+/* o pivô fica acima do palco (299, -450): é o centro da órbita e do arco */
+.orb-orbit {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transform-origin: 69% -175.9%;
+  will-change: transform;
+}
+
+.orb-photo {
+  display: grid;
+  place-items: center;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  border-radius: 18px;
+  background: var(--surface-solid);
+  box-shadow: 0 0 0 1px var(--line), 0 22px 40px -18px rgb(0 0 0 / 70%);
+}
+
+.orb-photo img {
+  display: block;
+  max-width: 245px;
+  max-height: 290px;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.orb-art {
+  position: relative;
+  height: 280px;
+  aspect-ratio: 1 / 2;
+  filter: drop-shadow(0 18px 24px rgb(0 0 0 / 45%));
+}
+
+.orb-head {
+  position: absolute;
+  left: 400px;
+  top: 92px;
+  width: 320px;
+  height: 160px;
+}
+
+.orb-hd {
+  position: absolute;
+  inset: 0;
+}
+
+.orb-eye {
+  margin: 0 0 6px 2px;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-on-dark);
+}
+
+.orb-t1,
+.orb-t2 {
+  display: block;
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  line-height: 1;
+  text-transform: uppercase;
+  font-family: var(--font-display);
+}
+
+.orb-t1 {
+  margin-top: 4px;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.orb-t2 {
+  margin-top: 6px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+}
+
+.orb-acts {
+  position: absolute;
+  left: 404px;
+  top: 282px;
+  display: flex;
+  gap: 36px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.orb-acts .orb-btn,
+.orb-acts a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  color: var(--foreground);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.orb-acts .orb-btn:hover,
+.orb-acts a:hover {
+  color: var(--accent-hover);
+}
+
+.orb-card {
+  position: absolute;
+  left: 726px;
+  top: 118px;
+  width: 222px;
+  padding: 18px 20px 20px;
+  border-radius: 20px;
+  background: color-mix(in oklab, var(--surface-solid) 78%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 0 0 1px var(--line) inset, 0 18px 40px -24px rgb(0 0 0 / 60%);
+}
+
+.orb-tabs {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding: 0 4px;
+  font-size: 12px;
+}
+
+.orb-tab {
+  padding: 3px 0;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.orb-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.orb-tab[aria-selected="true"] {
+  font-weight: 600;
+  color: var(--foreground);
+  box-shadow: 0 1px 0 var(--accent);
+}
+
+.orb-bodies {
+  display: grid;
+}
+
+.orb-body {
+  grid-area: 1 / 1;
+}
+
+.orb-rate {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.orb-badge {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 64px;
+  border-radius: 12px;
+  color: var(--on-accent);
+}
+
+.orb-badge strong {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.orb-badge svg {
+  position: absolute;
+  bottom: 7px;
+  width: 11px;
+  height: 11px;
+  fill: currentColor;
+  opacity: 0.75;
+}
+
+.orb-rate p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.orb-desc {
+  display: -webkit-box;
+  min-height: 70px;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  font-size: 12.5px;
+  line-height: 1.42;
+  color: var(--foreground);
+}
+
+.orb-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-height: 70px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.orb-chips li {
+  display: grid;
+  gap: 1px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--surface-soft);
+  font-size: 11.5px;
+  line-height: 1.3;
+}
+
+.orb-chips small {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* até 2 linhas; o texto inteiro fica no title e na lista completa abaixo */
+.orb-chips span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+
+.orb-strip {
+  position: absolute;
+  left: 130px;
+  top: 378px;
+  width: 560px;
+  height: 122px;
+  display: flex;
+  align-items: center;
+}
+
+.orb-arrow {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  color: var(--foreground);
+  transition: background 0.2s;
+}
+
+.orb-arrow:not(:disabled):hover {
+  background: var(--surface-hover);
+}
+
+.orb-arrow svg {
+  width: 12px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.orb-win {
+  position: relative;
+  flex: none;
+  width: 472px;
+  height: 122px;
+  margin: 0 2px;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, #000 88%, transparent);
+}
+
+.orb-track {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.orb-th {
+  display: flex;
+  justify-content: center;
+  width: 118px;
+  height: 122px;
+  padding-top: 3px;
+}
+
+.orb-th .orb-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  width: 84px;
+  height: 116px;
+  padding-top: 9px;
+  border-radius: 14px;
+  transition: background 0.45s;
+}
+
+.orb-th .orb-btn[aria-current="true"] {
+  background: var(--surface-soft);
+  box-shadow: 0 0 0 1px var(--line), 0 10px 24px -16px rgb(0 0 0 / 60%);
+}
+
+.orb-th img,
+.orb-th .orb-th-art {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  border-radius: 8px;
+  transition: transform 0.45s;
+}
+
+.orb-th .orb-th-art {
+  position: relative;
+  width: 28px;
+}
+
+.orb-th .orb-btn[aria-current="true"] img {
+  transform: scale(1.06);
+}
+
+.orb-th span:last-child {
+  max-width: 80px;
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.orb-credit {
+  max-width: 520px;
+  margin: 4px auto 0;
+  padding: 0 16px;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--subtle);
+}
+
+.orb-3d {
+  width: min(92vw, 720px);
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 20px;
+  background: var(--surface-solid);
+  color: var(--foreground);
+}
+
+.orb-3d::backdrop {
+  background: rgb(11 8 5 / 72%);
+}
+
+.orb-3d header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 12px 12px 20px;
+  font-family: var(--font-display);
+  font-size: 20px;
+}
+
+.orb-3d iframe {
+  display: block;
+  width: 100%;
+  height: min(70vh, 520px);
+  border: 0;
+}
+
+.orb-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* celular: coluna, sem a faixa de miniaturas (as setas ficam ao lado do contador) */
+@container (max-width: 639px) {
+  .orb-root {
+    height: auto;
+    min-height: 0;
+  }
+
+  .orb-canvas {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: 100%;
+    height: auto;
+    transform: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 16px 18px;
+  }
+
+  .orb-arc {
+    left: -60%;
+    top: -30px;
+    width: 220%;
+    height: auto;
+  }
+
+  .orb-count {
+    position: static;
+    flex-direction: row;
+    gap: 10px;
+  }
+
+  .orb-count i {
+    width: 22px;
+    height: 1px;
+  }
+
+  .orb-plates {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: min(56vw, 240px);
+    height: min(70vw, 290px);
+  }
+
+  .orb-photo img {
+    max-width: min(56vw, 240px);
+    max-height: min(70vw, 290px);
+  }
+
+  .orb-art {
+    height: min(66vw, 270px);
+  }
+
+  .orb-head {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: 100%;
+    height: 118px;
+    margin-top: 14px;
+  }
+
+  .orb-hd {
+    text-align: center;
+  }
+
+  .orb-acts {
+    position: relative;
+    left: auto;
+    top: auto;
+    justify-content: center;
+    margin-top: 2px;
+  }
+
+  .orb-card {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: 100%;
+    max-width: 420px;
+    margin-top: 12px;
+  }
+
+  .orb-strip {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: auto;
+    height: auto;
+    gap: 28px;
+    margin-top: 14px;
+  }
+
+  .orb-win {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb-track,
+  .orb-th .orb-btn,
+  .orb-th img {
+    transition: none;
+  }
+}

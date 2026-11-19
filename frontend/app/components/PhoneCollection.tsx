@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import AppIcon from "./AppIcon";
 import CatalogSearch from "./CatalogSearch";
+import { lembrarOrdemCelulares } from "./PhoneNavigation";
 import { PhoneShelf } from "@/components/ui/phone-shelf";
 import { TiltCard } from "@/components/ui/tilt-card";
 import { Reveal, RevealItem } from "@/components/ui/reveal";
@@ -144,6 +145,8 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
     listarCelulares(pagina, limit, controller.signal)
       .then((result) => {
         cacheListas.set(requestKey, result);
+        // a primeira página já serve de ordem para o carrossel da página do celular
+        if (pagina === 1 && !isOverview) lembrarOrdemCelulares(result.celulares, true);
         setRequestResult({ key: requestKey, status: "success", data: result });
       })
       .catch((error: unknown) => {
@@ -159,7 +162,7 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
       });
 
     return () => controller.abort();
-  }, [limit, pagina, refreshKey, requestKey]);
+  }, [isOverview, limit, pagina, refreshKey, requestKey]);
 
   const marcas = useMemo(
     () => [...new Set(celulares.map((celular) => celular.marca))].sort(),

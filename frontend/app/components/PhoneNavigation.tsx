@@ -1,105 +1,76 @@
 "use client";
 
 /**
- * Setas "anterior / próximo" da página do celular. A ordem é a mesma da
- * prateleira do catálogo. A troca usa um tipo de transição ("anterior" ou
- * "proximo") para o conteúdo deslizar para o lado certo, em vez de parecer
- * uma página nova. Teclado: ← e → (ignorado quando o foco está em campos).
+ * Navegação entre celulares na página do celular: a ordem que o carrossel segue
+ * (a mesma da prateleira do catálogo) e as setas do teclado. Os controles na
+ * tela ficam no próprio carrossel; a troca em si é da página (PhoneDetail).
  */
 
-import { addTransitionType, startTransition, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import AppIcon from "./AppIcon";
+import { useEffect, useState } from "react";
 import { listarCelulares, type Celular } from "@/src/lib/celulares";
-import type { TipoNavegacaoCelular } from "@/components/ui/transicoes";
 
 /** Mesmo limite do índice da busca: cobre o catálogo inteiro enquanto ele for pequeno. */
-const LIMITE_ORDEM = 100;
+export const LIMITE_ORDEM = 100;
 
-function nome(celular: Celular) {
-  return `${celular.marca} ${celular.modelo}`;
+/**
+ * Última lista do catálogo vista nesta aba. Quem vem do catálogo já encontra a
+ * ordem pronta, então o carrossel existe na primeira renderização e a foto que
+ * "voa" da prateleira cai direto no lugar dela (sem passar por um esqueleto).
+ */
+let ordemGuardada: Celular[] | null = null;
+
+/**
+ * Guarda a lista do catálogo (mesma ordem, até LIMITE_ORDEM itens). Uma lista
+ * parcial (a primeira página da prateleira) não substitui uma maior já guardada.
+ */
+export function lembrarOrdemCelulares(celulares: Celular[], parcial = false) {
+  if (parcial && ordemGuardada && ordemGuardada.length > celulares.length) return;
+  ordemGuardada = celulares;
 }
 
-/** Campos de texto não devem ganhar as setas do teclado. */
-function digitando(alvo: EventTarget | null) {
-  if (!(alvo instanceof HTMLElement)) return false;
-  return alvo.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(alvo.tagName);
-}
-
-export default function PhoneNavigation({ idcelular }: { idcelular: number }) {
-  const router = useRouter();
-  const [ordem, setOrdem] = useState<Celular[] | null>(null);
+/** Lista do catálogo na ordem da prateleira, ou null enquanto carrega (ou se falhou). */
+export function useOrdemCelulares(): Celular[] | null {
+  const [ordem, setOrdem] = useState<Celular[] | null>(ordemGuardada);
 
   useEffect(() => {
+    // mesmo com a lista guardada, busca de novo para pegar notas e aparelhos novos
     const controller = new AbortController();
     listarCelulares(1, LIMITE_ORDEM, controller.signal)
-      .then(({ celulares }) => setOrdem(celulares))
+      .then(({ celulares }) => {
+        lembrarOrdemCelulares(celulares);
+        setOrdem(celulares);
+      })
       .catch(() => {
-        // sem setas se a lista não carregar; a página do celular continua funcionando
+        // sem a lista, o carrossel mostra só o celular aberto
       });
     return () => controller.abort();
-  }, [idcelular]);
+  }, []);
 
-  const posicao = ordem ? ordem.findIndex((c) => c.idcelular === idcelular) : -1;
-  const anterior = posicao > 0 && ordem ? ordem[posicao - 1] : null;
-  const proximo = posicao >= 0 && ordem && posicao < ordem.length - 1 ? ordem[posicao + 1] : null;
+  return ordem;
+}
 
+/** Campos de texto e abas usam as setas para outra coisa. */
+function setasOcupadas(alvo: EventTarget | null) {
+  if (!(alvo instanceof HTMLElement)) return false;
+  if (alvo.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(alvo.tagName)) return true;
+  return alvo.closest('[role="tablist"]') !== null;
+}
+
+/** ← e → trocam de celular (fora de campos de texto e das abas). */
+export function useTeclasDeTroca(onAnterior: (() => void) | null, onProximo: (() => void) | null) {
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
-      if (digitando(event.target)) return;
-      if (event.key === "ArrowLeft" && anterior) {
+      if (setasOcupadas(event.target)) return;
+      if (event.key === "ArrowLeft" && onAnterior) {
         event.preventDefault();
-        irParaCelular(router, anterior, "anterior");
-      } else if (event.key === "ArrowRight" && proximo) {
+        onAnterior();
+      } else if (event.key === "ArrowRight" && onProximo) {
         event.preventDefault();
-        irParaCelular(router, proximo, "proximo");
+        onProximo();
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [anterior, proximo, router]);
-
-  return (
-    <nav className="phone-nav" aria-label="Celulares do catálogo">
-      <button
-        type="button"
-        className="phone-nav__button phone-nav__button--anterior"
-        disabled={!anterior}
-        onClick={() => anterior && irParaCelular(router, anterior, "anterior")}
-        aria-label={anterior ? `Anterior: ${nome(anterior)}` : "Anterior: não há"}
-      >
-        <AppIcon name="chevron-left" size={18} />
-        <span>
-          <small>Anterior</small>
-          {anterior && <strong>{nome(anterior)}</strong>}
-        </span>
-      </button>
-      <button
-        type="button"
-        className="phone-nav__button phone-nav__button--proximo"
-        disabled={!proximo}
-        onClick={() => proximo && irParaCelular(router, proximo, "proximo")}
-        aria-label={proximo ? `Próximo: ${nome(proximo)}` : "Próximo: não há"}
-      >
-        <span>
-          <small>Próximo</small>
-          {proximo && <strong>{nome(proximo)}</strong>}
-        </span>
-        <AppIcon name="chevron-right" size={18} />
-      </button>
-    </nav>
-  );
-}
-
-function irParaCelular(
-  router: { push: (href: string) => void },
-  celular: Celular,
-  tipo: TipoNavegacaoCelular,
-) {
-  // o tipo tem que ser registrado dentro do startTransition (API do React)
-  startTransition(() => {
-    addTransitionType(tipo);
-    router.push(`/catalog/${celular.idcelular}`);
-  });
+  }, [onAnterior, onProximo]);
 }
