@@ -270,15 +270,21 @@
 
 /* ---------- página do celular ---------- */
 
-.phone-detail {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+/* um painel só: ficha em cima, avaliações embaixo, separadas por um divisor */
+.phone-panel {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto var(--space-10);
   overflow: hidden;
-  margin-bottom: var(--space-10);
   border: 1px solid var(--line);
   border-radius: var(--radius-panel);
   background: var(--surface);
   box-shadow: var(--shadow-sm);
+}
+
+.phone-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
 }
 
 .phone-detail__media {
@@ -327,6 +333,83 @@
   font-size: 15px;
   line-height: 1.6;
   white-space: pre-line;
+}
+
+/* ---------- faixa de destaques (tela, chip, câmera, bateria) ---------- */
+
+.phone-highlights {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-5) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.phone-highlights__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface-soft);
+}
+
+.phone-highlights__icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.phone-highlights__text {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.phone-highlights__label {
+  color: var(--subtle);
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.phone-highlights__value {
+  overflow-wrap: anywhere;
+  color: var(--foreground);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* ---------- mais aparelhos da marca ---------- */
+
+.phone-related {
+  padding: var(--space-6) var(--space-8);
+  border-top: 1px solid var(--line);
+}
+
+.phone-related h2 {
+  margin: 0 0 var(--space-4);
+  color: var(--foreground);
+  font-size: 16px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.01em;
+}
+
+.phone-related__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .phone-detail__specs {
@@ -383,16 +466,71 @@
 
 .phone-reviews {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  max-width: 860px;
-  gap: var(--space-5);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  align-items: start;
+  gap: var(--space-6) var(--space-8);
+  padding: var(--space-8);
+  border-top: 1px solid var(--line);
   scroll-margin-top: calc(var(--header-height, 64px) + var(--space-6));
 }
 
 .phone-reviews__header {
   display: flex;
+  grid-column: 1 / -1;
   align-items: baseline;
   gap: var(--space-3);
+}
+
+.phone-reviews__aside,
+.phone-reviews__feed {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: var(--space-5);
+}
+
+.phone-reviews .comment-composer.form-field {
+  box-shadow: none;
+}
+
+/* nota média em destaque, acima do formulário */
+
+.reviews-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface-soft);
+}
+
+.reviews-summary__score {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 40px;
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.reviews-summary__meta {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-1);
+}
+
+.reviews-summary__stars {
+  color: var(--accent);
+  font-size: 18px;
+}
+
+.reviews-summary__meta p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .phone-reviews__header h2 {
@@ -577,12 +715,29 @@
   .phone-detail__info {
     padding: var(--space-6) var(--space-5);
   }
+
+  .phone-reviews {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--space-6) var(--space-5);
+  }
+
+  .phone-related {
+    padding: var(--space-5);
+  }
 }
 
 @media (max-width: 600px) {
   .phone-detail__specs div {
     grid-template-columns: minmax(0, 1fr);
     gap: 0;
+  }
+
+  .phone-highlights {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .phone-related__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .phone-detail__cta {

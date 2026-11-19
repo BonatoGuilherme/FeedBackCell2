@@ -8,7 +8,7 @@
 
 import { useState, type ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { Box, Images } from "lucide-react";
+import { Box, ImageOff, Images } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sketchfabEmbedUrl, type Celular } from "@/src/lib/celulares";
 
@@ -195,7 +195,10 @@ export function PhonePhoto({
           </ul>
         )}
         {modo === "fotos" && imagens.length === 0 && (
-          <p className="text-sm text-subtle">Este aparelho ainda não tem fotos.</p>
+          <p className="inline-flex items-center gap-2 rounded-full border border-line bg-surface-solid/70 px-3.5 py-1.5 text-[13px] text-subtle">
+            <ImageOff className="size-4 text-accent" strokeWidth={1.7} aria-hidden />
+            Sem fotos ainda — veja o aparelho desenhado
+          </p>
         )}
         {/* a primeira foto é a da busca; a licença do Wikimedia exige o crédito e o link da licença */}
         {modo === "fotos" && foto === 0 && especificacoes?.creditoImagem && (

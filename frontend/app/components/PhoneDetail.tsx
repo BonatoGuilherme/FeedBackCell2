@@ -1,17 +1,27 @@
 "use client";
 
 /**
- * Página de um celular (/celulares/ID): fotos ou modelo 3D, nota média,
- * descrição, especificações e, embaixo, as avaliações da comunidade.
+ * Página de um celular (/catalog/ID): num painel só, a ficha (fotos ou modelo
+ * 3D, nota, destaques e especificações), a faixa com outros aparelhos da marca
+ * e, embaixo do divisor, as avaliações da comunidade.
  */
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, MessageSquareText, RefreshCw, SearchX } from "lucide-react";
-import { buscarCelular, type Celular } from "@/src/lib/celulares";
+import { useCallback, useEffect, useState, type ComponentType } from "react";
+import {
+  ArrowLeft,
+  BatteryCharging,
+  Camera,
+  Cpu,
+  MessageSquareText,
+  RefreshCw,
+  SearchX,
+  Smartphone,
+} from "lucide-react";
+import { buscarCelular, listarCelulares, type Celular, type Especificacoes } from "@/src/lib/celulares";
 import { ApiError } from "@/src/lib/http";
 import { PhonePhoto } from "@/components/ui/phone-photo";
-import { PhoneArt, ROTULOS_ESPECIFICACOES } from "@/components/ui/phone-shelf";
+import { PhoneArt, PhoneMiniCard, ROTULOS_ESPECIFICACOES } from "@/components/ui/phone-shelf";
 import { NotaResumo } from "@/components/ui/rating";
 import { PrecoLancamento } from "@/components/ui/preco-lancamento";
 import PhoneComments from "./PhoneComments";
@@ -95,12 +105,87 @@ export default function PhoneDetail({ idcelular }: { idcelular: number | null })
   );
 }
 
-function Ficha({ celular, onAlterado }: { celular: Celular; onAlterado: () => void }) {
-  const { especificacoes } = celular;
-  const specs = especificacoes ? ROTULOS_ESPECIFICACOES.filter(([campo]) => especificacoes[campo]) : [];
+/** Especificações de destaque, com ícone, mostradas numa faixa antes da lista. */
+const DESTAQUES: [keyof Especificacoes, string, ComponentType<{ size?: number; strokeWidth?: number; "aria-hidden"?: boolean }>][] = [
+  ["tela", "Tela", Smartphone],
+  ["hardware", "Chip", Cpu],
+  ["camera", "Câmera", Camera],
+  ["bateria", "Bateria", BatteryCharging],
+];
+
+const CAMPOS_DESTACADOS = new Set(DESTAQUES.map(([campo]) => campo));
+
+function Destaques({ especificacoes }: { especificacoes: Especificacoes }) {
+  const itens = DESTAQUES.filter(([campo]) => especificacoes[campo]);
+  if (itens.length === 0) return null;
 
   return (
-    <>
+    <ul className="phone-highlights">
+      {itens.map(([campo, rotulo, Icone]) => (
+        <li key={campo} className="phone-highlights__item">
+          <span className="phone-highlights__icon">
+            <Icone size={17} strokeWidth={1.7} aria-hidden={true} />
+          </span>
+          <span className="phone-highlights__text">
+            <span className="phone-highlights__label">{rotulo}</span>
+            <span className="phone-highlights__value">{especificacoes[campo]}</span>
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+const MIN_DA_MARCA = 3;
+
+/**
+ * Faixa com outros aparelhos: os da mesma marca quando há pelo menos
+ * MIN_DA_MARCA deles; senão, outros celulares do catálogo. Some quando não há
+ * nada para mostrar (catálogo com um aparelho só, ou a lista falhou).
+ */
+function MaisAparelhos({ celular }: { celular: Celular }) {
+  const [relacionados, setRelacionados] = useState<{ titulo: string; celulares: Celular[] } | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    listarCelulares(1, 24, controller.signal)
+      .then(({ celulares }) => {
+        const outros = celulares.filter((c) => c.idcelular !== celular.idcelular);
+        const daMarca = outros.filter((c) => c.marca.toLowerCase() === celular.marca.toLowerCase());
+        const [titulo, lista] =
+          daMarca.length >= MIN_DA_MARCA
+            ? [`Mais da ${celular.marca}`, daMarca]
+            : ["Outros celulares", outros];
+        setRelacionados(lista.length > 0 ? { titulo, celulares: lista.slice(0, 6) } : null);
+      })
+      .catch(() => setRelacionados(null));
+    return () => controller.abort();
+  }, [celular.idcelular, celular.marca]);
+
+  if (!relacionados) return null;
+
+  return (
+    <section className="phone-related" aria-labelledby="mais-aparelhos">
+      <h2 id="mais-aparelhos">{relacionados.titulo}</h2>
+      <ul className="phone-related__list">
+        {relacionados.celulares.map((outro) => (
+          <li key={outro.idcelular}>
+            <PhoneMiniCard celular={outro} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function Ficha({ celular, onAlterado }: { celular: Celular; onAlterado: () => void }) {
+  const { especificacoes } = celular;
+  const specs = especificacoes
+    ? ROTULOS_ESPECIFICACOES.filter(([campo]) => especificacoes[campo] && !CAMPOS_DESTACADOS.has(campo))
+    : [];
+
+  return (
+    <div className="phone-panel">
       <article className="phone-detail">
         <div className="phone-detail__media">
           <PhonePhoto celular={celular} placeholder={<PhoneArt celular={celular} />} />
@@ -113,6 +198,8 @@ function Ficha({ celular, onAlterado }: { celular: Celular; onAlterado: () => vo
             <NotaResumo notaMedia={celular.notaMedia} avaliacoes={celular.avaliacoes} />
           </a>
           {celular.descricao && <p className="phone-detail__description">{celular.descricao}</p>}
+
+          {especificacoes && <Destaques especificacoes={especificacoes} />}
 
           {specs.length > 0 && (
             <dl className="phone-detail__specs">
@@ -145,7 +232,14 @@ function Ficha({ celular, onAlterado }: { celular: Celular; onAlterado: () => vo
         </div>
       </article>
 
-      <PhoneComments idcelular={celular.idcelular} onAlterado={onAlterado} />
-    </>
+      <MaisAparelhos celular={celular} />
+
+      <PhoneComments
+        idcelular={celular.idcelular}
+        notaMedia={celular.notaMedia}
+        avaliacoes={celular.avaliacoes}
+        onAlterado={onAlterado}
+      />
+    </div>
   );
 }
