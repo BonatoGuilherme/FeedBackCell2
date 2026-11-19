@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Coluna de mídia do modal de detalhes do celular: a foto (inteira, num quadro
+ * Coluna de mídia da página do celular: a foto (inteira, num quadro
  * neutro que acompanha a proporção da imagem), o modelo 3D, as miniaturas e o
  * crédito da foto com os links exigidos pela licença.
  */
@@ -14,7 +14,7 @@ import { sketchfabEmbedUrl, type Celular } from "@/src/lib/celulares";
 
 const SPRING = { type: "spring" as const, bounce: 0, duration: 0.5 };
 
-/** Altura máxima da foto e do 3D no modal. */
+/** Altura máxima da foto e do 3D. */
 const ALTURA_MIDIA = "max-h-[min(60vh,520px)]";
 
 const VERSOES_CC = new Set(["1.0", "2.0", "2.5", "3.0", "4.0"]);
@@ -110,7 +110,7 @@ export function PhonePhoto({
   return (
     <div className="relative flex flex-col items-center gap-4 rounded-t-[24px] bg-[radial-gradient(90%_70%_at_50%_20%,rgba(201,151,63,0.16),transparent_70%)] px-4 pb-5 pt-12 sm:px-6 md:max-h-[calc(100dvh-3rem)] md:justify-center md:overflow-y-auto md:rounded-l-[24px] md:rounded-tr-none md:py-10">
       {/*
-        O modelo 3D começa a carregar assim que o modal abre, escondido fora da
+        O modelo 3D começa a carregar assim que a página abre, escondido fora da
         tela; ao clicar em "Ver em 3D" o mesmo iframe só aparece (sem recarregar).
       */}
       {modelo3d && (

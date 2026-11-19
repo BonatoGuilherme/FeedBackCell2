@@ -1,199 +1,7 @@
-/* Comentários: app/comments/page.tsx */
+/* Página do celular (app/celulares/[id]): ficha, avaliações e busca do catálogo com sugestões. */
 
-.comments-page .back-link {
+.phone-page .back-link {
   margin-bottom: var(--space-5);
-}
-
-/* ---------- sem celular escolhido ---------- */
-
-.comments-start {
-  display: grid;
-  max-width: 520px;
-  justify-items: center;
-  margin: var(--space-12) auto 0;
-  padding: var(--space-10) var(--space-8);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-  text-align: center;
-}
-
-.comments-start__icon,
-.comments-empty__icon {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  place-items: center;
-  border-radius: var(--radius-card);
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
-.comments-start h1 {
-  margin: var(--space-4) 0 0;
-  font-size: var(--font-size-h2);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: -0.02em;
-}
-
-.comments-start > p {
-  max-width: 40ch;
-  margin: var(--space-2) 0 var(--space-6);
-  color: var(--muted);
-  line-height: 1.6;
-}
-
-.comments-start .form-alert {
-  width: 100%;
-}
-
-.comments-start .comments-lookup {
-  width: 100%;
-  text-align: left;
-}
-
-/* ---------- busca por ID ---------- */
-
-.comments-lookup {
-  display: grid;
-  gap: var(--space-2);
-}
-
-.comments-lookup label {
-  color: var(--foreground);
-  font-size: var(--font-size-label);
-  font-weight: var(--font-weight-medium);
-}
-
-.comments-lookup__row {
-  display: flex;
-  gap: var(--space-2);
-}
-
-.comments-lookup .search-field {
-  width: auto;
-  min-height: 40px;
-  flex: 1;
-}
-
-/* ---------- cabeçalho com o celular ---------- */
-
-.comments-hero {
-  display: flex;
-  align-items: center;
-  gap: var(--space-5);
-  margin-bottom: var(--space-8);
-  padding-bottom: var(--space-8);
-  border-bottom: 1px solid var(--line);
-}
-
-.comments-hero__media {
-  display: grid;
-  width: 88px;
-  height: 88px;
-  flex: none;
-  place-items: center;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  background: var(--surface);
-  color: var(--subtle);
-}
-
-.comments-hero__media img {
-  width: 100%;
-  height: 100%;
-  padding: var(--space-2);
-  object-fit: contain;
-}
-
-.comments-hero__info {
-  min-width: 0;
-  flex: 1;
-}
-
-.comments-hero__info .eyebrow {
-  margin-bottom: var(--space-1);
-}
-
-.comments-hero h1 {
-  margin: 0;
-  overflow: hidden;
-  color: var(--foreground);
-  font-size: var(--font-size-h1);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: -0.025em;
-  line-height: 1.15;
-  text-overflow: ellipsis;
-}
-
-.comments-hero__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin: var(--space-2) 0 0;
-  color: var(--muted);
-  font-size: 14px;
-}
-
-.comments-hero__meta span {
-  font-variant-numeric: tabular-nums;
-}
-
-.comments-hero__meta span + span::before {
-  margin-right: var(--space-2);
-  color: var(--line-strong);
-  content: "·";
-}
-
-.comments-hero__meta:empty {
-  display: none;
-}
-
-/* ---------- layout ---------- */
-
-.comments-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
-  align-items: start;
-  gap: var(--space-10);
-}
-
-.comments-main {
-  display: grid;
-  gap: var(--space-5);
-}
-
-.comments-aside {
-  position: sticky;
-  top: calc(var(--header-height) + var(--space-6));
-  display: grid;
-  gap: var(--space-4);
-}
-
-.comments-aside__card {
-  padding: var(--space-5);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  background: var(--surface);
-}
-
-.comments-aside__card h2 {
-  margin: 0 0 var(--space-3);
-  font-size: 14px;
-  font-weight: var(--font-weight-semibold);
-}
-
-.comments-aside__card ul {
-  display: grid;
-  gap: var(--space-2);
-  margin: 0;
-  padding-left: var(--space-4);
-  color: var(--muted);
-  list-style: disc;
-  font-size: var(--font-size-label);
-  line-height: 1.55;
 }
 
 /* ---------- novo comentário ---------- */
@@ -424,43 +232,11 @@
 
 /* ---------- responsivo ---------- */
 
-@media (max-width: 1024px) {
-  .comments-layout {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-6);
-  }
-
-  .comments-aside {
-    position: static;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 600px) {
-  .comments-start {
-    margin-top: var(--space-6);
-    padding: var(--space-8) var(--space-5);
-  }
 
-  .comments-hero {
-    flex-wrap: wrap;
-    gap: var(--space-4);
-    margin-bottom: var(--space-6);
-    padding-bottom: var(--space-6);
-  }
 
-  .comments-hero__media {
-    width: 64px;
-    height: 64px;
-  }
 
-  .comments-hero__action {
-    width: 100%;
-  }
 
-  .comments-aside {
-    grid-template-columns: minmax(0, 1fr);
-  }
 
   .comment-composer.form-field {
     padding: var(--space-4);
@@ -490,4 +266,345 @@
   .comments-alert .button {
     margin-left: 30px;
   }
+}
+
+/* ---------- página do celular ---------- */
+
+.phone-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  overflow: hidden;
+  margin-bottom: var(--space-10);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.phone-detail__media {
+  min-width: 0;
+}
+
+.phone-detail__info {
+  min-width: 0;
+  padding: var(--space-10) var(--space-8) var(--space-8);
+}
+
+.phone-detail__info .eyebrow {
+  margin-bottom: var(--space-1);
+}
+
+.phone-detail__info h1 {
+  margin: 0;
+  color: var(--foreground);
+  font-size: clamp(26px, 3.4vw, 36px);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.022em;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+.phone-detail__rating {
+  display: inline-flex;
+  margin-top: var(--space-3);
+  border-radius: var(--radius-card);
+  font-size: 16px;
+  text-decoration: none;
+}
+
+.phone-detail__rating:hover .text-muted {
+  color: var(--foreground);
+}
+
+.phone-detail__rating:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.phone-detail__description {
+  margin: var(--space-4) 0 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.phone-detail__specs {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-5) 0 0;
+  padding: var(--space-4);
+  border-radius: var(--radius-card);
+  background: var(--surface-soft);
+  font-size: 13px;
+}
+
+.phone-detail__specs div {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+.phone-detail__specs dt {
+  color: var(--subtle);
+}
+
+.phone-detail__specs dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--foreground);
+}
+
+.phone-detail__meta {
+  margin: var(--space-4) 0 0;
+  color: var(--subtle);
+  font-size: 13px;
+}
+
+.phone-detail__meta time {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-medium);
+}
+
+.phone-detail__cta {
+  margin-top: var(--space-6);
+}
+
+.phone-page .collection-empty h1,
+.phone-page .collection-error h1 {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 18px;
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ---------- avaliações ---------- */
+
+.phone-reviews {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 860px;
+  gap: var(--space-5);
+  scroll-margin-top: calc(var(--header-height, 64px) + var(--space-6));
+}
+
+.phone-reviews__header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.phone-reviews__header h2 {
+  margin: 0;
+  color: var(--foreground);
+  font-size: var(--font-size-h2, 22px);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.015em;
+}
+
+.phone-reviews__count {
+  color: var(--muted);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.comments-empty__icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: var(--radius-card);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.comment-item__rating {
+  display: flex;
+  margin: 0;
+  color: var(--accent);
+  font-size: 14px;
+}
+
+/* ---------- campo de nota (estrelas) ---------- */
+
+.rating-field {
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  border: 0;
+}
+
+.rating-field legend {
+  margin-bottom: var(--space-2);
+  padding: 0;
+  color: var(--foreground);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-medium);
+}
+
+.rating-field__stars {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.rating-field__star {
+  position: relative;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: var(--radius-card);
+  color: var(--line-strong);
+  cursor: pointer;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.rating-field__star svg {
+  width: 28px;
+  height: 28px;
+}
+
+.rating-field__star.is-on {
+  color: var(--accent);
+}
+
+.rating-field__star.is-on svg {
+  fill: currentColor;
+}
+
+.rating-field__star:hover {
+  background: var(--accent-soft);
+}
+
+.rating-field__star:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.rating-field[disabled] .rating-field__star {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.rating-field__hint {
+  margin-left: var(--space-2);
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.rating-field__error {
+  margin: var(--space-2) 0 0;
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.rating-field[aria-invalid="true"] .rating-field__star {
+  color: var(--danger);
+}
+
+/* ---------- busca do catálogo com sugestões ---------- */
+
+.catalog-search {
+  position: relative;
+  flex: none;
+}
+
+.catalog-search__list {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 100%;
+  min-width: 280px;
+  margin: 0;
+  padding: var(--space-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-md);
+  list-style: none;
+}
+
+.catalog-search__list[hidden] {
+  display: none;
+}
+
+.catalog-search__option {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: calc(var(--radius-card) - 4px);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.catalog-search__option[aria-selected="true"] {
+  background: var(--accent-soft);
+}
+
+.catalog-search__name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--foreground);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.catalog-search__brand {
+  color: var(--subtle);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.catalog-search__rating {
+  flex: none;
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .phone-detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .phone-detail__info {
+    padding: var(--space-6) var(--space-5);
+  }
+}
+
+@media (max-width: 600px) {
+  .phone-detail__specs div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .phone-detail__cta {
+    width: 100%;
+  }
+
+  .rating-field__star {
+    width: 40px;
+  }
+}
+
+/* ---------- preço de lançamento (ficha e busca de especificações) ---------- */
+
+.preco-lancamento {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.preco-lancamento__original {
+  color: var(--subtle);
+  font-size: 12px;
 }

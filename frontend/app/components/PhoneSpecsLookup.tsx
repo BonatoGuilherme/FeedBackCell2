@@ -8,10 +8,12 @@ import {
   type AparelhoEspecificacoes,
   type Modelo3d,
 } from "@/src/lib/celulares";
+import { PrecoLancamento } from "@/components/ui/preco-lancamento";
 import { getToken } from "@/src/lib/session";
 
 const ROTULOS: [keyof AparelhoEspecificacoes, string][] = [
   ["lancamento", "Lançamento"],
+  ["precoEstimado", "Preço de lançamento"],
   ["tela", "Tela"],
   ["hardware", "Hardware"],
   ["armazenamento", "Armazenamento"],
@@ -411,7 +413,15 @@ export function PhoneSpecsResult({ lookup }: { lookup: SpecsLookup }) {
           {specs.map(([campo, rotulo]) => (
             <div key={campo}>
               <dt>{rotulo}</dt>
-              <dd>{campo === "lancamento" ? aparelho?.[campo]?.replace(/^Released\s*/i, "") : aparelho?.[campo]}</dd>
+              <dd>
+                {campo === "precoEstimado" && aparelho ? (
+                  <PrecoLancamento estimado={aparelho.precoEstimado} original={aparelho.precoLancamento} />
+                ) : campo === "lancamento" ? (
+                  aparelho?.[campo]?.replace(/^Released\s*/i, "")
+                ) : (
+                  aparelho?.[campo]
+                )}
+              </dd>
             </div>
           ))}
         </dl>
