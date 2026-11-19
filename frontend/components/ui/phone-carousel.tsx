@@ -181,8 +181,13 @@ export function PhoneCarousel({ celulares, indice, direcao, onIr }: Props) {
   const miniaturasRef = useRef<(HTMLButtonElement | null)[]>([]);
   const idBase = useId();
   const [aba, setAba] = useState<Aba>("geral");
-  // id do celular cujo 3D está aberto; trocar de celular volta para a foto sozinho
+  // id do celular cujo 3D está aberto; qualquer troca de celular volta para a foto
   const [ver3d, setVer3d] = useState<number | null>(null);
+  const [indice3d, setIndice3d] = useState(indice);
+  if (indice !== indice3d) {
+    setIndice3d(indice);
+    setVer3d(null);
+  }
   const total = celulares.length;
   const celular = celulares[indice];
   const cor = rodizio(CORES, indice);
@@ -307,7 +312,7 @@ export function PhoneCarousel({ celulares, indice, direcao, onIr }: Props) {
                     <iframe
                       title={`${nome} em 3D`}
                       src={sketchfabEmbedUrl(celular.modelo3d)}
-                      allow="autoplay; fullscreen; xr-spatial-tracking"
+                      allow="autoplay; fullscreen; xr-spatial-tracking; accelerometer; gyroscope"
                       allowFullScreen
                       referrerPolicy="strict-origin-when-cross-origin"
                     />
@@ -362,12 +367,8 @@ export function PhoneCarousel({ celulares, indice, direcao, onIr }: Props) {
               Avaliar
             </a>
             {celular.modelo3d && (
-              <button
-                type="button"
-                className="orb-btn"
-                aria-pressed={em3d}
-                onClick={() => setVer3d(em3d ? null : celular.idcelular)}
-              >
+              // o texto já diz o estado ("Ver em 3D" / "Ver foto"); aria-pressed anunciaria em dobro
+              <button type="button" className="orb-btn" onClick={() => setVer3d(em3d ? null : celular.idcelular)}>
                 {em3d ? (
                   <ImageIcon size={15} strokeWidth={1.8} aria-hidden="true" />
                 ) : (
@@ -459,7 +460,7 @@ export function PhoneCarousel({ celulares, indice, direcao, onIr }: Props) {
       </div>
 
       {/* a primeira foto vem da busca; a licença do Wikimedia exige o crédito e o link da licença */}
-      {foto && credito && (
+      {foto && credito && !em3d && (
         <p className="orb-credit">
           <CreditoFoto texto={credito} url={celular.especificacoes?.creditoImagemUrl ?? null} />
         </p>
