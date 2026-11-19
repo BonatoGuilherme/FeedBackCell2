@@ -28,6 +28,22 @@ export function lembrarOrdemCelulares(celulares: Celular[], parcial = false) {
   ordemGuardada = celulares;
 }
 
+let buscandoOrdem: Promise<void> | null = null;
+
+/**
+ * Busca a ordem completa em segundo plano (uma vez por aba). A Home e o
+ * catálogo chamam ao abrir: assim, de qualquer um dos dois, a página do celular
+ * já nasce com o carrossel, mesmo que o aparelho não esteja na primeira página.
+ */
+export function prepararOrdemCelulares() {
+  // a página do celular revalida a lista ao abrir; aqui basta uma busca por aba
+  buscandoOrdem ??= listarCelulares(1, LIMITE_ORDEM)
+    .then(({ celulares }) => lembrarOrdemCelulares(celulares))
+    .catch(() => {
+      buscandoOrdem = null; // tenta de novo na próxima vez
+    });
+}
+
 /** Lista do catálogo na ordem da prateleira, ou null enquanto carrega (ou se falhou). */
 export function useOrdemCelulares(): Celular[] | null {
   const [ordem, setOrdem] = useState<Celular[] | null>(ordemGuardada);

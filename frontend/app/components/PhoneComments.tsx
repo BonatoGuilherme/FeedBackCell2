@@ -86,6 +86,7 @@ export default function PhoneComments({
   notaMedia,
   avaliacoes,
   inicial,
+  bloqueado = false,
   onAlterado,
 }: {
   idcelular: number;
@@ -93,6 +94,11 @@ export default function PhoneComments({
   avaliacoes: number;
   /** Primeira página já carregada: a lista aparece pronta, sem esqueleto. */
   inicial?: ListaComentarios;
+  /**
+   * Publicar e excluir ficam travados: a página já trocou de celular e esta
+   * ficha ainda é a do anterior (sem isso o comentário iria para o aparelho errado).
+   */
+  bloqueado?: boolean;
   onAlterado: () => void;
 }) {
   const [pagina, setPagina] = useState(1);
@@ -140,6 +146,7 @@ export default function PhoneComments({
 
   async function enviarComentario(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (bloqueado) return;
     setTentou(true);
     if (!nota || textoCurto) return;
     const token = getToken();
@@ -167,6 +174,7 @@ export default function PhoneComments({
   }
 
   async function removerComentario(idcomentario: number) {
+    if (bloqueado) return;
     const token = getToken();
     if (!token) {
       setErro("Sua sessão expirou. Entre novamente para continuar.");
@@ -224,7 +232,7 @@ export default function PhoneComments({
             <span className={`comment-composer__count${pertoDoLimite ? " is-warning" : ""}`} aria-live="polite">
               {caracteres}/{MAX_CHARS}
             </span>
-            <button className="button button--primary" disabled={enviando} type="submit">
+            <button className="button button--primary" disabled={enviando || bloqueado} type="submit">
               {enviando && <span className="button-spinner" aria-hidden="true" />}
               {enviando ? "Publicando…" : "Publicar"}
             </button>
@@ -269,6 +277,7 @@ export default function PhoneComments({
                       <button
                         aria-label="Excluir meu comentário"
                         className="comment-item__delete"
+                        disabled={bloqueado}
                         onClick={() => void removerComentario(comentario.idcomentario)}
                         title="Excluir meu comentário"
                         type="button"
