@@ -28,6 +28,7 @@ const SCREENS = [
 /** Especificações mostradas na página do aparelho, na ordem. */
 export const ROTULOS_ESPECIFICACOES: [keyof Especificacoes, string][] = [
   ["lancamento", "Lançamento"],
+  ["precoEstimado", "Preço de lançamento"],
   ["tela", "Tela"],
   ["hardware", "Hardware"],
   ["armazenamento", "Armazenamento"],

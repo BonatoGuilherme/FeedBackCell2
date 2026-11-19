@@ -235,6 +235,10 @@ export type AparelhoEspecificacoes = {
   peso: string | null;
   espessura: string | null;
   cores: string | null;
+  /** Preço de lançamento como a MobileAPI informa, ex.: "800 EUR". */
+  precoLancamento: string | null;
+  /** O mesmo preço convertido para reais com cotação fixa do specs-service, ex.: "R$ 4.960". */
+  precoEstimado: string | null;
 };
 
 export type Modelo3d = {
@@ -256,7 +260,7 @@ export type ResultadoEspecificacoes = {
 const CAMPOS_APARELHO = [
   "nome", "fabricante", "imagem", "imagemHd", "creditoImagem", "creditoImagemUrl",
   "lancamento", "tela", "hardware", "armazenamento", "camera", "bateria", "peso",
-  "espessura", "cores",
+  "espessura", "cores", "precoLancamento", "precoEstimado",
 ] as const;
 
 const URL_IMAGEM_HD = /^https:\/\/(upload|thumb)\.wikimedia\.org\/wikipedia\/commons\//;

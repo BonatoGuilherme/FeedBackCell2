@@ -13,6 +13,7 @@ import { ApiError } from "@/src/lib/http";
 import { PhonePhoto } from "@/components/ui/phone-photo";
 import { PhoneArt, ROTULOS_ESPECIFICACOES } from "@/components/ui/phone-shelf";
 import { NotaResumo } from "@/components/ui/rating";
+import { PrecoLancamento } from "@/components/ui/preco-lancamento";
 import PhoneComments from "./PhoneComments";
 
 type Estado =
@@ -118,7 +119,13 @@ function Ficha({ celular, onAlterado }: { celular: Celular; onAlterado: () => vo
               {specs.map(([campo, rotulo]) => (
                 <div key={campo}>
                   <dt>{rotulo}</dt>
-                  <dd>{especificacoes?.[campo]}</dd>
+                  <dd>
+                    {campo === "precoEstimado" ? (
+                      <PrecoLancamento estimado={especificacoes?.precoEstimado ?? null} original={especificacoes?.precoLancamento ?? null} />
+                    ) : (
+                      especificacoes?.[campo]
+                    )}
+                  </dd>
                 </div>
               ))}
             </dl>
