@@ -141,7 +141,7 @@ class ImagensHdServiceTest {
 
     private static Aparelho aparelho(String fabricante, String nome) {
         return new Aparelho(nome, fabricante, null, null, null, null, null, null, null, null, null, null,
-                null, null, null);
+                null, null, null, null, null);
     }
 
     @Test

@@ -76,6 +76,21 @@ class EsquemaTest {
                 .containsExactly("\"valor\" must be a number");
     }
 
+    /** Os preços da busca passam pelo esquema (senão o core-api descarta); texto acima de 40 caracteres não. */
+    @Test
+    void precosDaBuscaSaoAceitosAteOLimite() {
+        Esquema.Resultado ok = Esquemas.ESPECIFICACOES.validar(json(
+                "{\"nome\":\"Galaxy S23\",\"precoLancamento\":\"799,99 USD\",\"precoEstimado\":\"R$ 4.320\"}"));
+        assertThat(ok.valido()).isTrue();
+        assertThat(ok.valor().get("precoLancamento").stringValue()).isEqualTo("799,99 USD");
+        assertThat(ok.valor().get("precoEstimado").stringValue()).isEqualTo("R$ 4.320");
+
+        Esquema.Resultado longo = Esquemas.ESPECIFICACOES.validar(json(
+                "{\"precoLancamento\":\"" + "9".repeat(41) + "\"}"));
+        assertThat(longo.erros()).containsExactly(
+                "\"precoLancamento\" length must be less than or equal to 40 characters long");
+    }
+
     @Test
     void especificacoesAninhadasUsamCaminhoNoRotulo() {
         Esquema.Resultado r = Esquemas.CELULAR.validar(json(
