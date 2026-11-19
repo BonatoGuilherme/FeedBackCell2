@@ -78,7 +78,7 @@ function LinkExterno({ href, children }: { href: string; children: ReactNode }) 
 }
 
 /** Crédito da foto: o texto leva à página da imagem e a licença, ao texto da licença. */
-function CreditoFoto({ texto, url }: { texto: string; url: string | null }) {
+export function CreditoFoto({ texto, url }: { texto: string; url: string | null }) {
   const licenca = licencaCreativeCommons(texto);
   const trecho = (t: string) => (t && url ? <LinkExterno href={url}>{t}</LinkExterno> : t);
   if (!licenca) return <>{trecho(texto)}</>;

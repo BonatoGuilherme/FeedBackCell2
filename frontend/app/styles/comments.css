@@ -16,22 +16,6 @@
   margin-bottom: 0;
 }
 
-/* as setas encolhem (nomes com reticências) em vez de empurrar a página para o lado */
-.phone-page__top .phone-nav {
-  min-width: 0;
-  flex: 0 1 460px;
-}
-
-@media (max-width: 600px) {
-  .phone-page__top {
-    flex-wrap: wrap;
-  }
-
-  .phone-page__top .phone-nav {
-    flex-basis: 100%;
-  }
-}
-
 /* ---------- novo comentário ---------- */
 
 /* usa .form-field (forms.css) para label e textarea; aqui só o cartão e o rodapé */

@@ -6,7 +6,7 @@
  * `onAlterado` avisa a página para recarregar a média do aparelho.
  */
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { AlertCircle, ChevronLeft, ChevronRight, MessageSquare, RefreshCw, Trash2 } from "lucide-react";
 import {
   criarComentario,
@@ -17,7 +17,9 @@ import {
 import { getSessionUserId, getToken } from "@/src/lib/session";
 import { Estrelas, NotaCampo, textoAvaliacoes } from "@/components/ui/rating";
 
-const PAGE_SIZE = 20;
+/** Tamanho da página; a página do celular busca a primeira junto com o aparelho. */
+export const COMENTARIOS_POR_PAGINA = 20;
+const PAGE_SIZE = COMENTARIOS_POR_PAGINA;
 const MIN_CHARS = 3;
 const MAX_CHARS = 500;
 
@@ -83,26 +85,35 @@ export default function PhoneComments({
   idcelular,
   notaMedia,
   avaliacoes,
+  inicial,
   onAlterado,
 }: {
   idcelular: number;
   notaMedia: number | null;
   avaliacoes: number;
+  /** Primeira página já carregada: a lista aparece pronta, sem esqueleto. */
+  inicial?: ListaComentarios;
   onAlterado: () => void;
 }) {
   const [pagina, setPagina] = useState(1);
   const [atualizacao, setAtualizacao] = useState(0);
-  const [lista, setLista] = useState<ListaComentarios | null>(null);
+  const [lista, setLista] = useState<ListaComentarios | null>(inicial ?? null);
+  // com a primeira página em mãos, a primeira busca é desnecessária
+  const pularBusca = useRef(inicial !== undefined);
   const [texto, setTexto] = useState("");
   const [nota, setNota] = useState(0);
   const [tentou, setTentou] = useState(false);
   const [textoTocado, setTextoTocado] = useState(false);
   const [erro, setErro] = useState("");
-  const [carregando, setCarregando] = useState(true);
+  const [carregando, setCarregando] = useState(inicial === undefined);
   const [enviando, setEnviando] = useState(false);
   const usuarioId = getSessionUserId();
 
   useEffect(() => {
+    if (pularBusca.current) {
+      pularBusca.current = false;
+      return;
+    }
     const controller = new AbortController();
     setCarregando(true);
     setErro("");

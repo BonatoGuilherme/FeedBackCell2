@@ -143,6 +143,8 @@ export function PhoneShelf({ celulares, className }: PhoneShelfProps) {
 /**
  * Aparelho pequeno com marca, modelo e nota, usado na faixa "Mais da marca" da
  * página do celular: mesma linguagem da prateleira, numa caixa menor.
+ * Sem nome de transição: só a foto principal voa entre o catálogo e o celular
+ * (com nome, cada mini-cartão voava até o cartão igual na prateleira).
  */
 export function PhoneMiniCard({ celular }: { celular: Celular }) {
   return (
@@ -153,9 +155,7 @@ export function PhoneMiniCard({ celular }: { celular: Celular }) {
     >
       <span className="relative block aspect-[1/2] w-full max-w-[64px]">
         <span className="absolute inset-0 block transition-transform duration-300 ease-out group-hover:-translate-y-1 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0">
-          <CelularTransicao id={celular.idcelular}>
-            <PhoneVisual celular={celular} />
-          </CelularTransicao>
+          <PhoneVisual celular={celular} />
         </span>
       </span>
       <div className="min-w-0 self-stretch text-center">
