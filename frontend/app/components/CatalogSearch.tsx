@@ -63,7 +63,7 @@ export default function CatalogSearch({
 
   function abrir(celular: Celular) {
     setAberto(false);
-    router.push(`/celulares/${celular.idcelular}`);
+    router.push(`/catalog/${celular.idcelular}`);
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
