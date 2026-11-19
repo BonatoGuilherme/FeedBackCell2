@@ -26,12 +26,14 @@ import {
   AnimatePresence,
   animate,
   motion,
+  useIsPresent,
   useMotionValue,
   useReducedMotion,
   useTransform,
+  type HTMLMotionProps,
   type Variants,
 } from "motion/react";
-import { Box, MessageSquareText, X } from "lucide-react";
+import { Box, Image as ImageIcon, MessageSquareText } from "lucide-react";
 import { CelularTransicao } from "@/components/ui/transicoes";
 import { CreditoFoto } from "@/components/ui/phone-photo";
 import { PhoneArt } from "@/components/ui/phone-shelf";
@@ -173,14 +175,24 @@ type Props = {
 export function PhoneCarousel({ celulares, indice, direcao, onIr }: Props) {
   const reduzir = useReducedMotion() ?? false;
   const rootRef = useRef<HTMLDivElement>(null);
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const toque = useRef<{ x: number; y: number } | null>(null);
   const abasRef = useRef<Partial<Record<Aba, HTMLButtonElement | null>>>({});
+  const faixaRef = useRef<HTMLUListElement>(null);
+  const miniaturasRef = useRef<(HTMLButtonElement | null)[]>([]);
   const idBase = useId();
   const [aba, setAba] = useState<Aba>("geral");
+  // id do celular cujo 3D está aberto; trocar de celular volta para a foto sozinho
+  const [ver3d, setVer3d] = useState<number | null>(null);
   const total = celulares.length;
   const celular = celulares[indice];
   const cor = rodizio(CORES, indice);
+
+  // com o foco na faixa, ele acompanha o celular atual (senão some na parte escondida)
+  useEffect(() => {
+    if (faixaRef.current?.contains(document.activeElement)) {
+      miniaturasRef.current[indice]?.focus({ preventScroll: true });
+    }
+  }, [indice]);
 
   // encaixa o palco de 960 x 520 no carrossel; só mede quando o tamanho muda
   useLayoutEffect(() => {
@@ -270,6 +282,7 @@ export function PhoneCarousel({ celulares, indice, direcao, onIr }: Props) {
   const nome = `${celular.marca} ${celular.modelo}`;
   const foto = celular.imagens[0];
   const credito = celular.especificacoes?.creditoImagem;
+  const em3d = ver3d === celular.idcelular && Boolean(celular.modelo3d);
 
   return (
     <div className="orb-wrap">
@@ -288,6 +301,18 @@ export function PhoneCarousel({ celulares, indice, direcao, onIr }: Props) {
           <div className="orb-plates" onPointerDown={onPointerDown} onPointerUp={onPointerUp} onPointerCancel={() => (toque.current = null)}>
             <AnimatePresence {...presenca}>
               <motion.div key={celular.idcelular} className="orb-orbit" {...animado} variants={v(orbita)}>
+                {em3d && celular.modelo3d ? (
+                  // o modelo 3D entra no lugar da foto, sem janela por cima
+                  <div className="orb-3d">
+                    <iframe
+                      title={`${nome} em 3D`}
+                      src={sketchfabEmbedUrl(celular.modelo3d)}
+                      allow="autoplay; fullscreen; xr-spatial-tracking"
+                      allowFullScreen
+                      referrerPolicy="strict-origin-when-cross-origin"
+                    />
+                  </div>
+                ) : (
                 <CelularTransicao id={celular.idcelular}>
                   {foto ? (
                     <div className="orb-photo">
@@ -300,13 +325,14 @@ export function PhoneCarousel({ celulares, indice, direcao, onIr }: Props) {
                     </div>
                   )}
                 </CelularTransicao>
+                )}
               </motion.div>
             </AnimatePresence>
           </div>
 
           <div className="orb-head">
             <AnimatePresence {...presencaEntra}>
-              <motion.div key={celular.idcelular} className="orb-hd" initial="entra" animate="fica" exit="sai">
+              <SaiEscondido key={celular.idcelular} className="orb-hd" initial="entra" animate="fica" exit="sai">
                 <motion.p className="orb-eye" variants={v(etiqueta)}>
                   Nº {indice + 1} do catálogo
                 </motion.p>
@@ -326,7 +352,7 @@ export function PhoneCarousel({ celulares, indice, direcao, onIr }: Props) {
                     {celular.modelo}
                   </motion.span>
                 </h1>
-              </motion.div>
+              </SaiEscondido>
             </AnimatePresence>
           </div>
 
@@ -336,9 +362,18 @@ export function PhoneCarousel({ celulares, indice, direcao, onIr }: Props) {
               Avaliar
             </a>
             {celular.modelo3d && (
-              <button type="button" className="orb-btn" onClick={() => dialogRef.current?.showModal()}>
-                <Box size={15} strokeWidth={1.8} aria-hidden="true" />
-                Ver em 3D
+              <button
+                type="button"
+                className="orb-btn"
+                aria-pressed={em3d}
+                onClick={() => setVer3d(em3d ? null : celular.idcelular)}
+              >
+                {em3d ? (
+                  <ImageIcon size={15} strokeWidth={1.8} aria-hidden="true" />
+                ) : (
+                  <Box size={15} strokeWidth={1.8} aria-hidden="true" />
+                )}
+                {em3d ? "Ver foto" : "Ver em 3D"}
               </button>
             )}
           </div>
@@ -366,9 +401,9 @@ export function PhoneCarousel({ celulares, indice, direcao, onIr }: Props) {
             </div>
             <div className="orb-bodies" role="tabpanel" id={idPainel} aria-labelledby={idAba(aba)} tabIndex={0}>
               <AnimatePresence {...presencaEntra}>
-                <motion.div key={celular.idcelular} className="orb-body" {...animado} variants={v(corpo)}>
+                <SaiEscondido key={celular.idcelular} className="orb-body" {...animado} variants={v(corpo)}>
                   <CorpoCartao celular={celular} aba={aba} cor={cor} variantes={v(linhaCorpo)} />
-                </motion.div>
+                </SaiEscondido>
               </AnimatePresence>
             </div>
           </div>
@@ -380,14 +415,18 @@ export function PhoneCarousel({ celulares, indice, direcao, onIr }: Props) {
               </svg>
             </button>
             <div className="orb-win">
-              <ul className="orb-track" style={{ transform: `translateX(${-inicio * ITEM}px)` }}>
+              <ul ref={faixaRef} className="orb-track" style={{ transform: `translateX(${-inicio * ITEM}px)` }}>
                 {celulares.map((c, i) => (
                   <li key={c.idcelular} className="orb-th">
                     <button
+                      ref={(el) => {
+                        miniaturasRef.current[i] = el;
+                      }}
                       type="button"
                       className="orb-btn"
                       aria-current={i === indice ? "true" : undefined}
-                      tabIndex={i >= inicio && i < inicio + VISIVEIS ? 0 : -1}
+                      // só a miniatura atual entra no Tab; ← → trocam de celular e o foco vem junto
+                      tabIndex={i === indice ? 0 : -1}
                       onClick={() => ir(i)}
                     >
                       {c.imagens[0] ? (
@@ -426,34 +465,28 @@ export function PhoneCarousel({ celulares, indice, direcao, onIr }: Props) {
         </p>
       )}
 
-      {celular.modelo3d && (
-        <dialog ref={dialogRef} className="orb-3d" aria-label={`${nome} em 3D`}>
-          <header>
-            {nome}
-            <button type="button" className="orb-btn orb-arrow" aria-label="Fechar" onClick={() => dialogRef.current?.close()}>
-              <X size={18} strokeWidth={1.8} aria-hidden="true" />
-            </button>
-          </header>
-          <iframe
-            title={`${nome} em 3D`}
-            src={sketchfabEmbedUrl(celular.modelo3d)}
-            allow="autoplay; fullscreen; xr-spatial-tracking"
-            allowFullScreen
-            referrerPolicy="strict-origin-when-cross-origin"
-            loading="lazy"
-          />
-        </dialog>
-      )}
     </div>
   );
+}
+
+/**
+ * Bloco animado que, enquanto sai, some para leitores de tela: na troca o
+ * anterior e o novo ficam montados juntos por um instante (seriam dois <h1>).
+ */
+function SaiEscondido(props: HTMLMotionProps<"div">) {
+  const presente = useIsPresent();
+  return <motion.div {...props} aria-hidden={presente ? undefined : true} />;
 }
 
 function CorpoCartao({ celular, aba, cor, variantes }: { celular: Celular; aba: Aba; cor: string; variantes: Variants }) {
   const especificacoes = celular.especificacoes;
   const destaques = especificacoes ? DESTAQUES.filter(([campo]) => especificacoes[campo]) : [];
+  // na ficha técnica o cartão mostra só as especificações; a nota fica na visão geral
+  const soFicha = aba === "ficha" && destaques.length > 0;
 
   return (
     <>
+      {!soFicha && (
       <motion.div className="orb-rate" variants={variantes}>
         <span className="orb-badge" style={{ background: cor }}>
           <strong aria-label={celular.notaMedia === null ? "Sem nota" : `Nota ${celular.notaMedia.toFixed(1)} de 5`}>
@@ -465,7 +498,8 @@ function CorpoCartao({ celular, aba, cor, variantes }: { celular: Celular; aba: 
         </span>
         <p>{celular.avaliacoes > 0 ? textoAvaliacoes(celular.avaliacoes) : "Ainda sem avaliações"}</p>
       </motion.div>
-      {aba === "geral" || destaques.length === 0 ? (
+      )}
+      {!soFicha ? (
         <motion.p className="orb-desc" variants={variantes}>
           {celular.descricao || "Sem descrição. Conte o que achou dele nas avaliações."}
         </motion.p>

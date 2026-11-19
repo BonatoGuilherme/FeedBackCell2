@@ -331,6 +331,8 @@
 .orb-chips li {
   display: grid;
   gap: 1px;
+  justify-items: center;
+  text-align: center;
   padding: 6px 10px;
   border-radius: 10px;
   background: var(--surface-soft);
@@ -474,32 +476,20 @@
   color: var(--subtle);
 }
 
+/* o modelo 3D no lugar da foto, na mesma moldura (um pouco maior, para girar) */
 .orb-3d {
-  width: min(92vw, 720px);
-  padding: 0;
-  border: 1px solid var(--line-strong);
-  border-radius: 20px;
+  width: 280px;
+  height: 296px;
+  overflow: hidden;
+  border-radius: 18px;
   background: var(--surface-solid);
-  color: var(--foreground);
-}
-
-.orb-3d::backdrop {
-  background: rgb(11 8 5 / 72%);
-}
-
-.orb-3d header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 12px 12px 20px;
-  font-family: var(--font-display);
-  font-size: 20px;
+  box-shadow: 0 0 0 1px var(--line), 0 22px 40px -18px rgb(0 0 0 / 70%);
 }
 
 .orb-3d iframe {
   display: block;
   width: 100%;
-  height: min(70vh, 520px);
+  height: 100%;
   border: 0;
 }
 
@@ -565,6 +555,12 @@
 
   .orb-art {
     height: min(66vw, 270px);
+  }
+
+  /* no celular o 3D ocupa exatamente a área da foto (maior que isso sairia da tela) */
+  .orb-3d {
+    width: 100%;
+    height: 100%;
   }
 
   .orb-head {
