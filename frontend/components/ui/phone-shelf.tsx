@@ -4,13 +4,14 @@
  * Prateleira de celulares — adaptada do "Product Shelf" de Aakash Mehra.
  * Cada fileira mostra os aparelhos (a foto do aparelho; sem foto, um celular
  * desenhado), a marca, o modelo e a nota média. Clicar abre a página do
- * aparelho (/celulares/ID), com fotos, especificações e avaliações.
+ * aparelho (/catalog/ID), com fotos, especificações e avaliações.
  */
 
 import { useEffect, useRef, useState, type RefObject } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { NotaResumo, textoAvaliacoes } from "@/components/ui/rating";
+import { CelularTransicao } from "@/components/ui/transicoes";
 import { cn } from "@/lib/utils";
 import { type Celular, type Especificacoes } from "@/src/lib/celulares";
 
@@ -47,10 +48,12 @@ function hash(text: string) {
 const frameOf = (c: Celular) => FRAMES[hash(c.marca.toLowerCase()) % FRAMES.length];
 const screenOf = (c: Celular) => SCREENS[hash(c.modelo.toLowerCase()) % SCREENS.length];
 
-// Aparelhos por prateleira: quantos couberem na largura da própria prateleira
-// (cada um ocupa pelo menos LARGURA_MINIMA), nunca menos de 2. Assim a grade
-// preenche a tela em monitores largos e encolhe no celular.
-const LARGURA_MINIMA = 174;
+// Aparelhos por prateleira: cada coluna ocupa pelo menos LARGURA_MINIMA (com
+// GAP entre elas) e o aparelho em si tem no máximo 130 px, centralizado na
+// coluna. Nunca menos de 2 colunas. Medidas: 8 colunas a 2000 px, 5 a 1366 px,
+// 2 a 375 px.
+const LARGURA_MINIMA = 200;
+const GAP = 20;
 const COLUNAS_MINIMAS = 2;
 const COLUNAS_INICIAIS = 6;
 
@@ -62,7 +65,7 @@ function useColunas(ref: RefObject<HTMLElement | null>) {
     if (!elemento) return;
     const observador = new ResizeObserver(([entrada]) => {
       const largura = entrada.contentRect.width;
-      setColunas(Math.max(COLUNAS_MINIMAS, Math.floor(largura / LARGURA_MINIMA)));
+      setColunas(Math.max(COLUNAS_MINIMAS, Math.floor((largura + GAP) / (LARGURA_MINIMA + GAP))));
     });
     observador.observe(elemento);
     return () => observador.disconnect();
@@ -93,21 +96,21 @@ export function PhoneShelf({ celulares, className }: PhoneShelfProps) {
 
   return (
     <>
-      <div ref={prateleiraRef} className={cn("relative", className)}>
+      <div ref={prateleiraRef} className={cn("relative px-2 sm:px-6", className)}>
         {rows.map((row, r) => (
           <section key={r} aria-label={`Prateleira ${r + 1}`} className="relative mb-6 last:mb-0">
-            <div className="relative z-10 grid items-end gap-4 px-2 sm:gap-6 sm:px-6" style={grade}>
+            <div className="relative z-10 grid items-end gap-5" style={grade}>
               {row.map((c) => (
                 <div key={c.idcelular} className="relative flex justify-center">
                   {/* sombra de chão sob o aparelho (no lugar da prateleira branca) */}
                   <span
                     aria-hidden
-                    className="pointer-events-none absolute -bottom-2.5 left-1/2 h-4 w-[min(100%,112px)] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgba(201,151,63,0.35),transparent)]"
+                    className="pointer-events-none absolute -bottom-3 left-1/2 h-5 w-[min(100%,150px)] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgba(201,151,63,0.35),transparent)]"
                   />
                   <Link
-                    href={`/celulares/${c.idcelular}`}
+                    href={`/catalog/${c.idcelular}`}
                     aria-label={rotuloAcessivel(c)}
-                    className="relative block aspect-[1/2] w-full max-w-[92px] cursor-pointer rounded-[22%/11%] outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-4"
+                    className="relative block aspect-[1/2] w-full max-w-[130px] cursor-pointer rounded-[22%/11%] outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-4"
                   >
                     <motion.span
                       className="absolute inset-0 block"
@@ -115,13 +118,15 @@ export function PhoneShelf({ celulares, className }: PhoneShelfProps) {
                       whileHover={{ y: -10, rotateY: -18, rotateX: 8, scale: 1.06 }}
                       style={{ transformPerspective: 600 }}
                     >
-                      <PhoneVisual celular={c} />
+                      <CelularTransicao id={c.idcelular}>
+                        <PhoneVisual celular={c} />
+                      </CelularTransicao>
                     </motion.span>
                   </Link>
                 </div>
               ))}
             </div>
-            <div className="mt-5 grid gap-4 px-2 sm:gap-6 sm:px-6" style={grade}>
+            <div className="mt-6 grid gap-5" style={grade}>
               {row.map((c) => (
                 <div key={c.idcelular} className="min-w-0 text-center">
                   <ShelfLabel celular={c} />
@@ -135,12 +140,37 @@ export function PhoneShelf({ celulares, className }: PhoneShelfProps) {
   );
 }
 
+/**
+ * Aparelho pequeno com marca, modelo e nota, usado na faixa "Mais da marca" da
+ * página do celular: mesma linguagem da prateleira, numa caixa menor.
+ */
+export function PhoneMiniCard({ celular }: { celular: Celular }) {
+  return (
+    <Link
+      href={`/catalog/${celular.idcelular}`}
+      aria-label={rotuloAcessivel(celular)}
+      className="group flex flex-col items-center gap-3 rounded-[18px] border border-line bg-surface-soft px-3 py-4 outline-none transition-colors hover:border-line-strong focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+    >
+      <span className="relative block aspect-[1/2] w-full max-w-[64px]">
+        <span className="absolute inset-0 block transition-transform duration-300 ease-out group-hover:-translate-y-1 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0">
+          <CelularTransicao id={celular.idcelular}>
+            <PhoneVisual celular={celular} />
+          </CelularTransicao>
+        </span>
+      </span>
+      <div className="min-w-0 self-stretch text-center">
+        <ShelfLabel celular={celular} />
+      </div>
+    </Link>
+  );
+}
+
 function ShelfLabel({ celular }: { celular: Celular }) {
   return (
     <>
-      <div className="truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-subtle" title={celular.marca}>{celular.marca}</div>
-      <div className="mt-0.5 truncate text-[14px] font-medium leading-tight text-foreground" title={celular.modelo}>{celular.modelo}</div>
-      <NotaResumo compacto notaMedia={celular.notaMedia} avaliacoes={celular.avaliacoes} className="mt-0.5 text-[13px]" />
+      <div className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle" title={celular.marca}>{celular.marca}</div>
+      <div className="mt-1 truncate text-[16px] font-medium leading-snug text-foreground" title={celular.modelo}>{celular.modelo}</div>
+      <NotaResumo compacto notaMedia={celular.notaMedia} avaliacoes={celular.avaliacoes} className="mt-1 text-[14px]" />
     </>
   );
 }

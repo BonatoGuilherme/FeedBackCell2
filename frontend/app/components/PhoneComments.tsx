@@ -15,7 +15,7 @@ import {
   type ListaComentarios,
 } from "@/src/lib/comentarios";
 import { getSessionUserId, getToken } from "@/src/lib/session";
-import { Estrelas, NotaCampo } from "@/components/ui/rating";
+import { Estrelas, NotaCampo, textoAvaliacoes } from "@/components/ui/rating";
 
 const PAGE_SIZE = 20;
 const MIN_CHARS = 3;
@@ -58,11 +58,36 @@ function ListaCarregando() {
   );
 }
 
+/** Nota média em destaque, ao lado do formulário. */
+function ResumoNota({ notaMedia, avaliacoes }: { notaMedia: number | null; avaliacoes: number }) {
+  const semNota = notaMedia === null || avaliacoes === 0;
+
+  return (
+    <div className="reviews-summary">
+      <p className="reviews-summary__score" aria-hidden="true">
+        {semNota ? "—" : notaMedia.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+      </p>
+      <div className="reviews-summary__meta">
+        <Estrelas valor={semNota ? 0 : notaMedia} className="reviews-summary__stars" />
+        <p>
+          {semNota
+            ? "Ainda sem nota — a sua será a primeira."
+            : `Média de ${textoAvaliacoes(avaliacoes)}.`}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function PhoneComments({
   idcelular,
+  notaMedia,
+  avaliacoes,
   onAlterado,
 }: {
   idcelular: number;
+  notaMedia: number | null;
+  avaliacoes: number;
   onAlterado: () => void;
 }) {
   const [pagina, setPagina] = useState(1);
@@ -160,130 +185,136 @@ export default function PhoneComments({
         )}
       </header>
 
-      <form className="form-field comment-composer" onSubmit={enviarComentario} noValidate>
-        <NotaCampo valor={nota} onChange={setNota} erro={erroNota} disabled={enviando} />
-        <label htmlFor="comment-text">Seu comentário</label>
-        <textarea
-          aria-describedby="comment-text-hint"
-          aria-invalid={mostrarErroTexto}
-          id="comment-text"
-          maxLength={MAX_CHARS}
-          minLength={MIN_CHARS}
-          onBlur={() => setTextoTocado(true)}
-          onChange={(event) => setTexto(event.target.value)}
-          placeholder="O que você achou deste celular? Conte sobre bateria, câmera, desempenho…"
-          required
-          rows={4}
-          value={texto}
-        />
-        <div className="comment-composer__footer">
-          <p id="comment-text-hint" className={`comment-composer__hint${mostrarErroTexto ? " is-error" : ""}`}>
-            {mostrarErroTexto
-              ? `Escreva pelo menos ${MIN_CHARS} caracteres.`
-              : `Entre ${MIN_CHARS} e ${MAX_CHARS} caracteres.`}
-          </p>
-          <span className={`comment-composer__count${pertoDoLimite ? " is-warning" : ""}`} aria-live="polite">
-            {caracteres}/{MAX_CHARS}
-          </span>
-          <button className="button button--primary" disabled={enviando} type="submit">
-            {enviando && <span className="button-spinner" aria-hidden="true" />}
-            {enviando ? "Publicando…" : "Publicar"}
-          </button>
-        </div>
-      </form>
+      <div className="phone-reviews__aside">
+        <ResumoNota notaMedia={notaMedia} avaliacoes={avaliacoes} />
 
-      {erro && (
-        <div className="comments-alert" role="alert">
-          <AlertCircle size={18} strokeWidth={1.8} aria-hidden="true" />
-          <p>{erro}</p>
-          {!lista && !carregando && (
+        <form className="form-field comment-composer" onSubmit={enviarComentario} noValidate>
+          <NotaCampo valor={nota} onChange={setNota} erro={erroNota} disabled={enviando} />
+          <label htmlFor="comment-text">Seu comentário</label>
+          <textarea
+            aria-describedby="comment-text-hint"
+            aria-invalid={mostrarErroTexto}
+            id="comment-text"
+            maxLength={MAX_CHARS}
+            minLength={MIN_CHARS}
+            onBlur={() => setTextoTocado(true)}
+            onChange={(event) => setTexto(event.target.value)}
+            placeholder="O que você achou deste celular? Conte sobre bateria, câmera, desempenho…"
+            required
+            rows={4}
+            value={texto}
+          />
+          <div className="comment-composer__footer">
+            <p id="comment-text-hint" className={`comment-composer__hint${mostrarErroTexto ? " is-error" : ""}`}>
+              {mostrarErroTexto
+                ? `Escreva pelo menos ${MIN_CHARS} caracteres.`
+                : `Entre ${MIN_CHARS} e ${MAX_CHARS} caracteres.`}
+            </p>
+            <span className={`comment-composer__count${pertoDoLimite ? " is-warning" : ""}`} aria-live="polite">
+              {caracteres}/{MAX_CHARS}
+            </span>
+            <button className="button button--primary" disabled={enviando} type="submit">
+              {enviando && <span className="button-spinner" aria-hidden="true" />}
+              {enviando ? "Publicando…" : "Publicar"}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div className="phone-reviews__feed">
+        {erro && (
+          <div className="comments-alert" role="alert">
+            <AlertCircle size={18} strokeWidth={1.8} aria-hidden="true" />
+            <p>{erro}</p>
+            {!lista && !carregando && (
+              <button
+                className="button button--secondary button--sm"
+                onClick={() => setAtualizacao((value) => value + 1)}
+                type="button"
+              >
+                <RefreshCw size={14} strokeWidth={1.8} aria-hidden="true" />
+                Tentar novamente
+              </button>
+            )}
+          </div>
+        )}
+  
+        {carregando ? (
+          <ListaCarregando />
+        ) : lista && lista.comentarios.length > 0 ? (
+          <ol className="comment-list">
+            {lista.comentarios.map((comentario) => (
+              <li className="comment-item" key={comentario.idcomentario}>
+                <span className="comment-item__avatar" aria-hidden="true">
+                  {iniciais(comentario.Nome)}
+                </span>
+                <article className="comment-item__body">
+                  <header className="comment-item__header">
+                    <strong>{comentario.Nome}</strong>
+                    {comentario.dataCriacao && (
+                      <time dateTime={comentario.dataCriacao}>{formatarData(comentario.dataCriacao)}</time>
+                    )}
+                    {comentario.idusuario === usuarioId && (
+                      <button
+                        aria-label="Excluir meu comentário"
+                        className="comment-item__delete"
+                        onClick={() => void removerComentario(comentario.idcomentario)}
+                        title="Excluir meu comentário"
+                        type="button"
+                      >
+                        <Trash2 size={15} strokeWidth={1.8} aria-hidden="true" />
+                      </button>
+                    )}
+                  </header>
+                  {comentario.nota !== null && (
+                    <p className="comment-item__rating">
+                      <Estrelas valor={comentario.nota} />
+                      <span className="sr-only">Nota {comentario.nota} de 5</span>
+                    </p>
+                  )}
+                  <p>{comentario.texto}</p>
+                </article>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          !erro && (
+            <div className="comments-empty">
+              <span className="comments-empty__icon">
+                <MessageSquare size={20} strokeWidth={1.7} aria-hidden="true" />
+              </span>
+              <h3>Nenhuma avaliação ainda</h3>
+              <p>Seja a primeira pessoa a dar nota e contar o que achou deste celular.</p>
+            </div>
+          )
+        )}
+  
+        {lista && lista.paginacao.totalPaginas > 1 && (
+          <nav className="pagination" aria-label="Paginação dos comentários">
             <button
-              className="button button--secondary button--sm"
-              onClick={() => setAtualizacao((value) => value + 1)}
+              className="button button--secondary pagination__button"
+              disabled={pagina <= 1 || carregando}
+              onClick={() => setPagina((current) => Math.max(1, current - 1))}
               type="button"
             >
-              <RefreshCw size={14} strokeWidth={1.8} aria-hidden="true" />
-              Tentar novamente
+              <ChevronLeft size={16} strokeWidth={1.8} aria-hidden="true" />
+              Anterior
             </button>
-          )}
-        </div>
-      )}
-
-      {carregando ? (
-        <ListaCarregando />
-      ) : lista && lista.comentarios.length > 0 ? (
-        <ol className="comment-list">
-          {lista.comentarios.map((comentario) => (
-            <li className="comment-item" key={comentario.idcomentario}>
-              <span className="comment-item__avatar" aria-hidden="true">
-                {iniciais(comentario.Nome)}
-              </span>
-              <article className="comment-item__body">
-                <header className="comment-item__header">
-                  <strong>{comentario.Nome}</strong>
-                  {comentario.dataCriacao && (
-                    <time dateTime={comentario.dataCriacao}>{formatarData(comentario.dataCriacao)}</time>
-                  )}
-                  {comentario.idusuario === usuarioId && (
-                    <button
-                      aria-label="Excluir meu comentário"
-                      className="comment-item__delete"
-                      onClick={() => void removerComentario(comentario.idcomentario)}
-                      title="Excluir meu comentário"
-                      type="button"
-                    >
-                      <Trash2 size={15} strokeWidth={1.8} aria-hidden="true" />
-                    </button>
-                  )}
-                </header>
-                {comentario.nota !== null && (
-                  <p className="comment-item__rating">
-                    <Estrelas valor={comentario.nota} />
-                    <span className="sr-only">Nota {comentario.nota} de 5</span>
-                  </p>
-                )}
-                <p>{comentario.texto}</p>
-              </article>
-            </li>
-          ))}
-        </ol>
-      ) : (
-        !erro && (
-          <div className="comments-empty">
-            <span className="comments-empty__icon">
-              <MessageSquare size={20} strokeWidth={1.7} aria-hidden="true" />
+            <span>
+              Página {lista.paginacao.paginaAtual} de {lista.paginacao.totalPaginas}
             </span>
-            <h3>Nenhuma avaliação ainda</h3>
-            <p>Seja a primeira pessoa a dar nota e contar o que achou deste celular.</p>
-          </div>
-        )
-      )}
-
-      {lista && lista.paginacao.totalPaginas > 1 && (
-        <nav className="pagination" aria-label="Paginação dos comentários">
-          <button
-            className="button button--secondary pagination__button"
-            disabled={pagina <= 1 || carregando}
-            onClick={() => setPagina((current) => Math.max(1, current - 1))}
-            type="button"
-          >
-            <ChevronLeft size={16} strokeWidth={1.8} aria-hidden="true" />
-            Anterior
-          </button>
-          <span>
-            Página {lista.paginacao.paginaAtual} de {lista.paginacao.totalPaginas}
-          </span>
-          <button
-            className="button button--secondary pagination__button"
-            disabled={pagina >= lista.paginacao.totalPaginas || carregando}
-            onClick={() => setPagina((current) => current + 1)}
-            type="button"
-          >
-            Próxima
-            <ChevronRight size={16} strokeWidth={1.8} aria-hidden="true" />
-          </button>
-        </nav>
-      )}
+            <button
+              className="button button--secondary pagination__button"
+              disabled={pagina >= lista.paginacao.totalPaginas || carregando}
+              onClick={() => setPagina((current) => current + 1)}
+              type="button"
+            >
+              Próxima
+              <ChevronRight size={16} strokeWidth={1.8} aria-hidden="true" />
+            </button>
+          </nav>
+        )}
+      </div>
     </section>
   );
 }
