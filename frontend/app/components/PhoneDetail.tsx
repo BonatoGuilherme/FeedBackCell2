@@ -19,7 +19,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowLeft, RefreshCw, SearchX } from "lucide-react";
-import { buscarCelular, type Celular } from "@/src/lib/celulares";
+import { buscarCelular, listarCelulares, type Celular } from "@/src/lib/celulares";
 import { listarComentarios, type ListaComentarios } from "@/src/lib/comentarios";
 import { ApiError } from "@/src/lib/http";
 import { MOLDURA_APARELHO } from "@/components/ui/phone-photo";
@@ -27,7 +27,7 @@ import { CelularTransicao } from "@/components/ui/transicoes";
 import { PhoneCarousel, type Direcao } from "@/components/ui/phone-carousel";
 import { PhoneMiniCard, ROTULOS_ESPECIFICACOES } from "@/components/ui/phone-shelf";
 import { PrecoLancamento } from "@/components/ui/preco-lancamento";
-import { useOrdemCelulares, useTeclasDeTroca } from "./PhoneNavigation";
+import { LIMITE_ORDEM, useOrdemCelulares, useTeclasDeTroca } from "./PhoneNavigation";
 import PhoneComments, { COMENTARIOS_POR_PAGINA } from "./PhoneComments";
 
 /** Um celular pronto para a ficha: os dados e a primeira página de comentários (se vieram). */
@@ -126,8 +126,12 @@ export default function PhoneDetail() {
     if (atual) document.title = `${atual.marca} ${atual.modelo} · FeedBackCELL`;
   }, [atual]);
 
-  const naoEncontrado = idcelular === null || (estado.status === "not-found" && estado.id === idcelular);
+  const removido = estado.status === "not-found" && estado.id === idcelular;
+  // com o carrossel na tela (o celular está na lista), o 404 aparece só embaixo e as setas continuam
+  const naoEncontrado = idcelular === null || (removido && !atual);
   const erro = estado.status === "error" && estado.id === idcelular ? estado.message : null;
+  // a ficha ainda é a do celular anterior: comentar agora iria para o aparelho errado
+  const fichaAtrasada = ficha !== null && ficha.celular.idcelular !== idcelular;
 
   return (
     <div className="page-shell phone-page">
@@ -152,7 +156,15 @@ export default function PhoneDetail() {
       ) : atual && itens ? (
         <div className="phone-panel">
           <PhoneCarousel celulares={itens} indice={indice} direcao={visto.direcao} onIr={ir} />
-          {erro ? (
+          {removido ? (
+            <div className="collection-empty collection-empty--compact" role="alert">
+              <span className="collection-empty__icon">
+                <SearchX size={22} strokeWidth={1.7} aria-hidden="true" />
+              </span>
+              <h2>Este celular não está mais no catálogo</h2>
+              <p>Ele pode ter sido removido. Use as setas para ver os outros aparelhos.</p>
+            </div>
+          ) : erro ? (
             <ErroCelular message={erro} onTentar={recarregar} />
           ) : (
             <AnimatePresence mode="wait" initial={false}>
@@ -168,6 +180,7 @@ export default function PhoneDetail() {
                     celular={ficha.celular}
                     comentarios={ficha.comentarios}
                     catalogo={ordem}
+                    bloqueado={fichaAtrasada}
                     onAlterado={recarregar}
                   />
                 </motion.div>
@@ -240,10 +253,29 @@ const MIN_DA_MARCA = 3;
 /**
  * Faixa com outros aparelhos: os da mesma marca quando há pelo menos
  * MIN_DA_MARCA deles; senão, outros celulares do catálogo. Usa a lista que o
- * carrossel já tem, então entra junto com a ficha (sem aparecer depois).
+ * carrossel já tem, então entra junto com a ficha (sem aparecer depois); se
+ * ela não veio, busca a própria.
  */
 function MaisAparelhos({ celular, catalogo }: { celular: Celular; catalogo: Celular[] | null }) {
-  if (!catalogo) return null;
+  const [propria, setPropria] = useState<Celular[] | null>(null);
+
+  useEffect(() => {
+    if (catalogo) return;
+    const controller = new AbortController();
+    listarCelulares(1, LIMITE_ORDEM, controller.signal)
+      .then(({ celulares }) => setPropria(celulares))
+      .catch(() => {
+        // sem lista, a faixa simplesmente não aparece
+      });
+    return () => controller.abort();
+  }, [catalogo]);
+
+  const lista = catalogo ?? propria;
+  if (!lista) return null;
+  return <FaixaAparelhos celular={celular} catalogo={lista} />;
+}
+
+function FaixaAparelhos({ celular, catalogo }: { celular: Celular; catalogo: Celular[] }) {
   const outros = catalogo.filter((c) => c.idcelular !== celular.idcelular);
   const daMarca = outros.filter((c) => c.marca.toLowerCase() === celular.marca.toLowerCase());
   const [titulo, lista] =
@@ -269,11 +301,13 @@ function Ficha({
   celular,
   comentarios,
   catalogo,
+  bloqueado,
   onAlterado,
 }: {
   celular: Celular;
   comentarios?: ListaComentarios;
   catalogo: Celular[] | null;
+  bloqueado: boolean;
   onAlterado: () => void;
 }) {
   const { especificacoes } = celular;
@@ -317,6 +351,7 @@ function Ficha({
         notaMedia={celular.notaMedia}
         avaliacoes={celular.avaliacoes}
         inicial={comentarios}
+        bloqueado={bloqueado}
         onAlterado={onAlterado}
       />
     </>

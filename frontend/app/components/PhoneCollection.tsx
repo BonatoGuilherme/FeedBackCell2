@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import AppIcon from "./AppIcon";
 import CatalogSearch from "./CatalogSearch";
-import { lembrarOrdemCelulares } from "./PhoneNavigation";
+import { lembrarOrdemCelulares, prepararOrdemCelulares } from "./PhoneNavigation";
 import { PhoneShelf } from "@/components/ui/phone-shelf";
 import { TiltCard } from "@/components/ui/tilt-card";
 import { Reveal, RevealItem } from "@/components/ui/reveal";
@@ -163,6 +163,11 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
 
     return () => controller.abort();
   }, [isOverview, limit, pagina, refreshKey, requestKey]);
+
+  // a ordem completa fica pronta para a página do celular (vale também para a Home)
+  useEffect(() => {
+    prepararOrdemCelulares();
+  }, []);
 
   const marcas = useMemo(
     () => [...new Set(celulares.map((celular) => celular.marca))].sort(),
