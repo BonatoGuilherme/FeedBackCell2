@@ -66,10 +66,12 @@ export default function PhoneDetail({ idcelular }: { idcelular: number | null })
 
   return (
     <div className="page-shell phone-page">
-      <Link className="back-link" href="/catalog">
-        <ArrowLeft size={15} strokeWidth={1.8} aria-hidden="true" />
-        Catálogo
-      </Link>
+      <div className="phone-page__top">
+        <Link className="back-link" href="/catalog">
+          <ArrowLeft size={15} strokeWidth={1.8} aria-hidden="true" />
+          Catálogo
+        </Link>
+      </div>
 
       {estado.status === "loading" ? (
         <div className="collection-message" role="status">

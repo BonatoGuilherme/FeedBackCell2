@@ -1,7 +1,18 @@
-/* Página do celular (app/celulares/[id]): ficha, avaliações e busca do catálogo com sugestões. */
+/* Página do celular (app/catalog/[id]): ficha, avaliações e busca do catálogo com sugestões. */
+
+/* topo da página: "Catálogo" à esquerda e as setas anterior/próximo à direita */
+.phone-page__top {
+  display: flex;
+  width: 100%;
+  max-width: 1200px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin: 0 auto var(--space-5);
+}
 
 .phone-page .back-link {
-  margin-bottom: var(--space-5);
+  margin-bottom: 0;
 }
 
 /* ---------- novo comentário ---------- */
