@@ -25,14 +25,26 @@ Pode haver mais de uma sessão do Claude trabalhando neste repositório ao mesmo
 
 | Papel | Pasta | Pode mexer em |
 |---|---|---|
-| Tech lead | `FeedBackCELL Next.js/` (principal, na `master`) | Arquivos compartilhados, revisão, merge |
+| Tech lead | `FeedBackCELL Next.js/` (pasta principal) | Arquivos compartilhados, revisão, merge |
 | Dev back | worktree `../FeedBackCELL-back` | Só `backend/` |
 | Dev front | worktree `../FeedBackCELL-front` | Só `frontend/` |
 | QA | worktree `../FeedBackCELL-qa` | Testes e correções pequenas, sempre via PR |
 
 - Uma sessão por pasta. Nunca trabalhe na pasta de outra sessão, nem troque a branch da pasta principal se você não é o tech lead.
-- Devs e QA criam a própria branch no próprio worktree (`git worktree add ../FeedBackCELL-back -b feat/<tarefa>`), abrem PR para a `master` e não mergeiam.
-- Só o tech lead mergeia na `master`, apaga branches e remove worktrees (`git worktree remove <pasta>`) depois do merge.
+- Devs e QA criam a própria branch a partir da `dev`, no próprio worktree (`git worktree add ../FeedBackCELL-back -b feat/<tarefa> BonatoGuilherme/dev`), abrem PR para a `dev` e não mergeiam.
+- Só o tech lead mergeia (sempre com ordem do usuário), apaga branches e remove worktrees (`git worktree remove <pasta>`) depois do merge.
+
+### Fluxo de branches (Git Flow simplificado)
+
+```
+feat/* · fix/* · chore/*  ──squash──►  dev  ──merge commit──►  master  ──►  produção
+```
+
+- `master` = o que está no ar: cada merge dispara o deploy no Render e na Vercel. `dev` = integração e branch padrão do GitHub.
+- Toda branch nova sai da `dev` e volta para ela por PR, **com squash** (um commit por feature). Hotfix também passa pela `dev`.
+- O PR `dev → master` é a release: só é aberto quando o usuário mandar, e entra com **merge commit** (nunca squash, senão as duas branches divergem e cada release dá conflito). O título resume o que sobe.
+- Os rulesets do GitHub bloqueiam push direto, force-push e exclusão nas duas branches e exigem os 4 checks do CI verdes, sem exceção para admin. A `dev` só aceita squash e a `master` só aceita merge commit.
+- O preview da Vercel de outras branches serve só para conferir o visual: o CORS da core-api aceita uma origem só.
 - Arquivos compartilhados (`docker-compose*.yml`, `README.md`, `CLAUDE.md`, `.github/`, `infra/`, `package.json` e lockfiles) são do tech lead. Um dev que precisar mudar um deles pede ao tech lead ou avisa o usuário antes.
 - Antes de commitar: confira `git branch --show-current` e `git status`, faça `git add` só dos arquivos da sua tarefa (nunca `git add .`/`-A`) e revise `git diff --cached --stat`. Mudanças staged que não são suas ficam de fora.
 - Antes de abrir PR, veja se já existe PR ou branch para a mesma coisa (outra sessão pode ter feito) para não duplicar trabalho.
