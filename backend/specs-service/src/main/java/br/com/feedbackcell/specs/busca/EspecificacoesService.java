@@ -21,7 +21,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.LongSupplier;
 import java.util.regex.Pattern;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -61,6 +64,13 @@ public class EspecificacoesService {
      */
     @ConfigProperty(name = "mobileapi.prazo-preco", defaultValue = "8s")
     Duration prazoPreco = Duration.ofSeconds(8);
+    /**
+     * Teto total das chamadas extras do aparelho escolhido (câmeras + /misc), contado a partir do início
+     * delas. Câmeras e preço dividem o que sobrar; o que não couber fica null. Mantém a resposta bem abaixo
+     * dos 30 s do proxy do core-api, mesmo no pior caso.
+     */
+    @ConfigProperty(name = "mobileapi.prazo-extras", defaultValue = "15s")
+    Duration prazoExtras = Duration.ofSeconds(15);
     static final long CACHE_TTL_MS = 24L * 60 * 60 * 1000;
     static final int CACHE_MAX = 200;
     private static final int MAX_SUGESTOES = 8;
@@ -210,7 +220,7 @@ public class EspecificacoesService {
                     new Opcoes(true, true), MAX_SUGESTOES).stream().map(EspecificacoesService::normalizar).toList();
             // Câmeras e preço do aparelho escolhido (só ele, nunca as sugestões), em paralelo com a foto HD.
             String id = d == null ? null : idDispositivo(d);
-            CompletableFuture<JsonNode[]> detalhes = buscarDetalhes(id, auth);
+            Extras extras = buscarDetalhes(id, auth);
             Aparelho aparelho = d == null ? null : normalizar(d);
 
             List<Aparelho> todos = new ArrayList<>();
@@ -218,7 +228,7 @@ public class EspecificacoesService {
             todos.addAll(sugestoes);
             Map<String, FotoHd> fotos = imagensHd.buscar(todos);
             if (aparelho != null) {
-                JsonNode[] det = detalhes.join();
+                JsonNode[] det = extras.aguardar();
                 Precos.Preco preco = det[2] == null ? null : precos.deMisc(det[2]);
                 aparelho = normalizar(d, det[0], det[1], preco);
             }
@@ -246,27 +256,54 @@ public class EspecificacoesService {
     }
 
     /**
-     * [main-camera, selfie-camera, misc] do aparelho (cada um pode ser null), em paralelo com a foto HD.
-     * Tudo numa fila só, em sequência, por causa da cota por requisição do plano Free: as câmeras usam
-     * {@link #prazoCameras} e o /misc (preço) usa {@link #prazoPreco}, cada um com sua janela.
+     * Chamadas extras do aparelho escolhido: [main-camera, selfie-camera, misc] (cada uma pode ser null),
+     * em paralelo com a foto HD. Tudo numa fila só, em sequência, por causa da cota por requisição do
+     * plano Free. Cada chamada respeita o seu prazo ({@link #prazoCameras}, {@link #prazoPreco}) e o teto
+     * total {@link #prazoExtras}, contado a partir de agora.
      */
-    private CompletableFuture<JsonNode[]> buscarDetalhes(String id, Map<String, String> auth) {
+    private Extras buscarDetalhes(String id, Map<String, String> auth) {
+        long fim = System.nanoTime() + prazoExtras.toNanos();
         boolean cameras = camerasDetalhadas;
         boolean preco = precoAtivo;
-        if (id == null || (!cameras && !preco)) return CompletableFuture.completedFuture(new JsonNode[3]);
-        return CompletableFuture.supplyAsync(() -> {
+        if (id == null || (!cameras && !preco)) {
+            return new Extras(CompletableFuture.completedFuture(new JsonNode[3]), fim);
+        }
+        CompletableFuture<JsonNode[]> futuro = CompletableFuture.supplyAsync(() -> {
             JsonNode[] r = new JsonNode[3];
             if (cameras) {
-                long prazo = System.nanoTime() + prazoCameras.toNanos();
+                long prazo = Math.min(System.nanoTime() + prazoCameras.toNanos(), fim);
                 r[0] = buscarEndpoint(id, "main-camera", auth, prazo);
                 r[1] = buscarEndpoint(id, "selfie-camera", auth, prazo);
             }
             if (preco) {
-                long prazo = System.nanoTime() + prazoPreco.toNanos();
+                // o /misc usa o que sobrou das câmeras, até o seu prazo e o teto total
+                long prazo = Math.min(System.nanoTime() + prazoPreco.toNanos(), fim);
                 r[2] = buscarEndpoint(id, "misc", auth, prazo);
             }
             return r;
         }, pool);
+        return new Extras(futuro, fim);
+    }
+
+    /** Resultado das extras e o instante limite delas (teto total). */
+    private record Extras(CompletableFuture<JsonNode[]> futuro, long fim) {
+
+        /** Espera até o teto total; se passar, cancela e devolve tudo null (a busca segue sem as extras). */
+        JsonNode[] aguardar() {
+            try {
+                return futuro.get(Math.max(0, fim - System.nanoTime()), TimeUnit.NANOSECONDS);
+            } catch (TimeoutException e) {
+                futuro.cancel(true);
+                return new JsonNode[3];
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                futuro.cancel(true);
+                return new JsonNode[3];
+            } catch (ExecutionException e) {
+                LOG.errorf("Extras do aparelho falharam: %s", e.getMessage());
+                return new JsonNode[3];
+            }
+        }
     }
 
     /**

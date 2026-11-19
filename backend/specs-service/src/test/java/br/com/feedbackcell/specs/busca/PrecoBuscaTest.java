@@ -124,4 +124,26 @@ class PrecoBuscaTest {
         assertEquals(0, chamadasAoMisc("78"));
         assertTrue(r.sugestoes().stream().allMatch(s -> s.precoLancamento() == null && s.precoEstimado() == null));
     }
+
+    /** Teto total zerado: o aparelho sai, o preço fica null e o /misc nem é consultado. */
+    @Test
+    void tetoTotalDasExtrasZeradoNaoConsultaOMisc() {
+        responder(Resposta.ok("{\"price\":\"About 800 EUR\"}"));
+        EspecificacoesService s = servico(true);
+        s.prazoExtras = Duration.ZERO;
+        Aparelho a = s.buscar("Samsung", "Galaxy S23", false).aparelho();
+        assertEquals("Galaxy S23", a.nome());
+        assertNull(a.precoLancamento());
+        assertEquals(0, chamadasAoMisc("77"));
+    }
+
+    /** O prazo individual do /misc é um limite menor: com ele zerado, não consulta mesmo com o teto total livre. */
+    @Test
+    void prazoIndividualDoMiscLimitaMesmoComTetoTotalLivre() {
+        responder(Resposta.ok("{\"price\":\"About 800 EUR\"}"));
+        EspecificacoesService s = servico(true);
+        s.prazoPreco = Duration.ZERO;
+        assertNull(s.buscar("Samsung", "Galaxy S23", false).aparelho().precoLancamento());
+        assertEquals(0, chamadasAoMisc("77"));
+    }
 }
