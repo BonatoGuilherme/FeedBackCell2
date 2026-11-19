@@ -16,6 +16,7 @@ public final class ContratoEspecificacoes {
 
     static final Set<String> CAMPOS_300 = Set.of("nome", "fabricante", "lancamento", "tela", "hardware",
             "armazenamento", "camera", "bateria", "peso", "espessura", "cores", "creditoImagem");
+    static final Set<String> CAMPOS_40 = Set.of("precoLancamento", "precoEstimado");
     private static final Pattern MODELO3D = Pattern.compile("^[0-9a-f]{32}$");
     private static final Pattern CREDITO_URL = Pattern.compile("^https://commons\\.wikimedia\\.org/wiki/");
 
@@ -48,6 +49,9 @@ public final class ContratoEspecificacoes {
                 if (CAMPOS_300.contains(campo)) {
                     algumConhecido = true;
                     if (!v.isNull() && !(v.isTextual() && v.textValue().length() <= 300)) erros.add(campo);
+                } else if (CAMPOS_40.contains(campo)) {
+                    algumConhecido = true;
+                    if (!v.isNull() && !(v.isTextual() && v.textValue().length() <= 40)) erros.add(campo);
                 } else if (campo.equals("creditoImagemUrl")) {
                     algumConhecido = true;
                     if (!v.isNull() && !(v.isTextual() && (v.textValue().isEmpty()

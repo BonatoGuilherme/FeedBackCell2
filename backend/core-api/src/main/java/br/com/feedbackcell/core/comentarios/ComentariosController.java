@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
 /** Rotas /comentarios (controllers/comentariosController.js). */
@@ -72,22 +73,25 @@ public class ComentariosController {
     @PostMapping("/{idcelular}")
     public ResponseEntity<Map<String, Object>> criar(@PathVariable String idcelular, HttpServletRequest req) {
         Long idusuario = auth.exigir(req).id();
-        ObjectNode b = Esquemas.validar(Esquemas.COMENTARIO, corpo.ler(req));
+        JsonNode bruto = corpo.ler(req);
+        ObjectNode b = Esquemas.validar(Esquemas.COMENTARIO, bruto);
         Long celularId = Parametros.idJs(idcelular);
         if (celularId == null) throw ErroApi.de(400, "ID do celular inválido");
         String texto = b.get("texto").stringValue().strip();
         if (texto.isEmpty()) throw ErroApi.de(400, "Texto do comentário é obrigatório");
         if (texto.length() < 3) throw ErroApi.de(400, "Comentário deve ter pelo menos 3 caracteres");
         if (texto.length() > 500) throw ErroApi.de(400, "Comentário não pode ter mais de 500 caracteres");
+        int nota = nota(bruto.get("nota"));
         return Acao.executar("Erro ao criar comentário", () -> {
             if (!existeCelular(celularId)) throw ErroApi.de(404, "Celular não encontrado");
             if (idusuario == null) throw new IllegalStateException("Token sem idusuario numérico");
-            long id = comentarios.criar(celularId, idusuario, texto);
+            long id = comentarios.criar(celularId, idusuario, texto, nota);
             Map<String, Object> comentario = new LinkedHashMap<>();
             comentario.put("idcomentario", id);
             comentario.put("idcelular", celularId);
             comentario.put("idusuario", idusuario);
             comentario.put("texto", texto);
+            comentario.put("nota", nota);
             Map<String, Object> r = new LinkedHashMap<>();
             r.put("mensagem", "Comentário criado com sucesso");
             r.put("comentario", comentario);
@@ -116,5 +120,14 @@ public class ComentariosController {
 
     private boolean existeCelular(long id) {
         return id <= Integer.MAX_VALUE && celulares.idDono(id) != null;
+    }
+
+    /** Nota obrigatória: inteiro de 1 a 5. Fica fora do Joi para a mensagem sair em português. */
+    private static int nota(JsonNode n) {
+        if (n == null || n.isNull()) throw ErroApi.de(400, "Nota é obrigatória (use um número inteiro de 1 a 5)");
+        if (!n.isIntegralNumber() || !n.canConvertToInt() || n.intValue() < 1 || n.intValue() > 5) {
+            throw ErroApi.de(400, "Nota deve ser um número inteiro de 1 a 5");
+        }
+        return n.intValue();
     }
 }

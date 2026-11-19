@@ -33,6 +33,19 @@ class MigracaoTest {
     }
 
     @Test
+    void v2TrocaPrecoPorNotaDe1A5() throws Exception {
+        String v2 = recurso("db/migration/V2__avaliacoes_sem_preco.sql");
+        assertThat(v2).contains("ADD COLUMN `Nota` TINYINT NULL",
+                "CHECK (`Nota` BETWEEN 1 AND 5)", "DROP COLUMN `Preco`");
+    }
+
+    @Test
+    void v1NaoEhAlteradaPelaV2() throws Exception {
+        // o Flyway guarda o checksum: editar a V1 quebra os bancos que já a aplicaram
+        assertThat(recurso("db/migration/V1__schema_inicial.sql")).contains("`Preco` DECIMAL(10,2) NOT NULL");
+    }
+
+    @Test
     void bancoExistenteRecebeBaselineNaVersao1() throws Exception {
         Properties p = new Properties();
         p.load(new java.io.StringReader(recurso("application.properties")));

@@ -24,7 +24,7 @@ public class ComentarioRepositorio {
 
     public List<Map<String, Object>> doCelular(long idcelular, int limit, long offset) {
         return db.query("""
-                SELECT c.idcomentario, c.texto, c.dataCriacao, u.idusuario, u.Nome
+                SELECT c.idcomentario, c.texto, c.Nota AS nota, c.dataCriacao, u.idusuario, u.Nome
                 FROM Comentarios c
                 JOIN Usuarios u ON c.idusuario = u.idusuario
                 WHERE c.idcelular = ?
@@ -33,6 +33,7 @@ public class ComentarioRepositorio {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("idcomentario", rs.getLong("idcomentario"));
             m.put("texto", rs.getString("texto"));
+            m.put("nota", Linhas.inteiro(rs, "nota"));
             m.put("dataCriacao", Linhas.data(rs, "dataCriacao"));
             m.put("idusuario", rs.getLong("idusuario"));
             m.put("Nome", rs.getString("Nome"));
@@ -44,15 +45,16 @@ public class ComentarioRepositorio {
         return db.queryForObject("SELECT COUNT(*) FROM Comentarios WHERE idcelular = ?", Long.class, idcelular);
     }
 
-    public long criar(long idcelular, long idusuario, String texto) {
+    public long criar(long idcelular, long idusuario, String texto, int nota) {
         GeneratedKeyHolder chave = new GeneratedKeyHolder();
         db.update(con -> {
             PreparedStatement ps = con.prepareStatement(
-                    "INSERT INTO Comentarios (idcelular, idusuario, texto, dataCriacao) VALUES (?, ?, ?, NOW())",
+                    "INSERT INTO Comentarios (idcelular, idusuario, texto, Nota, dataCriacao) VALUES (?, ?, ?, ?, NOW())",
                     Statement.RETURN_GENERATED_KEYS);
             ps.setLong(1, idcelular);
             ps.setLong(2, idusuario);
             ps.setString(3, texto);
+            ps.setInt(4, nota);
             return ps;
         }, chave);
         return chave.getKey().longValue();
@@ -71,7 +73,7 @@ public class ComentarioRepositorio {
     /** {@code SELECT *} do Node: colunas na ordem da tabela. */
     public List<Map<String, Object>> doUsuario(long idusuario) {
         return db.query("""
-                SELECT idcomentario, idusuario, idcelular, texto, dataCriacao
+                SELECT idcomentario, idusuario, idcelular, texto, Nota AS nota, dataCriacao
                 FROM Comentarios
                 WHERE idusuario = ?
                 ORDER BY dataCriacao DESC, idcomentario DESC""", (rs, i) -> {
@@ -80,6 +82,7 @@ public class ComentarioRepositorio {
             m.put("idusuario", rs.getLong("idusuario"));
             m.put("idcelular", rs.getLong("idcelular"));
             m.put("texto", rs.getString("texto"));
+            m.put("nota", Linhas.inteiro(rs, "nota"));
             m.put("dataCriacao", Linhas.data(rs, "dataCriacao"));
             return m;
         }, idusuario);

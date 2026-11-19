@@ -16,7 +16,9 @@ public final class Modelos {
     public record Aparelho(
             String nome, String fabricante, String imagem, String lancamento, String tela, String hardware,
             String armazenamento, String camera, String bateria, String peso, String espessura, String cores,
-            String imagemHd, String creditoImagem, String creditoImagemUrl) {
+            String imagemHd, String creditoImagem, String creditoImagemUrl,
+            /** Preço de lançamento original ("799,99 USD") e estimado em reais ("R$ 4.320"); null se não houver. */
+            String precoLancamento, String precoEstimado) {
 
         /** Chave "fabricante|nome" usada para casar a foto HD com o aparelho. */
         public String chave() {
@@ -27,7 +29,7 @@ public final class Modelos {
             return new Aparelho(nome, fabricante, imagem, lancamento, tela, hardware, armazenamento, camera,
                     bateria, peso, espessura, cores,
                     f == null ? null : f.imagemHd(), f == null ? null : f.creditoImagem(),
-                    f == null ? null : f.creditoImagemUrl());
+                    f == null ? null : f.creditoImagemUrl(), precoLancamento, precoEstimado);
         }
 
         /** Tem alguma especificação técnica (além de nome e fabricante)? */

@@ -21,7 +21,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.LongSupplier;
 import java.util.regex.Pattern;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -55,6 +58,19 @@ public class EspecificacoesService {
     Duration prazoCameras = Duration.ofSeconds(12);
     /** Espera depois de um 429 da MobileAPI sem "retry_after" no corpo; os testes zeram. */
     Duration espera429 = Duration.ofMillis(2000);
+    /**
+     * Prazo do /misc (preço) depois das câmeras, na mesma fila sequencial. Separado do prazo das câmeras
+     * para não encurtar a espera delas; o pior caso da busca soma os dois (ver a classe).
+     */
+    @ConfigProperty(name = "mobileapi.prazo-preco", defaultValue = "8s")
+    Duration prazoPreco = Duration.ofSeconds(8);
+    /**
+     * Teto total das chamadas extras do aparelho escolhido (câmeras + /misc), contado a partir do início
+     * delas. Câmeras e preço dividem o que sobrar; o que não couber fica null. Mantém a resposta bem abaixo
+     * dos 30 s do proxy do core-api, mesmo no pior caso.
+     */
+    @ConfigProperty(name = "mobileapi.prazo-extras", defaultValue = "15s")
+    Duration prazoExtras = Duration.ofSeconds(15);
     static final long CACHE_TTL_MS = 24L * 60 * 60 * 1000;
     static final int CACHE_MAX = 200;
     private static final int MAX_SUGESTOES = 8;
@@ -75,6 +91,9 @@ public class EspecificacoesService {
     private final Optional<String> chaveMobileApi;
     /** Busca main-camera/selfie-camera do aparelho escolhido (2 créditos a mais da cota por busca). */
     private final boolean camerasDetalhadas;
+    /** Busca o preço de lançamento em /misc/ do aparelho escolhido (MOBILEAPI_PRECO=false desliga). */
+    private final boolean precoAtivo;
+    private final Precos precos;
     /** Limitado a {@link #CACHE_MAX} itens: ao passar disso sai o gravado há mais tempo. */
     private final LinkedHashMap<String, ItemCache> cache = new LinkedHashMap<>() {
         @Override
@@ -90,11 +109,21 @@ public class EspecificacoesService {
     public EspecificacoesService(ClienteHttp http, ImagensHdService imagensHd,
                                  @ConfigProperty(name = "mobileapi.key") Optional<String> chaveMobileApi,
                                  @ConfigProperty(name = "mobileapi.cameras-detalhadas", defaultValue = "true")
-                                 boolean camerasDetalhadas) {
+                                 boolean camerasDetalhadas,
+                                 @ConfigProperty(name = "mobileapi.preco", defaultValue = "true") boolean precoAtivo,
+                                 Precos precos) {
         this.http = http;
         this.imagensHd = imagensHd;
         this.chaveMobileApi = chaveMobileApi.filter(c -> !c.isBlank());
         this.camerasDetalhadas = camerasDetalhadas;
+        this.precoAtivo = precoAtivo;
+        this.precos = precos;
+    }
+
+    /** Sem preço (os testes de câmera não contam chamadas ao /misc). */
+    public EspecificacoesService(ClienteHttp http, ImagensHdService imagensHd,
+                                 Optional<String> chaveMobileApi, boolean camerasDetalhadas) {
+        this(http, imagensHd, chaveMobileApi, camerasDetalhadas, false, Precos.comCotacoesPadrao());
     }
 
     public EspecificacoesService(ClienteHttp http, ImagensHdService imagensHd, Optional<String> chaveMobileApi) {
@@ -189,9 +218,9 @@ public class EspecificacoesService {
             // Sugestões do autocomplete: variantes próximas e última palavra incompleta.
             List<Aparelho> sugestoes = CorrespondenciaNome.rankear(modelo, lista, EspecificacoesService::nome,
                     new Opcoes(true, true), MAX_SUGESTOES).stream().map(EspecificacoesService::normalizar).toList();
-            // Câmeras do aparelho escolhido, em paralelo com a foto HD.
+            // Câmeras e preço do aparelho escolhido (só ele, nunca as sugestões), em paralelo com a foto HD.
             String id = d == null ? null : idDispositivo(d);
-            CompletableFuture<JsonNode[]> cameras = buscarCameras(id, auth);
+            Extras extras = buscarDetalhes(id, auth);
             Aparelho aparelho = d == null ? null : normalizar(d);
 
             List<Aparelho> todos = new ArrayList<>();
@@ -199,8 +228,9 @@ public class EspecificacoesService {
             todos.addAll(sugestoes);
             Map<String, FotoHd> fotos = imagensHd.buscar(todos);
             if (aparelho != null) {
-                JsonNode[] cam = cameras.join();
-                aparelho = normalizar(d, cam[0], cam[1]);
+                JsonNode[] det = extras.aguardar();
+                Precos.Preco preco = det[2] == null ? null : precos.deMisc(det[2]);
+                aparelho = normalizar(d, det[0], det[1], preco);
             }
             sugestoes = sugestoes.stream().map(a -> a.comFoto(fotos.get(a.chave()))).toList();
             if (aparelho == null) {
@@ -226,23 +256,61 @@ public class EspecificacoesService {
     }
 
     /**
-     * [main-camera, selfie-camera] do aparelho (cada uma pode ser null), em paralelo com a foto HD.
-     * O plano Free da MobileAPI aceita ~1 requisição a cada 1,5 s e responde 429 na hora: as duas
-     * vão em sequência, e um 429 espera o "retry_after" pedido e tenta de novo (até 2 vezes), dentro de
-     * {@link #prazoCameras}.
+     * Chamadas extras do aparelho escolhido: [main-camera, selfie-camera, misc] (cada uma pode ser null),
+     * em paralelo com a foto HD. Tudo numa fila só, em sequência, por causa da cota por requisição do
+     * plano Free. Cada chamada respeita o seu prazo ({@link #prazoCameras}, {@link #prazoPreco}) e o teto
+     * total {@link #prazoExtras}, contado a partir de agora.
      */
-    private CompletableFuture<JsonNode[]> buscarCameras(String id, Map<String, String> auth) {
-        if (id == null || !camerasDetalhadas) return CompletableFuture.completedFuture(new JsonNode[2]);
-        return CompletableFuture.supplyAsync(() -> {
-            long prazo = System.nanoTime() + prazoCameras.toNanos();
-            JsonNode principal = buscarCamera(id, "main-camera", auth, prazo);
-            JsonNode frontal = buscarCamera(id, "selfie-camera", auth, prazo);
-            return new JsonNode[] {principal, frontal};
+    private Extras buscarDetalhes(String id, Map<String, String> auth) {
+        long fim = System.nanoTime() + prazoExtras.toNanos();
+        boolean cameras = camerasDetalhadas;
+        boolean preco = precoAtivo;
+        if (id == null || (!cameras && !preco)) {
+            return new Extras(CompletableFuture.completedFuture(new JsonNode[3]), fim);
+        }
+        CompletableFuture<JsonNode[]> futuro = CompletableFuture.supplyAsync(() -> {
+            JsonNode[] r = new JsonNode[3];
+            if (cameras) {
+                long prazo = Math.min(System.nanoTime() + prazoCameras.toNanos(), fim);
+                r[0] = buscarEndpoint(id, "main-camera", auth, prazo);
+                r[1] = buscarEndpoint(id, "selfie-camera", auth, prazo);
+            }
+            if (preco) {
+                // o /misc usa o que sobrou das câmeras, até o seu prazo e o teto total
+                long prazo = Math.min(System.nanoTime() + prazoPreco.toNanos(), fim);
+                r[2] = buscarEndpoint(id, "misc", auth, prazo);
+            }
+            return r;
         }, pool);
+        return new Extras(futuro, fim);
     }
 
-    /** Resposta de /devices/{id}/{tipo}/ ou null (prazo esgotado, 404 ou falha: fica a câmera da busca). */
-    private JsonNode buscarCamera(String id, String tipo, Map<String, String> auth, long prazo) {
+    /** Resultado das extras e o instante limite delas (teto total). */
+    private record Extras(CompletableFuture<JsonNode[]> futuro, long fim) {
+
+        /** Espera até o teto total; se passar, cancela e devolve tudo null (a busca segue sem as extras). */
+        JsonNode[] aguardar() {
+            try {
+                return futuro.get(Math.max(0, fim - System.nanoTime()), TimeUnit.NANOSECONDS);
+            } catch (TimeoutException e) {
+                futuro.cancel(true);
+                return new JsonNode[3];
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                futuro.cancel(true);
+                return new JsonNode[3];
+            } catch (ExecutionException e) {
+                LOG.errorf("Extras do aparelho falharam: %s", e.getMessage());
+                return new JsonNode[3];
+            }
+        }
+    }
+
+    /**
+     * Resposta de /devices/{id}/{tipo}/ ou null (prazo esgotado, 404 ou falha: sem câmera nova ou sem preço).
+     * Um 429 espera o "retry_after" pedido e tenta de novo (até 2 vezes), dentro do prazo.
+     */
+    private JsonNode buscarEndpoint(String id, String tipo, Map<String, String> auth, long prazo) {
         for (int tentativa = 0; System.nanoTime() < prazo; tentativa++) {
             try {
                 return http.buscarJson(MOBILEAPI_DEVICES + id + "/" + tipo + "/", auth, TIMEOUT_CAMERAS);
@@ -278,17 +346,17 @@ public class EspecificacoesService {
     /** Aparelho só com nome e foto HD (sem especificações), ou null se não houver foto. */
     private Aparelho aparelhoSoComFoto(String marca, String modelo) {
         Aparelho a = new Aparelho(Textos.texto(modelo, 120), marca.isEmpty() ? null : Textos.texto(marca, 80),
-                null, null, null, null, null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         Aparelho comFoto = a.comFoto(imagensHd.buscar(List.of(a)).get(a.chave()));
         return comFoto.imagemHd() != null ? comFoto : null;
     }
 
     static Aparelho normalizar(JsonNode d) {
-        return normalizar(d, null, null);
+        return normalizar(d, null, null, null);
     }
 
     /** Textos da MobileAPI em pt-BR; {@code principal}/{@code frontal}: respostas dos endpoints de câmera. */
-    static Aparelho normalizar(JsonNode d, JsonNode principal, JsonNode frontal) {
+    static Aparelho normalizar(JsonNode d, JsonNode principal, JsonNode frontal, Precos.Preco preco) {
         return new Aparelho(
                 Textos.texto(d.get("name"), 120),
                 Textos.texto(d.get("manufacturer_name"), 80),
@@ -302,7 +370,9 @@ public class EspecificacoesService {
                 Textos.texto(NormalizacaoSpecs.peso(Textos.texto(d.get("weight"), 60)), 60),
                 Textos.texto(NormalizacaoSpecs.espessura(Textos.texto(d.get("thickness"), 60)), 60),
                 Textos.texto(d.get("colors"), 300),
-                null, null, null);
+                null, null, null,
+                preco == null ? null : preco.lancamento(),
+                preco == null ? null : preco.estimado());
     }
 
     static String escolherThumbnail(JsonNode thumbnails) {
