@@ -12,7 +12,24 @@
 }
 
 .phone-page .back-link {
+  flex: none;
   margin-bottom: 0;
+}
+
+/* as setas encolhem (nomes com reticências) em vez de empurrar a página para o lado */
+.phone-page__top .phone-nav {
+  min-width: 0;
+  flex: 0 1 460px;
+}
+
+@media (max-width: 600px) {
+  .phone-page__top {
+    flex-wrap: wrap;
+  }
+
+  .phone-page__top .phone-nav {
+    flex-basis: 100%;
+  }
 }
 
 /* ---------- novo comentário ---------- */
@@ -209,6 +226,35 @@
 .skeleton--line {
   height: 12px;
   margin: 4px 0;
+}
+
+.skeleton--title {
+  width: 60%;
+  height: 34px;
+  margin: var(--space-3) 0;
+}
+
+.skeleton--block {
+  height: 180px;
+  margin-top: var(--space-5);
+  border-radius: var(--radius-card);
+}
+
+/* esqueleto da ficha: a moldura do aparelho é o destino da foto que "voa" */
+.phone-detail__media--loading {
+  display: grid;
+  place-items: center;
+  padding: var(--space-12) var(--space-6);
+}
+
+.phone-detail__media--loading .skeleton {
+  border-radius: 22% / 11%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
 }
 
 @keyframes comments-shimmer {

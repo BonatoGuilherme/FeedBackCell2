@@ -11,6 +11,7 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { NotaResumo, textoAvaliacoes } from "@/components/ui/rating";
+import { CelularTransicao } from "@/components/ui/transicoes";
 import { cn } from "@/lib/utils";
 import { type Celular, type Especificacoes } from "@/src/lib/celulares";
 
@@ -117,7 +118,9 @@ export function PhoneShelf({ celulares, className }: PhoneShelfProps) {
                       whileHover={{ y: -10, rotateY: -18, rotateX: 8, scale: 1.06 }}
                       style={{ transformPerspective: 600 }}
                     >
-                      <PhoneVisual celular={c} />
+                      <CelularTransicao id={c.idcelular}>
+                        <PhoneVisual celular={c} />
+                      </CelularTransicao>
                     </motion.span>
                   </Link>
                 </div>
@@ -150,7 +153,9 @@ export function PhoneMiniCard({ celular }: { celular: Celular }) {
     >
       <span className="relative block aspect-[1/2] w-full max-w-[64px]">
         <span className="absolute inset-0 block transition-transform duration-300 ease-out group-hover:-translate-y-1 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0">
-          <PhoneVisual celular={celular} />
+          <CelularTransicao id={celular.idcelular}>
+            <PhoneVisual celular={celular} />
+          </CelularTransicao>
         </span>
       </span>
       <div className="min-w-0 self-stretch text-center">

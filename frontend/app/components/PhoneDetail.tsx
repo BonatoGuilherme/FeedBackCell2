@@ -20,7 +20,9 @@ import {
 } from "lucide-react";
 import { buscarCelular, listarCelulares, type Celular, type Especificacoes } from "@/src/lib/celulares";
 import { ApiError } from "@/src/lib/http";
-import { PhonePhoto } from "@/components/ui/phone-photo";
+import { MOLDURA_APARELHO, PhonePhoto } from "@/components/ui/phone-photo";
+import { CelularTransicao } from "@/components/ui/transicoes";
+import PhoneNavigation from "./PhoneNavigation";
 import { PhoneArt, PhoneMiniCard, ROTULOS_ESPECIFICACOES } from "@/components/ui/phone-shelf";
 import { NotaResumo } from "@/components/ui/rating";
 import { PrecoLancamento } from "@/components/ui/preco-lancamento";
@@ -71,13 +73,11 @@ export default function PhoneDetail({ idcelular }: { idcelular: number | null })
           <ArrowLeft size={15} strokeWidth={1.8} aria-hidden="true" />
           Catálogo
         </Link>
+        {idcelular !== null && estado.status !== "not-found" && <PhoneNavigation idcelular={idcelular} />}
       </div>
 
-      {estado.status === "loading" ? (
-        <div className="collection-message" role="status">
-          <span className="loading-indicator" />
-          Carregando celular…
-        </div>
+      {estado.status === "loading" && idcelular !== null ? (
+        <FichaCarregando idcelular={idcelular} />
       ) : estado.status === "not-found" ? (
         <div className="collection-empty collection-empty--compact">
           <span className="collection-empty__icon">
@@ -100,9 +100,35 @@ export default function PhoneDetail({ idcelular }: { idcelular: number | null })
             Tentar novamente
           </button>
         </div>
-      ) : (
+      ) : estado.status === "ok" ? (
         <Ficha celular={estado.celular} onAlterado={recarregar} />
-      )}
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Esqueleto da ficha enquanto o celular carrega. A moldura da mídia já existe na
+ * primeira renderização com o nome de transição do aparelho: é o destino da foto
+ * que "voa" da prateleira (sem ele, a View Transition não forma o par).
+ */
+function FichaCarregando({ idcelular }: { idcelular: number }) {
+  return (
+    <div className="phone-panel" role="status" aria-label="Carregando celular">
+      <div className="phone-detail">
+        <div className="phone-detail__media phone-detail__media--loading">
+          <CelularTransicao id={idcelular}>
+            <div className={`${MOLDURA_APARELHO} skeleton`} />
+          </CelularTransicao>
+        </div>
+        <div className="phone-detail__info" aria-hidden="true">
+          <span className="skeleton skeleton--line" style={{ width: "22%" }} />
+          <span className="skeleton skeleton--title" />
+          <span className="skeleton skeleton--line" style={{ width: "40%" }} />
+          <span className="skeleton skeleton--block" />
+        </div>
+      </div>
+      <span className="sr-only">Carregando celular…</span>
     </div>
   );
 }
