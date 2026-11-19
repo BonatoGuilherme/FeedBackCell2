@@ -1,26 +1,31 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import AuthLayout from "./components/AuthLayout";
 import { AmbientBackground } from "@/components/ui/ambient-background";
 
-const geistSans = Geist({
+// fontes dentro do repositório (app/fonts, subconjunto latin do Google Fonts):
+// o build não depende de baixar nada da internet
+const geistSans = localFont({
+  src: "./fonts/Geist.woff2",
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  weight: "100 900",
   display: "swap",
 });
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: "./fonts/GeistMono.woff2",
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: "100 900",
 });
 
 // serifa renascentista para títulos e números de destaque
-const cormorant = Cormorant_Garamond({
+const cormorant = localFont({
+  src: [
+    { path: "./fonts/CormorantGaramond.woff2", weight: "500 700", style: "normal" },
+    { path: "./fonts/CormorantGaramond-Italic.woff2", weight: "500 700", style: "italic" },
+  ],
   variable: "--font-cormorant",
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  style: ["normal", "italic"],
   display: "swap",
 });
 
