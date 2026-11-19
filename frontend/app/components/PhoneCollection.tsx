@@ -18,6 +18,14 @@ type PhoneCollectionProps = {
   variant: "overview" | "catalog";
 };
 
+/**
+ * Última lista carregada de cada página, guardada enquanto a aba estiver aberta.
+ * Ao voltar da página de um celular a prateleira já nasce preenchida: sem isso a
+ * foto não teria par e a transição compartilhada não aconteceria na volta. Os
+ * dados são revalidados no efeito logo em seguida.
+ */
+const cacheListas = new Map<string, ListaCelulares>();
+
 function PhoneCard({ celular }: { celular: Celular }) {
   const cover = celular.imagens[0]?.url;
   return (
@@ -64,7 +72,7 @@ function PhoneCard({ celular }: { celular: Celular }) {
       </div>
       {/* o card inteiro abre a página do celular */}
       <Link
-        href={`/celulares/${celular.idcelular}`}
+        href={`/catalog/${celular.idcelular}`}
         aria-label={`Ver ${celular.marca} ${celular.modelo}`}
         className="absolute inset-0 z-[1] rounded-[22px] outline-none"
       />
@@ -106,7 +114,12 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
     | { key: string; status: "loading" }
     | { key: string; status: "success"; data: ListaCelulares }
     | { key: string; status: "error"; message: string }
-  >({ key: "", status: "loading" });
+  >(() => {
+    const emCache = cacheListas.get(requestKey);
+    return emCache
+      ? { key: requestKey, status: "success" as const, data: emCache }
+      : { key: "", status: "loading" as const };
+  });
   const currentResult =
     requestResult.key === requestKey ? requestResult : null;
   const loading =
@@ -130,6 +143,7 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
 
     listarCelulares(pagina, limit, controller.signal)
       .then((result) => {
+        cacheListas.set(requestKey, result);
         setRequestResult({ key: requestKey, status: "success", data: result });
       })
       .catch((error: unknown) => {

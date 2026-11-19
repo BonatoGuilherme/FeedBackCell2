@@ -29,8 +29,6 @@ const titles: Record<string, string> = {
 };
 
 function activeHref(pathname: string) {
-  // a página de um celular faz parte do catálogo
-  if (pathname.startsWith("/celulares/")) return "/catalog";
   const match = links
     .filter((l) => pathname === l.href || (l.href !== "/" && pathname.startsWith(l.href)))
     .sort((a, b) => b.href.length - a.href.length)[0];
