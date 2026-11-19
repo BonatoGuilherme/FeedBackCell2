@@ -1,0 +1,146 @@
+/*
+ * Transições entre as páginas de celular (components/ui/transicoes.tsx).
+ *
+ * Princípios do movimento:
+ * - quem chega desacelera (ease de saída), quem sai acelera e é mais curto;
+ * - a foto do aparelho "voa" com uma curva de mola discreta;
+ * - o crossfade mantém `mix-blend-mode: plus-lighter` (padrão do navegador):
+ *   é ele que evita a "piscada" no meio da dissolução;
+ * - durações curtas, porque a página fica congelada enquanto a transição roda.
+ * Cores e raios vêm dos tokens de globals.css.
+ */
+
+:root {
+  /* mola discreta: passa um fio do ponto final e volta */
+  --vt-mola: cubic-bezier(0.34, 1.12, 0.46, 1);
+  --vt-entra: 300ms;
+  --vt-sai: 190ms;
+}
+
+/* ---------- crossfade do restante da página ---------- */
+
+::view-transition-old(root) {
+  animation-duration: var(--vt-sai);
+  animation-timing-function: cubic-bezier(0.4, 0, 1, 1);
+}
+
+::view-transition-new(root) {
+  animation-duration: var(--vt-entra);
+  animation-timing-function: var(--ease-out-expo);
+}
+
+/* ---------- foto compartilhada: voa da prateleira até a página ---------- */
+
+::view-transition-group(*.celula-voo) {
+  animation-duration: 420ms;
+  animation-timing-function: var(--vt-mola);
+}
+
+/* ---------- troca lateral (setas): desliza com um toque de profundidade ---------- */
+
+/* sem o crossfade do fundo: só o conteúdo se move */
+:root:active-view-transition-type(anterior)::view-transition-old(root),
+:root:active-view-transition-type(anterior)::view-transition-new(root),
+:root:active-view-transition-type(proximo)::view-transition-old(root),
+:root:active-view-transition-type(proximo)::view-transition-new(root) {
+  animation: none;
+}
+
+@keyframes celula-entra-esq {
+  from {
+    opacity: 0;
+    transform: translateX(-30px) scale(0.985);
+  }
+}
+
+@keyframes celula-entra-dir {
+  from {
+    opacity: 0;
+    transform: translateX(30px) scale(0.985);
+  }
+}
+
+@keyframes celula-sai-esq {
+  to {
+    opacity: 0;
+    transform: translateX(-22px) scale(0.99);
+  }
+}
+
+@keyframes celula-sai-dir {
+  to {
+    opacity: 0;
+    transform: translateX(22px) scale(0.99);
+  }
+}
+
+@keyframes celula-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes celula-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+::view-transition-new(*.celula-entra-esq) {
+  animation: var(--vt-entra) var(--vt-mola) both celula-entra-esq;
+}
+
+::view-transition-new(*.celula-entra-dir) {
+  animation: var(--vt-entra) var(--vt-mola) both celula-entra-dir;
+}
+
+::view-transition-old(*.celula-sai-esq) {
+  animation: var(--vt-sai) cubic-bezier(0.4, 0, 1, 1) both celula-sai-esq;
+}
+
+::view-transition-old(*.celula-sai-dir) {
+  animation: var(--vt-sai) cubic-bezier(0.4, 0, 1, 1) both celula-sai-dir;
+}
+
+/*
+ * Os dois lados se cruzam deslocados; somar a luz (plus-lighter, que o
+ * navegador aplica por padrão) clarearia a sobreposição.
+ */
+::view-transition-new(*.celula-entra-esq),
+::view-transition-new(*.celula-entra-dir),
+::view-transition-old(*.celula-sai-esq),
+::view-transition-old(*.celula-sai-dir) {
+  mix-blend-mode: normal;
+}
+
+/* ---------- movimento reduzido: só dissolve, sem voo e sem deslize ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  /* o par ainda troca de lugar; sem duração ele aparece direto no destino */
+  ::view-transition-group(*.celula-voo) {
+    animation-duration: 1ms;
+  }
+
+  ::view-transition-old(*.celula-voo),
+  ::view-transition-new(*.celula-entra-esq),
+  ::view-transition-new(*.celula-entra-dir),
+  ::view-transition-old(*.celula-sai-esq),
+  ::view-transition-old(*.celula-sai-dir),
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 200ms;
+    animation-timing-function: var(--ease);
+  }
+
+  ::view-transition-new(*.celula-entra-esq),
+  ::view-transition-new(*.celula-entra-dir) {
+    animation-name: celula-fade-in;
+    mix-blend-mode: plus-lighter;
+  }
+
+  ::view-transition-old(*.celula-sai-esq),
+  ::view-transition-old(*.celula-sai-dir) {
+    animation-name: celula-fade-out;
+    mix-blend-mode: plus-lighter;
+  }
+}

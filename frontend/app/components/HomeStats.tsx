@@ -2,13 +2,13 @@
 
 /**
  * Indicadores do painel, calculados a partir do catálogo real:
- * total de celulares, marcas, preço médio e o cadastro mais recente.
+ * total de celulares, marcas, nota média das avaliações e o cadastro mais recente.
  * Os números contam do zero até o valor quando aparecem.
  */
 
 import { useEffect, useRef, useState } from "react";
 import { animate, useInView, useReducedMotion } from "motion/react";
-import { Coins, Layers, Smartphone, Sparkles } from "lucide-react";
+import { Layers, Smartphone, Sparkles, Star } from "lucide-react";
 import { listarCelulares, type Celular } from "@/src/lib/celulares";
 import { TiltCard } from "@/components/ui/tilt-card";
 import { Reveal, RevealItem } from "@/components/ui/reveal";
@@ -16,11 +16,13 @@ import { Reveal, RevealItem } from "@/components/ui/reveal";
 type Stats = {
   total: number;
   marcas: number;
-  precoMedio: number;
+  /** Média ponderada pelo número de avaliações de cada aparelho (0 se ninguém avaliou). */
+  notaMedia: number;
+  avaliacoes: number;
   recente: Celular | null;
 };
 
-const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+const decimal = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 function CountUp({ value, format }: { value: number; format: (n: number) => string }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -48,7 +50,7 @@ function CountUp({ value, format }: { value: number; format: (n: number) => stri
 }
 
 const inteiro = (n: number) => Math.round(n).toLocaleString("pt-BR");
-const moeda = (n: number) => brl.format(n);
+const nota = (n: number) => decimal.format(n);
 
 export default function HomeStats() {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -58,11 +60,18 @@ export default function HomeStats() {
     const controller = new AbortController();
     listarCelulares(1, 50, controller.signal)
       .then(({ celulares, paginacao }) => {
-        const precos = celulares.map((c) => c.preco).filter((p) => p > 0);
+        let soma = 0;
+        let avaliacoes = 0;
+        for (const c of celulares) {
+          if (c.notaMedia === null) continue;
+          soma += c.notaMedia * c.avaliacoes;
+          avaliacoes += c.avaliacoes;
+        }
         setStats({
           total: paginacao.totalItems,
           marcas: new Set(celulares.map((c) => c.marca.trim().toLowerCase())).size,
-          precoMedio: precos.length ? precos.reduce((a, b) => a + b, 0) / precos.length : 0,
+          notaMedia: avaliacoes ? soma / avaliacoes : 0,
+          avaliacoes,
           recente: celulares[0] ?? null,
         });
       })
@@ -88,11 +97,14 @@ export default function HomeStats() {
       foot: "entre os últimos 50",
     },
     {
-      icon: Coins,
-      label: "Preço médio",
+      icon: Star,
+      label: "Nota média",
       tone: "verdigris",
-      value: stats ? <CountUp value={stats.precoMedio} format={moeda} /> : null,
-      foot: "dos aparelhos com preço",
+      value: stats ? (stats.avaliacoes ? <CountUp value={stats.notaMedia} format={nota} /> : "—") : null,
+      foot: stats?.avaliacoes
+        ? `${inteiro(stats.avaliacoes)} ${stats.avaliacoes === 1 ? "avaliação" : "avaliações"}, de 1 a 5`
+        : "nenhuma avaliação ainda",
+      small: stats ? !stats.avaliacoes : false,
     },
     {
       icon: Sparkles,

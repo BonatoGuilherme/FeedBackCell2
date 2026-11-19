@@ -1,6 +1,5 @@
 package br.com.feedbackcell.core.validacao;
 
-import static br.com.feedbackcell.core.validacao.Esquema.numero;
 import static br.com.feedbackcell.core.validacao.Esquema.objeto;
 import static br.com.feedbackcell.core.validacao.Esquema.texto;
 
@@ -22,12 +21,13 @@ public final class Esquemas {
             texto300("creditoImagem"),
             texto("creditoImagemUrl").max(500)
                     .padrao("^https://commons\\.wikimedia\\.org/wiki/", "/^https:\\/\\/commons\\.wikimedia\\.org\\/wiki\\//")
-                    .permiteNull().permiteVazio());
+                    .permiteNull().permiteVazio(),
+            // preço de lançamento ("799,99 USD") e estimado em reais ("R$ 4.320"), vindos do specs-service
+            texto40("precoLancamento"), texto40("precoEstimado"));
 
     public static final Esquema CELULAR = Esquema.de(
             texto("marca").min(2).max(100).obrigatorio(),
             texto("modelo").min(2).max(100).obrigatorio(),
-            numero("preco").min("0").max("99999999.99").obrigatorio(),
             texto("descricao").max(500).permiteVazio(),
             objeto("especificacoes", ESPECIFICACOES).permiteNull(),
             texto("modelo3d").padrao("^[0-9a-f]{32}$", "/^[0-9a-f]{32}$/").permiteNull());
@@ -59,6 +59,10 @@ public final class Esquemas {
 
     private static Esquema.Campo texto300(String nome) {
         return texto(nome).max(300).permiteNull().permiteVazio();
+    }
+
+    private static Esquema.Campo texto40(String nome) {
+        return texto(nome).max(40).permiteNull().permiteVazio();
     }
 
     /** O middleware validateInput: 400 {erro: "Validação falhou", detalhes} ou o corpo limpo. */

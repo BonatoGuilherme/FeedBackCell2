@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppIcon from "./AppIcon";
+import CatalogSearch from "./CatalogSearch";
+import { lembrarOrdemCelulares } from "./PhoneNavigation";
 import { PhoneShelf } from "@/components/ui/phone-shelf";
 import { TiltCard } from "@/components/ui/tilt-card";
 import { Reveal, RevealItem } from "@/components/ui/reveal";
+import { NotaResumo } from "@/components/ui/rating";
 import {
-  buscarCelular,
   listarCelulares,
   type Celular,
   type ListaCelulares,
@@ -17,10 +19,13 @@ type PhoneCollectionProps = {
   variant: "overview" | "catalog";
 };
 
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
+/**
+ * Última lista carregada de cada página, guardada enquanto a aba estiver aberta.
+ * Ao voltar da página de um celular a prateleira já nasce preenchida: sem isso a
+ * foto não teria par e a transição compartilhada não aconteceria na volta. Os
+ * dados são revalidados no efeito logo em seguida.
+ */
+const cacheListas = new Map<string, ListaCelulares>();
 
 function PhoneCard({ celular }: { celular: Celular }) {
   const cover = celular.imagens[0]?.url;
@@ -52,20 +57,23 @@ function PhoneCard({ celular }: { celular: Celular }) {
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">{celular.marca}</p>
           <h3 className="truncate text-[16px] font-semibold text-foreground">{celular.modelo}</h3>
-          <p className="mt-0.5 text-[14px] tabular-nums text-muted">
-            {celular.preco > 0 ? currency.format(celular.preco) : "Preço não informado"}
-          </p>
+          <NotaResumo
+            compacto
+            notaMedia={celular.notaMedia}
+            avaliacoes={celular.avaliacoes}
+            className="mt-0.5 text-[14px]"
+          />
         </div>
-        <Link
-          className="relative z-[2] shrink-0 rounded-full bg-accent px-3.5 py-2 text-[13px] font-semibold text-on-accent transition-colors hover:bg-accent-hover"
-          href={`/comments?celular=${celular.idcelular}`}
+        <span
+          aria-hidden="true"
+          className="shrink-0 rounded-full bg-accent px-3.5 py-2 text-[13px] font-semibold text-on-accent transition-colors group-hover:bg-accent-hover"
         >
-          Comentários
-        </Link>
+          Ver avaliações
+        </span>
       </div>
-      {/* o card inteiro abre o celular no catálogo (o botão de comentários fica por cima) */}
+      {/* o card inteiro abre a página do celular */}
       <Link
-        href={`/catalog?celular=${celular.idcelular}`}
+        href={`/catalog/${celular.idcelular}`}
         aria-label={`Ver ${celular.marca} ${celular.modelo}`}
         className="absolute inset-0 z-[1] rounded-[22px] outline-none"
       />
@@ -102,14 +110,17 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
   const [busca, setBusca] = useState("");
   const [marcaSelecionada, setMarcaSelecionada] = useState("Todas as marcas");
   const [refreshKey, setRefreshKey] = useState(0);
-  // celular aberto no modal; /catalog?celular=ID abre direto (link da home)
-  const [selecionado, setSelecionado] = useState<Celular | null>(null);
   const requestKey = `${pagina}:${limit}:${refreshKey}`;
   const [requestResult, setRequestResult] = useState<
     | { key: string; status: "loading" }
     | { key: string; status: "success"; data: ListaCelulares }
     | { key: string; status: "error"; message: string }
-  >({ key: "", status: "loading" });
+  >(() => {
+    const emCache = cacheListas.get(requestKey);
+    return emCache
+      ? { key: requestKey, status: "success" as const, data: emCache }
+      : { key: "", status: "loading" as const };
+  });
   const currentResult =
     requestResult.key === requestKey ? requestResult : null;
   const loading =
@@ -133,6 +144,9 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
 
     listarCelulares(pagina, limit, controller.signal)
       .then((result) => {
+        cacheListas.set(requestKey, result);
+        // a primeira página já serve de ordem para o carrossel da página do celular
+        if (pagina === 1 && !isOverview) lembrarOrdemCelulares(result.celulares, true);
         setRequestResult({ key: requestKey, status: "success", data: result });
       })
       .catch((error: unknown) => {
@@ -148,7 +162,7 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
       });
 
     return () => controller.abort();
-  }, [limit, pagina, refreshKey, requestKey]);
+  }, [isOverview, limit, pagina, refreshKey, requestKey]);
 
   const marcas = useMemo(
     () => [...new Set(celulares.map((celular) => celular.marca))].sort(),
@@ -163,37 +177,13 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
         celular.marca === marcaSelecionada;
       const correspondeBusca =
         !termo ||
-        `${celular.marca} ${celular.modelo} ${celular.descricao}`
+        `${celular.marca} ${celular.modelo}`
           .toLocaleLowerCase("pt-BR")
           .includes(termo);
 
       return correspondeMarca && correspondeBusca;
     });
   }, [busca, celulares, marcaSelecionada]);
-
-  useEffect(() => {
-    if (isOverview) return;
-    const id = new URLSearchParams(window.location.search).get("celular");
-    if (!id || !/^[1-9]\d{0,9}$/.test(id)) return;
-    const controller = new AbortController();
-    buscarCelular(Number(id), controller.signal)
-      .then(setSelecionado)
-      .catch(() => {
-        // celular inexistente ou removido: só mostra o catálogo
-        if (!controller.signal.aborted) window.history.replaceState(null, "", "/catalog");
-      });
-    return () => controller.abort();
-  }, [isOverview]);
-
-  const abrirCelular = useCallback((celular: Celular) => {
-    setSelecionado(celular);
-    window.history.replaceState(null, "", `/catalog?celular=${celular.idcelular}`);
-  }, []);
-
-  const fecharCelular = useCallback(() => {
-    setSelecionado(null);
-    window.history.replaceState(null, "", "/catalog");
-  }, []);
 
   function atualizarLista() {
     setRefreshKey((current) => current + 1);
@@ -261,7 +251,7 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
             {paginacao
               ? `${paginacao.totalItems} ${paginacao.totalItems === 1 ? "celular cadastrado" : "celulares cadastrados"} · `
               : ""}
-            Toque em um aparelho para ver fotos e especificações.
+            Toque em um aparelho para ver fotos, especificações e avaliações.
           </p>
         </div>
         <Link className="button button--primary" href="/items/new">
@@ -271,19 +261,13 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
       </header>
 
       <div className="catalog-toolbar">
-        <label className="search-field">
-          <AppIcon name="search" size={19} />
-          <span className="sr-only">Buscar celular</span>
-          <input
-            type="search"
-            placeholder="Buscar marca, modelo ou descrição"
-            value={busca}
-            onChange={(event) => {
-              setBusca(event.target.value);
-              setPagina(1);
-            }}
-          />
-        </label>
+        <CatalogSearch
+          valor={busca}
+          onChange={(texto) => {
+            setBusca(texto);
+            setPagina(1);
+          }}
+        />
         {/* filtros na mesma linha da busca; rolam para o lado se não couberem */}
         {marcas.length > 1 && !loading && !erro && (
           <div className="brand-filters" aria-label="Filtrar por marca">
@@ -348,10 +332,6 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
         <PhoneShelf
           className="mt-7"
           celulares={celularesFiltrados}
-          formatPrice={(preco) => currency.format(preco)}
-          aberto={selecionado}
-          onAbrir={abrirCelular}
-          onFechar={fecharCelular}
         />
       )}
 

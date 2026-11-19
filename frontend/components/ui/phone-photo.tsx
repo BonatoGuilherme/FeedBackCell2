@@ -1,21 +1,25 @@
 "use client";
 
 /**
- * Coluna de mídia do modal de detalhes do celular: a foto (inteira, num quadro
+ * Coluna de mídia da página do celular: a foto (inteira, num quadro
  * neutro que acompanha a proporção da imagem), o modelo 3D, as miniaturas e o
  * crédito da foto com os links exigidos pela licença.
  */
 
 import { useState, type ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { Box, Images } from "lucide-react";
+import { Box, ImageOff, Images } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CelularTransicao } from "@/components/ui/transicoes";
 import { sketchfabEmbedUrl, type Celular } from "@/src/lib/celulares";
 
 const SPRING = { type: "spring" as const, bounce: 0, duration: 0.5 };
 
-/** Altura máxima da foto e do 3D no modal. */
+/** Altura máxima da foto e do 3D. */
 const ALTURA_MIDIA = "max-h-[min(60vh,520px)]";
+
+/** Moldura do celular desenhado; o esqueleto do carregamento usa a mesma medida. */
+export const MOLDURA_APARELHO = "relative aspect-[1/2] h-[min(56vh,480px)] rounded-[22%/11%]";
 
 const VERSOES_CC = new Set(["1.0", "2.0", "2.5", "3.0", "4.0"]);
 const MODIFICADORES_CC = new Set(["by", "by-sa", "by-nd", "by-nc", "by-nc-sa", "by-nc-nd"]);
@@ -74,7 +78,7 @@ function LinkExterno({ href, children }: { href: string; children: ReactNode }) 
 }
 
 /** Crédito da foto: o texto leva à página da imagem e a licença, ao texto da licença. */
-function CreditoFoto({ texto, url }: { texto: string; url: string | null }) {
+export function CreditoFoto({ texto, url }: { texto: string; url: string | null }) {
   const licenca = licencaCreativeCommons(texto);
   const trecho = (t: string) => (t && url ? <LinkExterno href={url}>{t}</LinkExterno> : t);
   if (!licenca) return <>{trecho(texto)}</>;
@@ -110,7 +114,7 @@ export function PhonePhoto({
   return (
     <div className="relative flex flex-col items-center gap-4 rounded-t-[24px] bg-[radial-gradient(90%_70%_at_50%_20%,rgba(201,151,63,0.16),transparent_70%)] px-4 pb-5 pt-12 sm:px-6 md:max-h-[calc(100dvh-3rem)] md:justify-center md:overflow-y-auto md:rounded-l-[24px] md:rounded-tr-none md:py-10">
       {/*
-        O modelo 3D começa a carregar assim que o modal abre, escondido fora da
+        O modelo 3D começa a carregar assim que a página abre, escondido fora da
         tela; ao clicar em "Ver em 3D" o mesmo iframe só aparece (sem recarregar).
       */}
       {modelo3d && (
@@ -138,11 +142,9 @@ export function PhonePhoto({
       {modo === "3d" && modelo3d ? null : atual ? (
         // foto real: inteira (object-contain), num quadro retangular neutro que segue a
         // proporção da imagem — larga ocupa a largura; alta para na altura máxima
-        <motion.div
-          layoutId={`phone-${celular.idcelular}`}
-          transition={SPRING}
-          className="relative flex min-h-40 w-full items-center justify-center overflow-hidden rounded-2xl bg-surface-solid shadow-[0_18px_40px_-22px_rgba(15,16,32,0.4)] ring-1 ring-line"
-        >
+        // a foto "voa" da prateleira até aqui (View Transition com o nome celular-ID)
+        <CelularTransicao id={celular.idcelular}>
+        <div className="relative flex min-h-40 w-full items-center justify-center overflow-hidden rounded-2xl bg-surface-solid shadow-[0_18px_40px_-22px_rgba(15,16,32,0.4)] ring-1 ring-line">
           {/* eslint-disable-next-line @next/next/no-img-element -- imagem servida pela API */}
           <img
             key={atual.idimagem}
@@ -150,16 +152,13 @@ export function PhonePhoto({
             alt={`${celular.marca} ${celular.modelo}, foto ${foto + 1} de ${imagens.length}`}
             className={cn("foto-aparelho block h-auto w-full object-contain", ALTURA_MIDIA)}
           />
-        </motion.div>
+        </div>
+        </CelularTransicao>
       ) : (
         // sem foto: o celular desenhado, na moldura de celular
-        <motion.div
-          layoutId={`phone-${celular.idcelular}`}
-          transition={SPRING}
-          className="relative aspect-[1/2] h-[min(56vh,480px)] rounded-[22%/11%]"
-        >
-          {placeholder}
-        </motion.div>
+        <CelularTransicao id={celular.idcelular}>
+          <div className={MOLDURA_APARELHO}>{placeholder}</div>
+        </CelularTransicao>
       )}
 
       <motion.div {...fade} className="flex w-full flex-col items-center gap-3">
@@ -195,7 +194,10 @@ export function PhonePhoto({
           </ul>
         )}
         {modo === "fotos" && imagens.length === 0 && (
-          <p className="text-sm text-subtle">Este aparelho ainda não tem fotos.</p>
+          <p className="inline-flex items-center gap-2 rounded-full border border-line bg-surface-solid/70 px-3.5 py-1.5 text-[13px] text-subtle">
+            <ImageOff className="size-4 text-accent" strokeWidth={1.7} aria-hidden />
+            Sem fotos ainda — veja o aparelho desenhado
+          </p>
         )}
         {/* a primeira foto é a da busca; a licença do Wikimedia exige o crédito e o link da licença */}
         {modo === "fotos" && foto === 0 && especificacoes?.creditoImagem && (

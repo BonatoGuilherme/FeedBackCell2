@@ -8,8 +8,10 @@
 @import "./styles/catalog.css";
 @import "./styles/phone-form.css";
 @import "./styles/comments.css";
+@import "./styles/phone-carousel.css";
 @import "./styles/home.css";
 @import "./styles/renaissance.css";
+@import "./styles/transitions.css";
 
 /*
  * Design tokens do FeedBackCELL.

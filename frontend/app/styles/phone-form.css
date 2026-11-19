@@ -60,7 +60,6 @@
   gap: var(--space-4);
 }
 
-.phone-form__price { max-width: 260px; }
 .phone-form__required { color: var(--error); }
 
 .phone-form__optional {
@@ -478,7 +477,6 @@ a.phone-specs__credit:hover { color: var(--foreground); }
   .phone-form__alert { margin: var(--space-4) var(--space-4) 0; }
   .phone-form__section { padding: var(--space-6) var(--space-4); }
   .phone-form__row { grid-template-columns: minmax(0, 1fr); gap: var(--space-5); }
-  .phone-form__price { max-width: none; }
 
   .phone-form__actions {
     flex-direction: column-reverse;

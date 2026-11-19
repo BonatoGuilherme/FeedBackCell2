@@ -99,8 +99,7 @@ public class CelularesController {
             if (idusuario == null) throw new IllegalStateException("Token sem idusuario numérico");
             JsonNode spec = nuloSeAusente(b.get("especificacoes"));
             String modelo3d = texto(b.get("modelo3d"));
-            long id = celulares.criar(c.marca, c.modelo, b.get("preco").numberValue(), c.descricao,
-                    idusuario, spec, modelo3d);
+            long id = celulares.criar(c.marca, c.modelo, c.descricao, idusuario, spec, modelo3d);
             // Busca assíncrona (specs-service) do que veio faltando; nunca quebra a resposta.
             if (spec == null || modelo3d == null) {
                 eventos.celularCriado(id, c.marca, c.modelo, spec == null, modelo3d == null);
@@ -109,11 +108,13 @@ public class CelularesController {
             celular.put("idcelular", id);
             celular.put("marca", c.marca);
             celular.put("modelo", c.modelo);
-            celular.put("preco", b.get("preco"));
             celular.put("descricao", c.descricao);
             celular.put("especificacoes", b.has("especificacoes") ? b.get("especificacoes") : null);
             celular.put("modelo3d", modelo3d);
             celular.put("idusuario", idusuario);
+            // celular novo: ainda sem comentários com nota
+            celular.put("notaMedia", null);
+            celular.put("avaliacoes", 0);
             Map<String, Object> r = new LinkedHashMap<>();
             r.put("mensagem", "Celular criado com sucesso");
             r.put("celular", celular);
@@ -137,15 +138,17 @@ public class CelularesController {
             JsonNode spec = b.has("especificacoes")
                     ? nuloSeAusente(b.get("especificacoes")) : (JsonNode) atual.get("especificacoes");
             String modelo3d = b.has("modelo3d") ? texto(b.get("modelo3d")) : (String) atual.get("modelo3d");
-            celulares.atualizar(idcelular, c.marca, c.modelo, b.get("preco").numberValue(), c.descricao, spec, modelo3d);
+            celulares.atualizar(idcelular, c.marca, c.modelo, c.descricao, spec, modelo3d);
             Map<String, Object> celular = new LinkedHashMap<>();
             celular.put("idcelular", idcelular);
             celular.put("marca", c.marca);
             celular.put("modelo", c.modelo);
-            celular.put("preco", b.get("preco"));
             celular.put("descricao", c.descricao);
             celular.put("especificacoes", spec);
             celular.put("modelo3d", modelo3d);
+            // a edição não mexe nas notas: a média lida antes da atualização continua valendo
+            celular.put("notaMedia", atual.get("notaMedia"));
+            celular.put("avaliacoes", atual.get("avaliacoes"));
             Map<String, Object> r = new LinkedHashMap<>();
             r.put("mensagem", "Celular atualizado com sucesso");
             r.put("celular", celular);
