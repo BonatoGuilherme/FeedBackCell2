@@ -21,10 +21,11 @@ export default function RegisterPage() {
 
         <AuthField
           id="nome"
-          label="Nome completo"
-          autoComplete="name"
+          label="Nome de exibição"
+          autoComplete="nickname"
           required
-          placeholder="Maria Souza"
+          placeholder="Ex.: Maria Teste"
+          hint="Aparece nos seus comentários. Pode ser um apelido."
           icon={<User />}
           value={nome}
           error={nome && !validations.nome ? "Mínimo de 3 caracteres" : undefined}
@@ -40,7 +41,8 @@ export default function RegisterPage() {
           type="email"
           autoComplete="email"
           required
-          placeholder="seu@email.com"
+          placeholder="teste@exemplo.com"
+          hint="Pode ser um e-mail de teste; não enviamos mensagens."
           icon={<Mail />}
           value={email}
           error={email && !validations.email ? "E-mail inválido" : undefined}
@@ -56,7 +58,7 @@ export default function RegisterPage() {
           type="password"
           autoComplete="new-password"
           required
-          hint="Use pelo menos 6 caracteres."
+          hint="Use pelo menos 6 caracteres e não repita uma senha que você usa em outro site."
           icon={<Lock />}
           value={senha}
           error={senha && !validations.senha ? "Mínimo de 6 caracteres" : undefined}
