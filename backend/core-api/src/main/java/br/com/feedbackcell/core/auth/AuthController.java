@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -44,7 +45,13 @@ public class AuthController {
             String nome = b.get("nome").stringValue();
             String email = b.get("email").stringValue();
             if (usuarios.emailExiste(email)) throw ErroApi.de(409, "Email já cadastrado");
-            long id = usuarios.criar(nome, email, senhas.hash(b.get("senha").stringValue()));
+            long id;
+            try {
+                id = usuarios.criar(nome, email, senhas.hash(b.get("senha").stringValue()));
+            } catch (DuplicateKeyException e) {
+                // dois cadastros simultâneos com o mesmo e-mail: o segundo esbarra no UNIQUE
+                throw ErroApi.de(409, "Email já cadastrado");
+            }
             Map<String, Object> usuario = new LinkedHashMap<>();
             usuario.put("idusuario", id);
             usuario.put("nome", nome);

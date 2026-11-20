@@ -57,6 +57,12 @@ public class UsuarioRepositorio {
         return !db.queryForList("SELECT idusuario FROM Usuarios WHERE Email = ?", Long.class, email).isEmpty();
     }
 
+    /** O e-mail já pertence a outra conta (troca de e-mail no perfil). */
+    public boolean emailDeOutroUsuario(String email, long id) {
+        return !db.queryForList("SELECT idusuario FROM Usuarios WHERE Email = ? AND idusuario <> ?",
+                Long.class, email, id).isEmpty();
+    }
+
     public long criar(String nome, String email, String senhaHash) {
         GeneratedKeyHolder chave = new GeneratedKeyHolder();
         db.update(con -> {
