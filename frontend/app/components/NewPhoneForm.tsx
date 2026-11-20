@@ -27,6 +27,9 @@ export default function NewPhoneForm() {
   const [loading, setLoading] = useState(false);
   const [fotos, setFotos] = useState<PickedPhoto[]>([]);
   const [progresso, setProgresso] = useState("");
+  // celular já criado nesta tela: um novo envio só reenvia as fotos que falharam (sem duplicar o celular)
+  const [salvoId, setSalvoId] = useState<number | null>(null);
+  const [pendentes, setPendentes] = useState<File[]>([]);
   // depois da primeira tentativa de envio, os campos inválidos ficam marcados
   const [tentou, setTentou] = useState(false);
   const focouInvalido = useRef(false);
@@ -54,47 +57,62 @@ export default function NewPhoneForm() {
 
     setLoading(true);
     try {
-      let especificacoes = null;
-      if (escolhido) {
-        const { imagem: _imagem, imagemHd: _imagemHd, ...resto } = escolhido;
-        void _imagem;
-        void _imagemHd;
-        especificacoes = resto;
-      }
-      const uid3d = specs.modelo3d?.embedUrl.match(/models\/([0-9a-f]{32})\//)?.[1] ?? null;
-      const celular = await criarCelular(
-        {
-          marca: marca.trim(),
-          modelo: modelo.trim(),
-          descricao: descricao.trim(),
-          especificacoes,
-          modelo3d: uid3d,
-        },
-        token,
-      );
+      let idcelular = salvoId;
+      let envios = pendentes;
 
-      const nomeArquivo = modelo.trim() || "celular";
-      if (escolhido?.imagemHd) setProgresso("Baixando a foto em alta resolução…");
-      const arquivoApi =
-        (escolhido?.imagemHd ? await baixarImagemHd(escolhido.imagemHd, nomeArquivo) : null) ??
-        (escolhido?.imagem ? dataUriParaArquivo(escolhido.imagem, nomeArquivo) : null);
-      const envios = [...(arquivoApi ? [arquivoApi] : []), ...fotos.map((foto) => foto.file).slice(0, maxFotos)];
+      if (idcelular === null) {
+        let especificacoes = null;
+        if (escolhido) {
+          const { imagem: _imagem, imagemHd: _imagemHd, ...resto } = escolhido;
+          void _imagem;
+          void _imagemHd;
+          especificacoes = resto;
+        }
+        const uid3d = specs.modelo3d?.embedUrl.match(/models\/([0-9a-f]{32})\//)?.[1] ?? null;
+
+        // as fotos são montadas antes de criar o celular: nada depois do POST pode perder o que falta enviar
+        const nomeArquivo = modelo.trim() || "celular";
+        if (escolhido?.imagemHd) setProgresso("Baixando a foto em alta resolução…");
+        const arquivoApi =
+          (escolhido?.imagemHd ? await baixarImagemHd(escolhido.imagemHd, nomeArquivo) : null) ??
+          (escolhido?.imagem ? dataUriParaArquivo(escolhido.imagem, nomeArquivo) : null);
+        envios = [...(arquivoApi ? [arquivoApi] : []), ...fotos.map((foto) => foto.file).slice(0, maxFotos)];
+
+        setProgresso("Salvando o celular…");
+        const celular = await criarCelular(
+          {
+            marca: marca.trim(),
+            modelo: modelo.trim(),
+            descricao: descricao.trim(),
+            especificacoes,
+            modelo3d: uid3d,
+          },
+          token,
+        );
+        idcelular = celular.idcelular;
+        setSalvoId(idcelular);
+        setPendentes(envios);
+      }
+
       const falhas: string[] = [];
+      const naoEnviadas: File[] = [];
       for (const [i, arquivo] of envios.entries()) {
         setProgresso(`Enviando foto ${i + 1} de ${envios.length}…`);
         try {
-          await enviarFoto(celular.idcelular, arquivo, token);
+          await enviarFoto(idcelular, arquivo, token);
         } catch (error: unknown) {
+          naoEnviadas.push(arquivo);
           falhas.push(
             `${arquivo.name}: ${error instanceof Error ? error.message : "falhou"}`,
           );
         }
       }
+      setPendentes(naoEnviadas);
 
-      if (falhas.length > 0) {
-        setFotos([]);
+      if (naoEnviadas.length > 0) {
         setErro(
-          `O celular foi salvo, mas ${falhas.length} foto(s) não foram enviadas. ${falhas.join(" · ")}`,
+          `O celular foi salvo, mas ${naoEnviadas.length} foto(s) não foram enviadas. ${falhas.join(" · ")} ` +
+            `Use "Reenviar fotos" para tentar de novo (o celular não será criado outra vez) ou volte ao catálogo.`,
         );
         return;
       }
@@ -162,6 +180,9 @@ export default function NewPhoneForm() {
               <span>{erro}</span>
             </div>
           )}
+
+          {/* depois de salvo, os campos travam: mudar algo aqui não alteraria o celular já criado */}
+          <fieldset className="m-0 min-w-0 border-0 p-0" disabled={salvoId !== null}>
 
           <FormSection
             id="secao-aparelho"
@@ -245,8 +266,8 @@ export default function NewPhoneForm() {
             title="Fotos"
             description={
               imagemApi
-                ? `A foto encontrada na busca já entra como capa. Você pode adicionar mais ${maxFotos}.`
-                : `Até ${MAX_FOTOS} fotos. A primeira vira a capa do anúncio.`
+                ? `A foto encontrada na busca já entra como capa. Você pode adicionar mais ${maxFotos}. As fotos ficam públicas: evite imagens com pessoas, documentos ou localização.`
+                : `Até ${MAX_FOTOS} fotos. A primeira vira a capa do anúncio. As fotos ficam públicas: evite imagens com pessoas, documentos ou localização.`
             }
           >
             <PhotoPicker
@@ -267,6 +288,7 @@ export default function NewPhoneForm() {
           >
             <PhoneSpecsResult lookup={specs} />
           </FormSection>
+          </fieldset>
 
           <div className="phone-form__actions">
             <p className="phone-form__status" role="status" aria-live="polite">
@@ -288,18 +310,18 @@ export default function NewPhoneForm() {
                 aria-disabled={loading || undefined}
                 tabIndex={loading ? -1 : undefined}
               >
-                Cancelar
+                {salvoId !== null ? "Ir para o catálogo" : "Cancelar"}
               </Link>
               <button className="button button--primary" type="submit" disabled={loading}>
                 {loading ? (
                   <>
                     <span className="button-spinner" aria-hidden="true" />
-                    Salvando…
+                    {salvoId !== null ? "Enviando…" : "Salvando…"}
                   </>
                 ) : (
                   <>
                     <AppIcon name="check" size={16} />
-                    Salvar celular
+                    {salvoId !== null ? "Reenviar fotos" : "Salvar celular"}
                   </>
                 )}
               </button>
