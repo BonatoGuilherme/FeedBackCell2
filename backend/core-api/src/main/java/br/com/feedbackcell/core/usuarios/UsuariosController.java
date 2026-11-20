@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -58,7 +59,14 @@ public class UsuariosController {
         if (nome.length() < 3) throw ErroApi.de(400, "Nome deve ter pelo menos 3 caracteres");
         if (!EMAIL.matcher(b.get("email").stringValue()).matches()) throw ErroApi.de(400, "Email inválido");
         return Acao.executar("Erro ao atualizar perfil", () -> {
-            if (id != null) usuarios.atualizarPerfil(id, nome, email);
+            if (id != null) {
+                if (usuarios.emailDeOutroUsuario(email, id)) throw ErroApi.de(409, "Email já cadastrado");
+                try {
+                    usuarios.atualizarPerfil(id, nome, email);
+                } catch (DuplicateKeyException e) {
+                    throw ErroApi.de(409, "Email já cadastrado");
+                }
+            }
             Map<String, Object> u = new LinkedHashMap<>();
             u.put("idusuario", id);
             u.put("Nome", nome);

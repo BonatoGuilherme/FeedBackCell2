@@ -183,8 +183,11 @@ class EspecificacoesServiceTest {
         assertNull(r.aparelho());
         assertNull(r.modelo3d());
         assertTrue(r.avisos().get(0).contains("Limite"));
-        s.buscar("Motorola", "Moto G", false);
-        assertEquals(4, externas());
+        // não cacheia (o Sketchfab é chamado de novo), mas o 429 pausa a MobileAPI: a 2ª busca não a chama
+        Resultado r2 = s.buscar("Motorola", "Moto G", false);
+        assertTrue(r2.avisos().get(0).contains("Limite"));
+        assertEquals(3, externas());
+        assertEquals(1, http.chamadas.stream().filter(c -> c.url().contains("mobileapi")).count());
     }
 
     @Test

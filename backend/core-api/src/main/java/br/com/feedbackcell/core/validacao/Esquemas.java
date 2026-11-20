@@ -34,18 +34,21 @@ public final class Esquemas {
 
     public static final Esquema COMENTARIO = Esquema.de(texto("texto").min(3).max(500).obrigatorio());
 
+    // Usuarios.Email é VARCHAR(100): um e-mail válido maior que isso estourava no INSERT (500).
+    private static final int EMAIL_MAX = 100;
+
     public static final Esquema REGISTRO = Esquema.de(
             texto("nome").min(3).max(100).obrigatorio(),
-            texto("email").email().obrigatorio(),
+            texto("email").email().max(EMAIL_MAX).obrigatorio(),
             texto("senha").min(6).max(100).obrigatorio());
 
     public static final Esquema LOGIN = Esquema.de(
-            texto("email").email().obrigatorio(),
+            texto("email").email().max(EMAIL_MAX).obrigatorio(),
             texto("senha").obrigatorio());
 
     public static final Esquema PERFIL = Esquema.de(
             texto("nome").min(3).max(100).obrigatorio(),
-            texto("email").email().obrigatorio());
+            texto("email").email().max(EMAIL_MAX).obrigatorio());
 
     public static final Esquema SENHA = Esquema.de(
             texto("senhaAtual").obrigatorio(),

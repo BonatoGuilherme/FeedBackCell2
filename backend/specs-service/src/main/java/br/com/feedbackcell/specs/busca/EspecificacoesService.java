@@ -19,7 +19,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.time.Clock;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -102,8 +104,14 @@ public class EspecificacoesService {
         }
     };
     private final ExecutorService pool = Executors.newVirtualThreadPerTaskExecutor();
+    /** Buscas iguais ao mesmo tempo esperam a primeira em vez de gastar cota de novo. */
+    private final Map<String, CompletableFuture<Resultado>> emAndamento = new ConcurrentHashMap<>();
+    /** Teto de créditos da MobileAPI por dia/mês e pausa depois de 429; os testes trocam. */
+    CotaMobileApi cota;
     /** Relógio do TTL do cache; os testes trocam. */
     LongSupplier relogio = System::currentTimeMillis;
+
+    static final String AVISO_LIMITE = "Limite de consultas de especificações atingido. Tente mais tarde.";
 
     @Inject
     public EspecificacoesService(ClienteHttp http, ImagensHdService imagensHd,
@@ -111,16 +119,25 @@ public class EspecificacoesService {
                                  @ConfigProperty(name = "mobileapi.cameras-detalhadas", defaultValue = "true")
                                  boolean camerasDetalhadas,
                                  @ConfigProperty(name = "mobileapi.preco", defaultValue = "true") boolean precoAtivo,
-                                 Precos precos) {
+                                 Precos precos,
+                                 @ConfigProperty(name = "mobileapi.creditos-por-dia", defaultValue = "15") int creditosPorDia,
+                                 @ConfigProperty(name = "mobileapi.creditos-por-mes", defaultValue = "50") int creditosPorMes) {
         this.http = http;
         this.imagensHd = imagensHd;
         this.chaveMobileApi = chaveMobileApi.filter(c -> !c.isBlank());
         this.camerasDetalhadas = camerasDetalhadas;
         this.precoAtivo = precoAtivo;
         this.precos = precos;
+        this.cota = new CotaMobileApi(creditosPorDia, creditosPorMes, Clock.systemUTC());
     }
 
-    /** Sem preço (os testes de câmera não contam chamadas ao /misc). */
+    /** Sem teto de créditos (testes). */
+    public EspecificacoesService(ClienteHttp http, ImagensHdService imagensHd, Optional<String> chaveMobileApi,
+                                 boolean camerasDetalhadas, boolean precoAtivo, Precos precos) {
+        this(http, imagensHd, chaveMobileApi, camerasDetalhadas, precoAtivo, precos, 0, 0);
+    }
+
+    /** Sem preço (os testes de câmera não contam chamadas ao /misc) e sem teto de créditos. */
     public EspecificacoesService(ClienteHttp http, ImagensHdService imagensHd,
                                  Optional<String> chaveMobileApi, boolean camerasDetalhadas) {
         this(http, imagensHd, chaveMobileApi, camerasDetalhadas, false, Precos.comCotacoesPadrao());
@@ -166,10 +183,31 @@ public class EspecificacoesService {
      * escolhe outra sugestão e só falta o modelo 3D dela.
      */
     public Resultado buscar(String marca, String modelo, boolean somente3d) {
-        String chave = ((somente3d ? "3d" : "full") + "|" + marca + "|" + modelo).toLowerCase(Locale.ROOT);
+        // "Galaxy  S24 " e "galaxy s24" são a mesma busca: a chave não pode gastar cota por espaço ou caixa
+        String chave = (somente3d ? "3d" : "full") + "|" + normalizarChave(marca) + "|" + normalizarChave(modelo);
         Resultado emCache = lerCache(chave);
         if (emCache != null) return emCache;
 
+        CompletableFuture<Resultado> minha = new CompletableFuture<>();
+        CompletableFuture<Resultado> outra = emAndamento.putIfAbsent(chave, minha);
+        if (outra != null) return outra.join();
+        try {
+            Resultado r = buscarSemCache(marca, modelo, somente3d, chave);
+            minha.complete(r);
+            return r;
+        } catch (RuntimeException e) {
+            minha.completeExceptionally(e);
+            throw e;
+        } finally {
+            emAndamento.remove(chave, minha);
+        }
+    }
+
+    static String normalizarChave(String texto) {
+        return texto == null ? "" : texto.strip().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
+    }
+
+    private Resultado buscarSemCache(String marca, String modelo, boolean somente3d, String chave) {
         CompletableFuture<Busca> spec = somente3d
                 ? CompletableFuture.completedFuture(new Busca(null, List.of(), null, false, false))
                 : CompletableFuture.supplyAsync(() -> buscarAparelho(marca, modelo), pool);
@@ -207,6 +245,10 @@ public class EspecificacoesService {
         params.put("limit", "50");
         if (!marca.isEmpty()) params.put("manufacturer", marca);
         Map<String, String> auth = Map.of("Authorization", "Token " + chaveMobileApi.get());
+        if (!cota.reservar()) {
+            LOG.warn("MobileAPI: cota do dia/mês esgotada ou pausada depois de 429; busca sem especificações.");
+            return new Busca(null, List.of(), AVISO_LIMITE, true, false);
+        }
         try {
             JsonNode dados = http.buscarJson(MOBILEAPI_URL + "?" + ImagensHdService.query(params), auth, TIMEOUT);
             List<JsonNode> lista = new ArrayList<>();
@@ -240,9 +282,8 @@ public class EspecificacoesService {
             return new Busca(aparelho.comFoto(fotos.get(aparelho.chave())), sugestoes, null, false, false);
         } catch (ClienteHttp.ErroHttp e) {
             LOG.errorf("MobileAPI falhou: %s", e.getMessage());
-            String aviso = e.status() == 429
-                    ? "Limite de consultas de especificações atingido. Tente mais tarde."
-                    : "Não foi possível consultar as especificações agora.";
+            if (e.status() == 429) cota.pausar(e.esperar());
+            String aviso = e.status() == 429 ? AVISO_LIMITE : "Não foi possível consultar as especificações agora.";
             return new Busca(null, List.of(), aviso, true, temporaria(e));
         }
     }
@@ -311,6 +352,8 @@ public class EspecificacoesService {
      * Um 429 espera o "retry_after" pedido e tenta de novo (até 2 vezes), dentro do prazo.
      */
     private JsonNode buscarEndpoint(String id, String tipo, Map<String, String> auth, long prazo) {
+        // sem crédito, fica sem a câmera nova ou sem preço (o 429 daqui só pede espaçamento: não pausa tudo)
+        if (!cota.reservar()) return null;
         for (int tentativa = 0; System.nanoTime() < prazo; tentativa++) {
             try {
                 return http.buscarJson(MOBILEAPI_DEVICES + id + "/" + tipo + "/", auth, TIMEOUT_CAMERAS);
