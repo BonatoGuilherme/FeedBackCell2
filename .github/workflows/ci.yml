@@ -52,6 +52,12 @@ jobs:
           java-version: 21
           cache: maven
           cache-dependency-path: backend/core-api/pom.xml
+      # o cache do setup-java guarda só ~/.m2/repository; o Maven que o mvnw baixa
+      # fica em ~/.m2/wrapper e, sem isto, vinha do Maven Central a cada run
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2/wrapper
+          key: mvnw-${{ runner.os }}-${{ hashFiles('backend/core-api/.mvn/wrapper/maven-wrapper.properties') }}
       - run: chmod +x mvnw
         working-directory: backend/core-api
       - run: ./mvnw -B verify
@@ -69,6 +75,10 @@ jobs:
           java-version: 21
           cache: maven
           cache-dependency-path: backend/specs-service/pom.xml
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2/wrapper
+          key: mvnw-${{ runner.os }}-${{ hashFiles('backend/specs-service/.mvn/wrapper/maven-wrapper.properties') }}
       - run: chmod +x mvnw
         working-directory: backend/specs-service
       - run: ./mvnw -B verify
