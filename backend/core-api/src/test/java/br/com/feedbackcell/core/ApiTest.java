@@ -400,7 +400,7 @@ class ApiTest {
 
     @Test
     void healthCorsERotaInexistente() throws Exception {
-        mvc.perform(get("/health")).andExpect(content().json("{\"status\":\"ok\"}", true))
+        mvc.perform(get("/health")).andExpect(content().json("{\"status\":\"ok\",\"commit\":\"local\"}", true))
                 .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:3000"));
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options("/celulares"))
                 .andExpect(status().isNoContent())

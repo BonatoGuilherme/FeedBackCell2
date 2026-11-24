@@ -1,0 +1,84 @@
+name: Smoke test
+
+# Depois do CI verde na master (que é o que libera o deploy no Render e na Vercel),
+# espera produção rodar o commit novo e confere o básico. Não gasta crédito da
+# MobileAPI nem faz login. Falhou: o run fica vermelho, o GitHub avisa por e-mail
+# e o rollback é manual (Render: Deploys > Rollback; Vercel: Instant Rollback).
+#
+# Atenção: workflow_run sempre usa a versão deste arquivo da branch padrão (dev).
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: smoke
+  cancel-in-progress: true
+
+env:
+  CORE_API: https://feedbackcell2-1.onrender.com
+  SPECS: https://feedbackcell2.onrender.com
+  FRONTEND: https://feed-back-cell2.vercel.app
+
+jobs:
+  smoke:
+    name: Smoke test em produção
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      ESPERADO: ${{ github.event.workflow_run.head_sha || github.sha }}
+    steps:
+      # Histórico completo para comparar o commit no ar com o esperado.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.ESPERADO }}
+          fetch-depth: 0
+
+      - name: Esperar o Render subir o commit novo (até 20 min)
+        run: |
+          # O serviço está em dia se roda o commit esperado ou se nada mudou na
+          # pasta dele desde o commit que está no ar (o Render pode não redeployar).
+          em_dia() { # $1 = commit no ar, $2 = pasta do serviço
+            [ "$1" = "$ESPERADO" ] && return 0
+            [ -n "$1" ] && git cat-file -e "$1^{commit}" 2>/dev/null \
+              && git diff --quiet "$1" "$ESPERADO" -- "$2"
+          }
+          fim=$((SECONDS + 1200))
+          while :; do
+            core=$(curl -fsS --max-time 60 "$CORE_API/health" | jq -r '.commit // empty' || true)
+            specs=$(curl -fsS --max-time 60 "$SPECS/q/health/live" \
+              | jq -r '.checks[]? | select(.name == "versao") | .data.commit' || true)
+            echo "core-api: ${core:-?}  specs-service: ${specs:-?}  esperado: $ESPERADO"
+            if em_dia "$core" backend/core-api && em_dia "$specs" backend/specs-service; then
+              break
+            fi
+            if [ "$SECONDS" -ge "$fim" ]; then
+              echo "::error::O Render não subiu $ESPERADO em 20 minutos."
+              exit 1
+            fi
+            sleep 30
+          done
+
+      - name: core-api pronto (banco conectado)
+        run: curl -fsS --max-time 60 "$CORE_API/readyz" | jq -e '.status == "ready"'
+
+      - name: specs-service UP
+        run: curl -fsS --max-time 60 "$SPECS/q/health" | jq -e '.status == "UP"'
+
+      - name: CORS aceita o frontend
+        run: |
+          origem=$(curl -fsS --max-time 60 -o /dev/null -D - -X OPTIONS \
+            -H "Origin: $FRONTEND" -H "Access-Control-Request-Method: GET" \
+            "$CORE_API/celulares" \
+            | tr -d '\r' | awk -F': ' 'tolower($1) == "access-control-allow-origin" { print $2 }')
+          echo "Access-Control-Allow-Origin: $origem"
+          [ "$origem" = "$FRONTEND" ] || { echo "::error::CORS devolveu '$origem', esperado '$FRONTEND'."; exit 1; }
+
+      - name: Frontend responde
+        run: curl -fsS --max-time 60 -o /dev/null -w '%{http_code}\n' "$FRONTEND/"
