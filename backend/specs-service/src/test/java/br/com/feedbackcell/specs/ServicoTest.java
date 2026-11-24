@@ -64,7 +64,8 @@ class ServicoTest {
 
     @Test
     void health() {
-        given().when().get("/q/health/live").then().statusCode(200).body("status", equalTo("UP"));
+        given().when().get("/q/health/live").then().statusCode(200).body("status", equalTo("UP"))
+                .body("checks.find { it.name == 'versao' }.data.commit", equalTo("local"));
     }
 
     private JsonNode publicar(String evento) throws Exception {
