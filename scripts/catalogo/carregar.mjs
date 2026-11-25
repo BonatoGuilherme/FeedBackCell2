@@ -2,6 +2,10 @@
 /**
  * Carrega o catálogo de celulares (scripts/catalogo/catalogo.json) na API do FeedBackCELL.
  *
+ * ANTES DE APLICAR: a carga depende do PR de segurança (#53) já estar em produção, porque as
+ * especificações usam campos novos (creditoFicha, creditoFichaUrl) que o backend antigo descartaria.
+ * ADMIN_EMAIL precisa ser a conta de id 1 (dona dos celulares 1, 2 e 3; só o dono pode apagá-los).
+ *
  * Requer Node 20+ (fetch nativo), sem dependências. Variáveis de ambiente (nada de senha no código):
  *   API_URL        ex.: https://feedbackcell2-1.onrender.com
  *   ADMIN_EMAIL    conta dona dos celulares (a mesma que cadastrou os ids 1, 2 e 3)
@@ -13,7 +17,6 @@
  *   node scripts/catalogo/carregar.mjs                    # dry-run: só mostra o que faria, não escreve nada
  *   node scripts/catalogo/carregar.mjs --aplicar          # cadastra celulares, fotos e avaliações
  *   node scripts/catalogo/carregar.mjs --aplicar --apagar-antigos   # também remove os ids 1, 2 e 3
- *   node scripts/catalogo/carregar.mjs --aplicar --sem-ilustracoes  # não envia os desenhos vetoriais (iPhones)
  *
  * Pode rodar de novo sem duplicar: celular com mesma marca+modelo é pulado, foto só é enviada se o celular
  * ainda não tem nenhuma, e avaliação só é publicada se o mesmo texto ainda não existe no celular.
@@ -30,7 +33,6 @@ const UA = "FeedBackCELL-catalogo/1.0 (carga do catalogo do projeto; contato via
 const args = new Set(process.argv.slice(2));
 const APLICAR = args.has("--aplicar");
 const APAGAR = args.has("--apagar-antigos");
-const SEM_ILUSTRACOES = args.has("--sem-ilustracoes");
 
 const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
 const log = (m) => console.log(m);
@@ -140,7 +142,7 @@ async function main() {
   for (const c of catalogo.celulares) {
     const k = chave(c.marca, c.modelo);
     const rotulo = `${c.marca} ${c.modelo}`;
-    const foto = c.foto && !(SEM_ILUSTRACOES && c.foto.tipo === "ilustracao") ? c.foto : null;
+    const foto = c.foto || null;
     let existente = porChave.get(k);
     if (existente) {
       log(`= ${rotulo}: já existe (id ${existente.idcelular}), pulando cadastro.`);

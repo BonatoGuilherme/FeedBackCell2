@@ -1,7 +1,7 @@
 {
   "versao": 1,
   "geradoEm": "2026-11-25",
-  "observacao": "Fichas: GSMArena. Fotos: Wikimedia Commons (licenças livres). Tipo 'ilustracao' = desenho vetorial do aparelho, não fotografia.",
+  "observacao": "Fichas: GSMArena. Fotos: Wikimedia Commons (licenças livres). iPhones ficam sem foto (o site desenha o aparelho).",
   "contaExemplo": {
     "nome": "Avaliação de exemplo"
   },
@@ -24,13 +24,7 @@
       "marca": "Apple",
       "modelo": "iPhone 16 Pro Max",
       "descricao": "",
-      "foto": {
-        "arquivo": "IPhone_16_Pro_Max_Vector.svg",
-        "autor": "Rafael Fernandez",
-        "licenca": "CC BY-SA 4.0",
-        "url": "https://commons.wikimedia.org/wiki/File:IPhone_16_Pro_Max_Vector.svg",
-        "tipo": "ilustracao"
-      },
+      "foto": null,
       "especificacoes": {
         "nome": "iPhone 16 Pro Max",
         "fabricante": "Apple",
@@ -43,36 +37,15 @@
         "peso": "227 g",
         "espessura": "8,3 mm",
         "cores": "Black Titanium, White Titanium, Natural Titanium, Desert Titanium",
-        "creditoImagem": "Foto: Rafael Fernandez · CC BY-SA 4.0 · Wikimedia Commons",
-        "creditoImagemUrl": "https://commons.wikimedia.org/wiki/File:IPhone_16_Pro_Max_Vector.svg",
-        "creditos": {
-          "ficha": [
-            {
-              "nome": "GSMArena",
-              "url": "https://www.gsmarena.com/apple_iphone_16_pro_max-13123.php"
-            }
-          ],
-          "fotos": [
-            {
-              "autor": "Rafael Fernandez",
-              "licenca": "CC BY-SA 4.0",
-              "url": "https://commons.wikimedia.org/wiki/File:IPhone_16_Pro_Max_Vector.svg"
-            }
-          ]
-        }
+        "creditoFicha": "Ficha: GSMArena",
+        "creditoFichaUrl": "https://www.gsmarena.com/apple_iphone_16_pro_max-13123.php"
       }
     },
     {
       "marca": "Apple",
       "modelo": "iPhone 16",
       "descricao": "",
-      "foto": {
-        "arquivo": "IPhone_16_Vector.svg",
-        "autor": "Rafael Fernandez",
-        "licenca": "CC BY-SA 4.0",
-        "url": "https://commons.wikimedia.org/wiki/File:IPhone_16_Vector.svg",
-        "tipo": "ilustracao"
-      },
+      "foto": null,
       "especificacoes": {
         "nome": "iPhone 16",
         "fabricante": "Apple",
@@ -85,36 +58,15 @@
         "peso": "170 g",
         "espessura": "7,8 mm",
         "cores": "Black, White, Pink, Teal, Ultramarine",
-        "creditoImagem": "Foto: Rafael Fernandez · CC BY-SA 4.0 · Wikimedia Commons",
-        "creditoImagemUrl": "https://commons.wikimedia.org/wiki/File:IPhone_16_Vector.svg",
-        "creditos": {
-          "ficha": [
-            {
-              "nome": "GSMArena",
-              "url": "https://www.gsmarena.com/apple_iphone_16-13317.php"
-            }
-          ],
-          "fotos": [
-            {
-              "autor": "Rafael Fernandez",
-              "licenca": "CC BY-SA 4.0",
-              "url": "https://commons.wikimedia.org/wiki/File:IPhone_16_Vector.svg"
-            }
-          ]
-        }
+        "creditoFicha": "Ficha: GSMArena",
+        "creditoFichaUrl": "https://www.gsmarena.com/apple_iphone_16-13317.php"
       }
     },
     {
       "marca": "Apple",
       "modelo": "iPhone 15",
       "descricao": "",
-      "foto": {
-        "arquivo": "IPhone_15_Vector.svg",
-        "autor": "Rafael Fernandez",
-        "licenca": "CC BY-SA 4.0",
-        "url": "https://commons.wikimedia.org/wiki/File:IPhone_15_Vector.svg",
-        "tipo": "ilustracao"
-      },
+      "foto": null,
       "especificacoes": {
         "nome": "iPhone 15",
         "fabricante": "Apple",
@@ -127,23 +79,8 @@
         "peso": "171 g",
         "espessura": "7,8 mm",
         "cores": "Black, Blue, Green, Yellow, Pink",
-        "creditoImagem": "Foto: Rafael Fernandez · CC BY-SA 4.0 · Wikimedia Commons",
-        "creditoImagemUrl": "https://commons.wikimedia.org/wiki/File:IPhone_15_Vector.svg",
-        "creditos": {
-          "ficha": [
-            {
-              "nome": "GSMArena",
-              "url": "https://www.gsmarena.com/apple_iphone_15-12559.php"
-            }
-          ],
-          "fotos": [
-            {
-              "autor": "Rafael Fernandez",
-              "licenca": "CC BY-SA 4.0",
-              "url": "https://commons.wikimedia.org/wiki/File:IPhone_15_Vector.svg"
-            }
-          ]
-        }
+        "creditoFicha": "Ficha: GSMArena",
+        "creditoFichaUrl": "https://www.gsmarena.com/apple_iphone_15-12559.php"
       }
     },
     {
@@ -171,21 +108,8 @@
         "cores": "Titanium Black, Titanium Gray, Titanium Violet, Titanium Yellow",
         "creditoImagem": "Foto: Dinkun Chen · CC BY-SA 4.0 · Wikimedia Commons",
         "creditoImagemUrl": "https://commons.wikimedia.org/wiki/File:SAMSUNG_Galaxy_S24_Ultra.jpg",
-        "creditos": {
-          "ficha": [
-            {
-              "nome": "GSMArena",
-              "url": "https://www.gsmarena.com/samsung_galaxy_s24_ultra-12771.php"
-            }
-          ],
-          "fotos": [
-            {
-              "autor": "Dinkun Chen",
-              "licenca": "CC BY-SA 4.0",
-              "url": "https://commons.wikimedia.org/wiki/File:SAMSUNG_Galaxy_S24_Ultra.jpg"
-            }
-          ]
-        }
+        "creditoFicha": "Ficha: GSMArena",
+        "creditoFichaUrl": "https://www.gsmarena.com/samsung_galaxy_s24_ultra-12771.php"
       }
     },
     {
@@ -213,21 +137,8 @@
         "cores": "Iceblue, Lilac, Navy, Lemon",
         "creditoImagem": "Foto: Captainmorlypogi1959 · CC BY-SA 4.0 · Wikimedia Commons",
         "creditoImagemUrl": "https://commons.wikimedia.org/wiki/File:Samsung_Galaxy_A55_5G_2024.jpg",
-        "creditos": {
-          "ficha": [
-            {
-              "nome": "GSMArena",
-              "url": "https://www.gsmarena.com/samsung_galaxy_a55-12824.php"
-            }
-          ],
-          "fotos": [
-            {
-              "autor": "Captainmorlypogi1959",
-              "licenca": "CC BY-SA 4.0",
-              "url": "https://commons.wikimedia.org/wiki/File:Samsung_Galaxy_A55_5G_2024.jpg"
-            }
-          ]
-        }
+        "creditoFicha": "Ficha: GSMArena",
+        "creditoFichaUrl": "https://www.gsmarena.com/samsung_galaxy_a55-12824.php"
       }
     },
     {
@@ -255,21 +166,8 @@
         "cores": "Iceblue, Lilac, Navy, Lemon",
         "creditoImagem": "Foto: Captainmorlypogi1959 · CC BY-SA 4.0 · Wikimedia Commons",
         "creditoImagemUrl": "https://commons.wikimedia.org/wiki/File:Samsung_Galaxy_A35_5G_2024_(1).jpg",
-        "creditos": {
-          "ficha": [
-            {
-              "nome": "GSMArena",
-              "url": "https://www.gsmarena.com/samsung_galaxy_a35-12705.php"
-            }
-          ],
-          "fotos": [
-            {
-              "autor": "Captainmorlypogi1959",
-              "licenca": "CC BY-SA 4.0",
-              "url": "https://commons.wikimedia.org/wiki/File:Samsung_Galaxy_A35_5G_2024_(1).jpg"
-            }
-          ]
-        }
+        "creditoFicha": "Ficha: GSMArena",
+        "creditoFichaUrl": "https://www.gsmarena.com/samsung_galaxy_a35-12705.php"
       }
     },
     {
@@ -297,21 +195,8 @@
         "cores": "Nautical Blue, Latte, Grisaille, Poinciana, Mocha Mousse",
         "creditoImagem": "Foto: AdiDusi · CC BY-SA 4.0 · Wikimedia Commons",
         "creditoImagemUrl": "https://commons.wikimedia.org/wiki/File:Motorola_Edge_50_Neo_Front_View_Nautical_Blue.png",
-        "creditos": {
-          "ficha": [
-            {
-              "nome": "GSMArena",
-              "url": "https://www.gsmarena.com/motorola_edge_50_neo-13224.php"
-            }
-          ],
-          "fotos": [
-            {
-              "autor": "AdiDusi",
-              "licenca": "CC BY-SA 4.0",
-              "url": "https://commons.wikimedia.org/wiki/File:Motorola_Edge_50_Neo_Front_View_Nautical_Blue.png"
-            }
-          ]
-        }
+        "creditoFicha": "Ficha: GSMArena",
+        "creditoFichaUrl": "https://www.gsmarena.com/motorola_edge_50_neo-13224.php"
       }
     },
     {
@@ -331,15 +216,8 @@
         "peso": "177 g",
         "espessura": "8 mm",
         "cores": "Midnight Blue, Indigo Blue, Glacier Blue, Mint Green",
-        "creditos": {
-          "ficha": [
-            {
-              "nome": "GSMArena",
-              "url": "https://www.gsmarena.com/motorola_moto_g54-12543.php"
-            }
-          ],
-          "fotos": []
-        }
+        "creditoFicha": "Ficha: GSMArena",
+        "creditoFichaUrl": "https://www.gsmarena.com/motorola_moto_g54-12543.php"
       }
     },
     {
@@ -367,21 +245,8 @@
         "cores": "Lavender Purple, Frost Blue, Midnight Black, Sand Gold",
         "creditoImagem": "Foto: Maksdroider · CC BY-SA 4.0 · Wikimedia Commons",
         "creditoImagemUrl": "https://commons.wikimedia.org/wiki/File:Redmi_Note_14_ProPlus.jpg",
-        "creditos": {
-          "ficha": [
-            {
-              "nome": "GSMArena",
-              "url": "https://www.gsmarena.com/xiaomi_redmi_note_14_pro+_5g_(global)-13612.php"
-            }
-          ],
-          "fotos": [
-            {
-              "autor": "Maksdroider",
-              "licenca": "CC BY-SA 4.0",
-              "url": "https://commons.wikimedia.org/wiki/File:Redmi_Note_14_ProPlus.jpg"
-            }
-          ]
-        }
+        "creditoFicha": "Ficha: GSMArena",
+        "creditoFichaUrl": "https://www.gsmarena.com/xiaomi_redmi_note_14_pro+_5g_(global)-13612.php"
       }
     },
     {
@@ -401,15 +266,8 @@
         "peso": "190 g",
         "espessura": "8,4 mm",
         "cores": "Lavender Purple, Coral Green, Midnight Black",
-        "creditos": {
-          "ficha": [
-            {
-              "nome": "GSMArena",
-              "url": "https://www.gsmarena.com/xiaomi_redmi_note_14_pro_5g_(global)-13613.php"
-            }
-          ],
-          "fotos": []
-        }
+        "creditoFicha": "Ficha: GSMArena",
+        "creditoFichaUrl": "https://www.gsmarena.com/xiaomi_redmi_note_14_pro_5g_(global)-13613.php"
       }
     },
     {
@@ -437,21 +295,8 @@
         "cores": "Obsidian, Hazel, Rose, Mint",
         "creditoImagem": "Foto: IXTA9839 · CC BY-SA 4.0 · Wikimedia Commons",
         "creditoImagemUrl": "https://commons.wikimedia.org/wiki/File:Google_Pixel_8_Rose_front.jpg",
-        "creditos": {
-          "ficha": [
-            {
-              "nome": "GSMArena",
-              "url": "https://www.gsmarena.com/google_pixel_8-12546.php"
-            }
-          ],
-          "fotos": [
-            {
-              "autor": "IXTA9839",
-              "licenca": "CC BY-SA 4.0",
-              "url": "https://commons.wikimedia.org/wiki/File:Google_Pixel_8_Rose_front.jpg"
-            }
-          ]
-        }
+        "creditoFicha": "Ficha: GSMArena",
+        "creditoFichaUrl": "https://www.gsmarena.com/google_pixel_8-12546.php"
       }
     },
     {
@@ -479,21 +324,8 @@
         "cores": "Obsidian, Porcelain, Bay, Aloe",
         "creditoImagem": "Foto: Miyako Fujimiya · CC BY 4.0 · Wikimedia Commons",
         "creditoImagemUrl": "https://commons.wikimedia.org/wiki/File:Pixel_8a.jpg",
-        "creditos": {
-          "ficha": [
-            {
-              "nome": "GSMArena",
-              "url": "https://www.gsmarena.com/google_pixel_8a-12937.php"
-            }
-          ],
-          "fotos": [
-            {
-              "autor": "Miyako Fujimiya",
-              "licenca": "CC BY 4.0",
-              "url": "https://commons.wikimedia.org/wiki/File:Pixel_8a.jpg"
-            }
-          ]
-        }
+        "creditoFicha": "Ficha: GSMArena",
+        "creditoFichaUrl": "https://www.gsmarena.com/google_pixel_8a-12937.php"
       }
     }
   ],
