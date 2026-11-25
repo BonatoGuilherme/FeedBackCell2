@@ -122,4 +122,23 @@ class ServicoTest {
     void readinessUpSemKafka() {
         given().when().get("/q/health/ready").then().statusCode(200).body("status", equalTo("UP"));
     }
+
+    @Test
+    void restInformaOsCreditosGastosNoHeader() {
+        given().queryParam("marca", "Samsung").queryParam("modelo", "Galaxy S24")
+                .when().get("/especificacoes").then().statusCode(200)
+                .header("X-Creditos-Gastos", org.hamcrest.Matchers.not(equalTo("0")));
+        // segunda busca igual vem do cache: nenhum crédito
+        given().queryParam("marca", "Samsung").queryParam("modelo", "Galaxy S24")
+                .when().get("/especificacoes").then().statusCode(200).header("X-Creditos-Gastos", equalTo("0"));
+        given().queryParam("marca", "Samsung").queryParam("modelo", "Galaxy S23").queryParam("somente3d", "1")
+                .when().get("/especificacoes").then().statusCode(200).header("X-Creditos-Gastos", equalTo("0"));
+    }
+
+    @Test
+    void creditosDevolveOSaldoDosTetos() {
+        given().when().get("/especificacoes/creditos").then().statusCode(200)
+                .body("restantesHoje", org.hamcrest.Matchers.lessThanOrEqualTo(15))
+                .body("restantesMes", org.hamcrest.Matchers.lessThanOrEqualTo(50));
+    }
 }
