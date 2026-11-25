@@ -25,13 +25,6 @@ export type Celular = {
   especificacoes: Especificacoes | null;
   /** uid do modelo 3D no Sketchfab. */
   modelo3d: string | null;
-  /** Fontes da ficha técnica e das fotos (campo opcional `creditos` das especificações). */
-  creditos: Creditos | null;
-};
-
-export type Creditos = {
-  ficha: { nome: string; url: string }[];
-  fotos: { autor: string; licenca: string | null; url: string }[];
 };
 
 export const MAX_FOTOS = 10;
@@ -101,29 +94,7 @@ function parseCelular(value: unknown): Celular {
       typeof value.modelo3d === "string" && /^[0-9a-f]{32}$/.test(value.modelo3d)
         ? value.modelo3d
         : null,
-    creditos: isRecord(value.especificacoes) ? parseCreditos(value.especificacoes.creditos) : null,
   };
-}
-
-/** Só links http(s) viram crédito clicável (nada de javascript:). */
-const URL_HTTP = /^https?:\/\//i;
-
-function parseCreditos(value: unknown): Creditos | null {
-  if (!isRecord(value)) return null;
-  const lista = (v: unknown) => (Array.isArray(v) ? v.filter(isRecord) : []);
-  const texto = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
-
-  const ficha = lista(value.ficha).flatMap((item) => {
-    const nome = texto(item.nome);
-    const url = texto(item.url);
-    return nome && url && URL_HTTP.test(url) ? [{ nome, url }] : [];
-  });
-  const fotos = lista(value.fotos).flatMap((item) => {
-    const autor = texto(item.autor);
-    const url = texto(item.url);
-    return autor && url && URL_HTTP.test(url) ? [{ autor, licenca: texto(item.licenca), url }] : [];
-  });
-  return ficha.length > 0 || fotos.length > 0 ? { ficha, fotos } : null;
 }
 
 function parseEspecificacoes(value: unknown): Especificacoes | null {
@@ -255,6 +226,9 @@ export type AparelhoEspecificacoes = {
   /** Crédito e link da foto em alta resolução (a licença exige atribuição). */
   creditoImagem: string | null;
   creditoImagemUrl: string | null;
+  /** Fonte da ficha técnica (ex.: "Ficha: GSMArena") e o link dela, só http(s). */
+  creditoFicha: string | null;
+  creditoFichaUrl: string | null;
   lancamento: string | null;
   tela: string | null;
   hardware: string | null;
@@ -287,7 +261,7 @@ export type ResultadoEspecificacoes = {
 };
 
 const CAMPOS_APARELHO = [
-  "nome", "fabricante", "imagem", "imagemHd", "creditoImagem", "creditoImagemUrl",
+  "nome", "fabricante", "imagem", "imagemHd", "creditoImagem", "creditoImagemUrl", "creditoFicha", "creditoFichaUrl",
   "lancamento", "tela", "hardware", "armazenamento", "camera", "bateria", "peso",
   "espessura", "cores", "precoLancamento", "precoEstimado",
 ] as const;
@@ -307,6 +281,7 @@ function parseAparelho(value: unknown): AparelhoEspecificacoes | null {
   }
   if (aparelho.imagemHd && !URL_IMAGEM_HD.test(aparelho.imagemHd)) aparelho.imagemHd = null;
   if (aparelho.creditoImagemUrl && !URL_CREDITO.test(aparelho.creditoImagemUrl)) aparelho.creditoImagemUrl = null;
+  if (aparelho.creditoFichaUrl && !/^https?:\/\//i.test(aparelho.creditoFichaUrl)) aparelho.creditoFichaUrl = null;
   return aparelho;
 }
 

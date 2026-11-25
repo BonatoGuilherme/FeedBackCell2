@@ -296,41 +296,23 @@ function FaixaAparelhos({ celular, catalogo }: { celular: Celular; catalogo: Cel
   );
 }
 
-/** Linha discreta com as fontes da ficha e das fotos (só aparece se o celular tiver créditos). */
-function CreditosFonte({ creditos }: { creditos: Celular["creditos"] }) {
-  if (!creditos) return null;
-  const externo = { target: "_blank", rel: "noopener noreferrer" } as const;
-  const { ficha, fotos } = creditos;
+/**
+ * Fonte da ficha técnica (campos `creditoFicha`/`creditoFichaUrl` das especificações), em linha
+ * discreta. O crédito da foto (`creditoImagem`) já aparece junto da foto, então não se repete aqui.
+ */
+function CreditosFonte({ especificacoes }: { especificacoes: Celular["especificacoes"] }) {
+  const texto = especificacoes?.creditoFicha;
+  if (!texto) return null;
+  const url = especificacoes?.creditoFichaUrl;
 
   return (
     <p className="phone-detail__meta phone-detail__credits">
-      {ficha.length > 0 && (
-        <span>
-          Ficha:{" "}
-          {ficha.map((f, i) => (
-            <span key={f.url}>
-              {i > 0 && ", "}
-              <a href={f.url} {...externo}>
-                {f.nome}
-              </a>
-            </span>
-          ))}
-        </span>
-      )}
-      {ficha.length > 0 && fotos.length > 0 && " · "}
-      {fotos.length > 0 && (
-        <span>
-          Foto:{" "}
-          {fotos.map((f, i) => (
-            <span key={f.url}>
-              {i > 0 && ", "}
-              <a href={f.url} {...externo}>
-                {f.autor}
-                {f.licenca ? ` (${f.licenca})` : ""}
-              </a>
-            </span>
-          ))}
-        </span>
+      {url ? (
+        <a href={url} target="_blank" rel="noopener noreferrer">
+          {texto}
+        </a>
+      ) : (
+        texto
       )}
     </p>
   );
@@ -384,7 +366,7 @@ function Ficha({
         </section>
       )}
 
-      <CreditosFonte creditos={celular.creditos} />
+      <CreditosFonte especificacoes={celular.especificacoes} />
 
       <MaisAparelhos celular={celular} catalogo={catalogo} />
 

@@ -18,10 +18,10 @@ const celular = {
     nome: "Samsung Galaxy Teste",
     tela: "6,1 polegadas",
     armazenamento: "128 GB",
-    creditos: {
-      ficha: [{ nome: "GSMArena", url: "https://www.gsmarena.com/teste.php" }],
-      fotos: [{ autor: "Fulano", licenca: "CC BY-SA 4.0", url: "https://commons.wikimedia.org/wiki/File:Teste.jpg" }],
-    },
+    creditoImagem: "Foto: Fulano · CC BY-SA 4.0 · Wikimedia Commons",
+    creditoImagemUrl: "https://commons.wikimedia.org/wiki/File:Teste.jpg",
+    creditoFicha: "Ficha: GSMArena",
+    creditoFichaUrl: "https://www.gsmarena.com/teste.php",
   },
 };
 
@@ -87,11 +87,13 @@ test("visitante vê o catálogo e o detalhe com comentários, sem ir ao login", 
   await expect(page.getByText("Ótimo aparelho!")).toBeVisible();
   // créditos aparecem em linha própria e não como linha da tabela de especificações
   const creditos = page.locator(".phone-detail__credits");
-  await expect(creditos).toContainText("Ficha: GSMArena");
-  await expect(creditos).toContainText("Foto: Fulano (CC BY-SA 4.0)");
-  await expect(creditos.getByRole("link", { name: "GSMArena" })).toHaveAttribute("rel", "noopener noreferrer");
-  await expect(creditos.getByRole("link", { name: "GSMArena" })).toHaveAttribute("target", "_blank");
-  await expect(page.locator(".phone-detail__specs")).not.toContainText(/cr[eé]ditos/i);
+  await expect(creditos).toHaveText("Ficha: GSMArena");
+  const link = creditos.getByRole("link", { name: "Ficha: GSMArena" });
+  await expect(link).toHaveAttribute("href", "https://www.gsmarena.com/teste.php");
+  await expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  await expect(link).toHaveAttribute("target", "_blank");
+  // os créditos não viram linha da tabela de especificações
+  await expect(page.locator(".phone-detail__specs")).not.toContainText(/GSMArena|Fulano/);
 });
 
 test("visitante que quer avaliar é levado ao login com next", async ({ page }) => {
