@@ -56,6 +56,7 @@ class ApiTest {
     @MockitoBean ImagemRepositorio imagens;
     @MockitoBean ComentarioRepositorio comentarios;
     @MockitoBean UsuarioRepositorio usuarios;
+    @MockitoBean br.com.feedbackcell.core.dados.UsoBuscaRepositorio usoBusca;
     @MockitoBean EventosCelular eventos;
 
     private String bearer(long id) {
