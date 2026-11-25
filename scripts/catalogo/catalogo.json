@@ -1,0 +1,530 @@
+{
+  "versao": 1,
+  "geradoEm": "2026-11-25",
+  "observacao": "Fichas: GSMArena. Fotos: Wikimedia Commons (licenças livres). Tipo 'ilustracao' = desenho vetorial do aparelho, não fotografia.",
+  "contaExemplo": {
+    "nome": "Avaliação de exemplo"
+  },
+  "apagarAntigos": [
+    {
+      "id": 1,
+      "marca": "Samsung"
+    },
+    {
+      "id": 2,
+      "marca": "Samsung"
+    },
+    {
+      "id": 3,
+      "marca": "Samsung"
+    }
+  ],
+  "celulares": [
+    {
+      "marca": "Apple",
+      "modelo": "iPhone 16 Pro Max",
+      "descricao": "",
+      "foto": {
+        "arquivo": "IPhone_16_Pro_Max_Vector.svg",
+        "autor": "Rafael Fernandez",
+        "licenca": "CC BY-SA 4.0",
+        "url": "https://commons.wikimedia.org/wiki/File:IPhone_16_Pro_Max_Vector.svg",
+        "tipo": "ilustracao"
+      },
+      "especificacoes": {
+        "nome": "iPhone 16 Pro Max",
+        "fabricante": "Apple",
+        "lancamento": "20/09/2024",
+        "tela": "6,9 pol, 1320 x 2868 px, LTPO OLED 120 Hz",
+        "hardware": "Apple A18 Pro (3 nm)",
+        "armazenamento": "256 GB, 512 GB, 1 TB (8 GB de RAM)",
+        "camera": "48 MP + 12 MP (teleobjetiva 5x) + 48 MP (ultra-angular)",
+        "bateria": "4685 mAh",
+        "peso": "227 g",
+        "espessura": "8,3 mm",
+        "cores": "Black Titanium, White Titanium, Natural Titanium, Desert Titanium",
+        "creditoImagem": "Foto: Rafael Fernandez · CC BY-SA 4.0 · Wikimedia Commons",
+        "creditoImagemUrl": "https://commons.wikimedia.org/wiki/File:IPhone_16_Pro_Max_Vector.svg",
+        "creditos": {
+          "ficha": [
+            {
+              "nome": "GSMArena",
+              "url": "https://www.gsmarena.com/apple_iphone_16_pro_max-13123.php"
+            }
+          ],
+          "fotos": [
+            {
+              "autor": "Rafael Fernandez",
+              "licenca": "CC BY-SA 4.0",
+              "url": "https://commons.wikimedia.org/wiki/File:IPhone_16_Pro_Max_Vector.svg"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "marca": "Apple",
+      "modelo": "iPhone 16",
+      "descricao": "",
+      "foto": {
+        "arquivo": "IPhone_16_Vector.svg",
+        "autor": "Rafael Fernandez",
+        "licenca": "CC BY-SA 4.0",
+        "url": "https://commons.wikimedia.org/wiki/File:IPhone_16_Vector.svg",
+        "tipo": "ilustracao"
+      },
+      "especificacoes": {
+        "nome": "iPhone 16",
+        "fabricante": "Apple",
+        "lancamento": "20/09/2024",
+        "tela": "6,1 pol, 1179 x 2556 px, OLED 60 Hz",
+        "hardware": "Apple A18 (3 nm)",
+        "armazenamento": "128 GB, 256 GB, 512 GB (8 GB de RAM)",
+        "camera": "48 MP + 12 MP (ultra-angular)",
+        "bateria": "3561 mAh",
+        "peso": "170 g",
+        "espessura": "7,8 mm",
+        "cores": "Black, White, Pink, Teal, Ultramarine",
+        "creditoImagem": "Foto: Rafael Fernandez · CC BY-SA 4.0 · Wikimedia Commons",
+        "creditoImagemUrl": "https://commons.wikimedia.org/wiki/File:IPhone_16_Vector.svg",
+        "creditos": {
+          "ficha": [
+            {
+              "nome": "GSMArena",
+              "url": "https://www.gsmarena.com/apple_iphone_16-13317.php"
+            }
+          ],
+          "fotos": [
+            {
+              "autor": "Rafael Fernandez",
+              "licenca": "CC BY-SA 4.0",
+              "url": "https://commons.wikimedia.org/wiki/File:IPhone_16_Vector.svg"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "marca": "Apple",
+      "modelo": "iPhone 15",
+      "descricao": "",
+      "foto": {
+        "arquivo": "IPhone_15_Vector.svg",
+        "autor": "Rafael Fernandez",
+        "licenca": "CC BY-SA 4.0",
+        "url": "https://commons.wikimedia.org/wiki/File:IPhone_15_Vector.svg",
+        "tipo": "ilustracao"
+      },
+      "especificacoes": {
+        "nome": "iPhone 15",
+        "fabricante": "Apple",
+        "lancamento": "22/09/2023",
+        "tela": "6,1 pol, 1179 x 2556 px, OLED 60 Hz",
+        "hardware": "Apple A16 Bionic (4 nm)",
+        "armazenamento": "128 GB, 256 GB, 512 GB (6 GB de RAM)",
+        "camera": "48 MP + 12 MP (ultra-angular)",
+        "bateria": "3349 mAh",
+        "peso": "171 g",
+        "espessura": "7,8 mm",
+        "cores": "Black, Blue, Green, Yellow, Pink",
+        "creditoImagem": "Foto: Rafael Fernandez · CC BY-SA 4.0 · Wikimedia Commons",
+        "creditoImagemUrl": "https://commons.wikimedia.org/wiki/File:IPhone_15_Vector.svg",
+        "creditos": {
+          "ficha": [
+            {
+              "nome": "GSMArena",
+              "url": "https://www.gsmarena.com/apple_iphone_15-12559.php"
+            }
+          ],
+          "fotos": [
+            {
+              "autor": "Rafael Fernandez",
+              "licenca": "CC BY-SA 4.0",
+              "url": "https://commons.wikimedia.org/wiki/File:IPhone_15_Vector.svg"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "marca": "Samsung",
+      "modelo": "Galaxy S24 Ultra",
+      "descricao": "",
+      "foto": {
+        "arquivo": "SAMSUNG_Galaxy_S24_Ultra.jpg",
+        "autor": "Dinkun Chen",
+        "licenca": "CC BY-SA 4.0",
+        "url": "https://commons.wikimedia.org/wiki/File:SAMSUNG_Galaxy_S24_Ultra.jpg",
+        "tipo": "foto"
+      },
+      "especificacoes": {
+        "nome": "Galaxy S24 Ultra",
+        "fabricante": "Samsung",
+        "lancamento": "24/01/2024",
+        "tela": "6,8 pol, 1440 x 3120 px, LTPO AMOLED 120 Hz",
+        "hardware": "Snapdragon 8 Gen 3 (4 nm)",
+        "armazenamento": "256 GB, 512 GB, 1 TB (12 GB de RAM)",
+        "camera": "200 MP + 50 MP (periscópio 5x) + 10 MP (teleobjetiva 3x) + 12 MP (ultra-angular)",
+        "bateria": "5000 mAh",
+        "peso": "232 g",
+        "espessura": "8,6 mm",
+        "cores": "Titanium Black, Titanium Gray, Titanium Violet, Titanium Yellow",
+        "creditoImagem": "Foto: Dinkun Chen · CC BY-SA 4.0 · Wikimedia Commons",
+        "creditoImagemUrl": "https://commons.wikimedia.org/wiki/File:SAMSUNG_Galaxy_S24_Ultra.jpg",
+        "creditos": {
+          "ficha": [
+            {
+              "nome": "GSMArena",
+              "url": "https://www.gsmarena.com/samsung_galaxy_s24_ultra-12771.php"
+            }
+          ],
+          "fotos": [
+            {
+              "autor": "Dinkun Chen",
+              "licenca": "CC BY-SA 4.0",
+              "url": "https://commons.wikimedia.org/wiki/File:SAMSUNG_Galaxy_S24_Ultra.jpg"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "marca": "Samsung",
+      "modelo": "Galaxy A55 5G",
+      "descricao": "",
+      "foto": {
+        "arquivo": "Samsung_Galaxy_A55_5G_2024.jpg",
+        "autor": "Captainmorlypogi1959",
+        "licenca": "CC BY-SA 4.0",
+        "url": "https://commons.wikimedia.org/wiki/File:Samsung_Galaxy_A55_5G_2024.jpg",
+        "tipo": "foto"
+      },
+      "especificacoes": {
+        "nome": "Galaxy A55 5G",
+        "fabricante": "Samsung",
+        "lancamento": "15/03/2024",
+        "tela": "6,6 pol, 1080 x 2340 px, Super AMOLED 120 Hz",
+        "hardware": "Exynos 1480 (4 nm)",
+        "armazenamento": "128 GB, 256 GB (6 a 12 GB de RAM)",
+        "camera": "50 MP + 12 MP (ultra-angular) + 5 MP (macro)",
+        "bateria": "5000 mAh",
+        "peso": "213 g",
+        "espessura": "8,2 mm",
+        "cores": "Iceblue, Lilac, Navy, Lemon",
+        "creditoImagem": "Foto: Captainmorlypogi1959 · CC BY-SA 4.0 · Wikimedia Commons",
+        "creditoImagemUrl": "https://commons.wikimedia.org/wiki/File:Samsung_Galaxy_A55_5G_2024.jpg",
+        "creditos": {
+          "ficha": [
+            {
+              "nome": "GSMArena",
+              "url": "https://www.gsmarena.com/samsung_galaxy_a55-12824.php"
+            }
+          ],
+          "fotos": [
+            {
+              "autor": "Captainmorlypogi1959",
+              "licenca": "CC BY-SA 4.0",
+              "url": "https://commons.wikimedia.org/wiki/File:Samsung_Galaxy_A55_5G_2024.jpg"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "marca": "Samsung",
+      "modelo": "Galaxy A35 5G",
+      "descricao": "",
+      "foto": {
+        "arquivo": "Samsung_Galaxy_A35_5G_2024_(1).jpg",
+        "autor": "Captainmorlypogi1959",
+        "licenca": "CC BY-SA 4.0",
+        "url": "https://commons.wikimedia.org/wiki/File:Samsung_Galaxy_A35_5G_2024_(1).jpg",
+        "tipo": "foto"
+      },
+      "especificacoes": {
+        "nome": "Galaxy A35 5G",
+        "fabricante": "Samsung",
+        "lancamento": "15/03/2024",
+        "tela": "6,6 pol, 1080 x 2340 px, Super AMOLED 120 Hz",
+        "hardware": "Exynos 1380 (5 nm)",
+        "armazenamento": "128 GB, 256 GB (4 a 12 GB de RAM)",
+        "camera": "50 MP + 8 MP (ultra-angular) + 5 MP (macro)",
+        "bateria": "5000 mAh",
+        "peso": "209 g",
+        "espessura": "8,2 mm",
+        "cores": "Iceblue, Lilac, Navy, Lemon",
+        "creditoImagem": "Foto: Captainmorlypogi1959 · CC BY-SA 4.0 · Wikimedia Commons",
+        "creditoImagemUrl": "https://commons.wikimedia.org/wiki/File:Samsung_Galaxy_A35_5G_2024_(1).jpg",
+        "creditos": {
+          "ficha": [
+            {
+              "nome": "GSMArena",
+              "url": "https://www.gsmarena.com/samsung_galaxy_a35-12705.php"
+            }
+          ],
+          "fotos": [
+            {
+              "autor": "Captainmorlypogi1959",
+              "licenca": "CC BY-SA 4.0",
+              "url": "https://commons.wikimedia.org/wiki/File:Samsung_Galaxy_A35_5G_2024_(1).jpg"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "marca": "Motorola",
+      "modelo": "Edge 50 Neo",
+      "descricao": "",
+      "foto": {
+        "arquivo": "Motorola_Edge_50_Neo_Front_View_Nautical_Blue.png",
+        "autor": "AdiDusi",
+        "licenca": "CC BY-SA 4.0",
+        "url": "https://commons.wikimedia.org/wiki/File:Motorola_Edge_50_Neo_Front_View_Nautical_Blue.png",
+        "tipo": "foto"
+      },
+      "especificacoes": {
+        "nome": "Edge 50 Neo",
+        "fabricante": "Motorola",
+        "lancamento": "29/08/2024",
+        "tela": "6,4 pol, 1200 x 2670 px, pOLED 120 Hz",
+        "hardware": "MediaTek Dimensity 7300 (4 nm)",
+        "armazenamento": "256 GB, 512 GB (8 a 12 GB de RAM)",
+        "camera": "50 MP + 10 MP (teleobjetiva 3x) + 13 MP (ultra-angular)",
+        "bateria": "4310 mAh",
+        "peso": "171 g",
+        "espessura": "8,1 mm",
+        "cores": "Nautical Blue, Latte, Grisaille, Poinciana, Mocha Mousse",
+        "creditoImagem": "Foto: AdiDusi · CC BY-SA 4.0 · Wikimedia Commons",
+        "creditoImagemUrl": "https://commons.wikimedia.org/wiki/File:Motorola_Edge_50_Neo_Front_View_Nautical_Blue.png",
+        "creditos": {
+          "ficha": [
+            {
+              "nome": "GSMArena",
+              "url": "https://www.gsmarena.com/motorola_edge_50_neo-13224.php"
+            }
+          ],
+          "fotos": [
+            {
+              "autor": "AdiDusi",
+              "licenca": "CC BY-SA 4.0",
+              "url": "https://commons.wikimedia.org/wiki/File:Motorola_Edge_50_Neo_Front_View_Nautical_Blue.png"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "marca": "Motorola",
+      "modelo": "Moto G54 5G",
+      "descricao": "",
+      "foto": null,
+      "especificacoes": {
+        "nome": "Moto G54 5G",
+        "fabricante": "Motorola",
+        "lancamento": "05/09/2023",
+        "tela": "6,5 pol, 1080 x 2400 px, IPS LCD 120 Hz",
+        "hardware": "MediaTek Dimensity 7020 (6 nm)",
+        "armazenamento": "128 GB, 256 GB (4 a 12 GB de RAM)",
+        "camera": "50 MP + 2 MP (macro)",
+        "bateria": "5000 mAh",
+        "peso": "177 g",
+        "espessura": "8 mm",
+        "cores": "Midnight Blue, Indigo Blue, Glacier Blue, Mint Green",
+        "creditos": {
+          "ficha": [
+            {
+              "nome": "GSMArena",
+              "url": "https://www.gsmarena.com/motorola_moto_g54-12543.php"
+            }
+          ],
+          "fotos": []
+        }
+      }
+    },
+    {
+      "marca": "Xiaomi",
+      "modelo": "Redmi Note 14 Pro+ 5G",
+      "descricao": "",
+      "foto": {
+        "arquivo": "Redmi_Note_14_ProPlus.jpg",
+        "autor": "Maksdroider",
+        "licenca": "CC BY-SA 4.0",
+        "url": "https://commons.wikimedia.org/wiki/File:Redmi_Note_14_ProPlus.jpg",
+        "tipo": "foto"
+      },
+      "especificacoes": {
+        "nome": "Redmi Note 14 Pro+ 5G",
+        "fabricante": "Xiaomi",
+        "lancamento": "15/01/2025",
+        "tela": "6,67 pol, 1220 x 2712 px, AMOLED 120 Hz",
+        "hardware": "Snapdragon 7s Gen 3 (4 nm)",
+        "armazenamento": "256 GB, 512 GB (8 a 16 GB de RAM)",
+        "camera": "200 MP + 8 MP (ultra-angular) + 2 MP (macro)",
+        "bateria": "5110 mAh",
+        "peso": "205 g",
+        "espessura": "8,8 mm",
+        "cores": "Lavender Purple, Frost Blue, Midnight Black, Sand Gold",
+        "creditoImagem": "Foto: Maksdroider · CC BY-SA 4.0 · Wikimedia Commons",
+        "creditoImagemUrl": "https://commons.wikimedia.org/wiki/File:Redmi_Note_14_ProPlus.jpg",
+        "creditos": {
+          "ficha": [
+            {
+              "nome": "GSMArena",
+              "url": "https://www.gsmarena.com/xiaomi_redmi_note_14_pro+_5g_(global)-13612.php"
+            }
+          ],
+          "fotos": [
+            {
+              "autor": "Maksdroider",
+              "licenca": "CC BY-SA 4.0",
+              "url": "https://commons.wikimedia.org/wiki/File:Redmi_Note_14_ProPlus.jpg"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "marca": "Xiaomi",
+      "modelo": "Redmi Note 14 Pro 5G",
+      "descricao": "",
+      "foto": null,
+      "especificacoes": {
+        "nome": "Redmi Note 14 Pro 5G",
+        "fabricante": "Xiaomi",
+        "lancamento": "15/01/2025",
+        "tela": "6,67 pol, 1220 x 2712 px, AMOLED 120 Hz",
+        "hardware": "MediaTek Dimensity 7300 Ultra (4 nm)",
+        "armazenamento": "256 GB, 512 GB (8 a 12 GB de RAM)",
+        "camera": "200 MP + 8 MP (ultra-angular) + 2 MP (macro)",
+        "bateria": "5110 mAh",
+        "peso": "190 g",
+        "espessura": "8,4 mm",
+        "cores": "Lavender Purple, Coral Green, Midnight Black",
+        "creditos": {
+          "ficha": [
+            {
+              "nome": "GSMArena",
+              "url": "https://www.gsmarena.com/xiaomi_redmi_note_14_pro_5g_(global)-13613.php"
+            }
+          ],
+          "fotos": []
+        }
+      }
+    },
+    {
+      "marca": "Google",
+      "modelo": "Pixel 8",
+      "descricao": "",
+      "foto": {
+        "arquivo": "Google_Pixel_8_Rose_front.jpg",
+        "autor": "IXTA9839",
+        "licenca": "CC BY-SA 4.0",
+        "url": "https://commons.wikimedia.org/wiki/File:Google_Pixel_8_Rose_front.jpg",
+        "tipo": "foto"
+      },
+      "especificacoes": {
+        "nome": "Pixel 8",
+        "fabricante": "Google",
+        "lancamento": "12/10/2023",
+        "tela": "6,2 pol, 1080 x 2400 px, OLED 120 Hz",
+        "hardware": "Google Tensor G3",
+        "armazenamento": "128 GB, 256 GB (8 GB de RAM)",
+        "camera": "50 MP + 12 MP (ultra-angular)",
+        "bateria": "4575 mAh",
+        "peso": "187 g",
+        "espessura": "8,9 mm",
+        "cores": "Obsidian, Hazel, Rose, Mint",
+        "creditoImagem": "Foto: IXTA9839 · CC BY-SA 4.0 · Wikimedia Commons",
+        "creditoImagemUrl": "https://commons.wikimedia.org/wiki/File:Google_Pixel_8_Rose_front.jpg",
+        "creditos": {
+          "ficha": [
+            {
+              "nome": "GSMArena",
+              "url": "https://www.gsmarena.com/google_pixel_8-12546.php"
+            }
+          ],
+          "fotos": [
+            {
+              "autor": "IXTA9839",
+              "licenca": "CC BY-SA 4.0",
+              "url": "https://commons.wikimedia.org/wiki/File:Google_Pixel_8_Rose_front.jpg"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "marca": "Google",
+      "modelo": "Pixel 8a",
+      "descricao": "",
+      "foto": {
+        "arquivo": "Pixel_8a.jpg",
+        "autor": "Miyako Fujimiya",
+        "licenca": "CC BY 4.0",
+        "url": "https://commons.wikimedia.org/wiki/File:Pixel_8a.jpg",
+        "tipo": "foto"
+      },
+      "especificacoes": {
+        "nome": "Pixel 8a",
+        "fabricante": "Google",
+        "lancamento": "14/05/2024",
+        "tela": "6,1 pol, 1080 x 2400 px, OLED 120 Hz",
+        "hardware": "Google Tensor G3",
+        "armazenamento": "128 GB, 256 GB (8 GB de RAM)",
+        "camera": "64 MP + 13 MP (ultra-angular)",
+        "bateria": "4492 mAh",
+        "peso": "188 g",
+        "espessura": "8,9 mm",
+        "cores": "Obsidian, Porcelain, Bay, Aloe",
+        "creditoImagem": "Foto: Miyako Fujimiya · CC BY 4.0 · Wikimedia Commons",
+        "creditoImagemUrl": "https://commons.wikimedia.org/wiki/File:Pixel_8a.jpg",
+        "creditos": {
+          "ficha": [
+            {
+              "nome": "GSMArena",
+              "url": "https://www.gsmarena.com/google_pixel_8a-12937.php"
+            }
+          ],
+          "fotos": [
+            {
+              "autor": "Miyako Fujimiya",
+              "licenca": "CC BY 4.0",
+              "url": "https://commons.wikimedia.org/wiki/File:Pixel_8a.jpg"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "avaliacoes": [
+    {
+      "marca": "Samsung",
+      "modelo": "Galaxy S24 Ultra",
+      "nota": 5,
+      "fonte": "https://www.gsmarena.com/samsung_galaxy_s24_ultra-review-2670p7.php",
+      "texto": "Segundo a análise do GSMArena, o S24 Ultra é um dos Androids com maior autonomia de bateria e o sistema de câmeras é, na maior parte, motivo de satisfação, com o novo zoom telefoto. Como pontos fracos, citam a recarga de 45 W, que não é rápida, e algumas peculiaridades no zoom. A conclusão: o pacote mais completo da Samsung, fácil de recomendar."
+    },
+    {
+      "marca": "Apple",
+      "modelo": "iPhone 16 Pro Max",
+      "nota": 5,
+      "fonte": "https://www.gsmarena.com/apple_iphone_16_pro_max-review-2750p6.php",
+      "texto": "Segundo a análise do GSMArena, o iPhone 16 Pro Max tem acabamento líder da categoria, tela excelente, desempenho de topo e algumas das melhores câmeras do mercado. Nos testes de laboratório a bateria rendeu 17 h 18 min de uso ativo e a recarga chega a cerca de 30 W. Quem já tem o 15 Pro Max provavelmente não precisa trocar."
+    },
+    {
+      "marca": "Google",
+      "modelo": "Pixel 8a",
+      "nota": 4,
+      "fonte": "https://www.gsmarena.com/google_pixel_8a-review-2705p6.php",
+      "texto": "Segundo a análise do GSMArena, o Pixel 8a é um compacto excelente: tela OLED ótima, chip potente, boa bateria e câmera à altura do nome Pixel. Os pontos negativos são as bordas grossas, a recarga lenta e o forte aquecimento sob carga. O site também criticou o preço de lançamento, muito próximo ao do Pixel 8, que seria a melhor compra."
+    },
+    {
+      "marca": "Xiaomi",
+      "modelo": "Redmi Note 14 Pro+ 5G",
+      "nota": 3,
+      "fonte": "https://www.gsmarena.com/xiaomi_redmi_note_14_pro_plus-review-2788p6.php",
+      "texto": "Segundo a análise do GSMArena, o Redmi Note 14 Pro+ tem boa construção, tela muito bonita, desempenho sólido com ótima estabilidade térmica e recarga muito rápida. Em contrapartida, a bateria e a qualidade das fotos não melhoraram em relação ao modelo anterior, e há concorrentes na mesma faixa de preço com chip melhor e mais autonomia."
+    }
+  ]
+}
