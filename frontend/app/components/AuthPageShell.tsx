@@ -3,10 +3,12 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Camera, Cpu, MessageSquareText } from "lucide-react";
 
 import { PhoneOrbit } from "@/components/ui/phone-orbit";
 import DemoNotice from "./DemoNotice";
+import { caminhoSeguro } from "@/src/lib/rotas";
 
 type AuthPageShellProps = {
   children: ReactNode;
@@ -28,6 +30,9 @@ const switchLinks = {
 
 export default function AuthPageShell({ children, mode, title, subtitle }: AuthPageShellProps) {
   const swap = switchLinks[mode];
+  // quem veio de uma ação que exige conta volta para ela depois de entrar ou criar a conta
+  const next = caminhoSeguro(useSearchParams().get("next"));
+  const swapHref = next ? `${swap.href}?next=${encodeURIComponent(next)}` : swap.href;
 
   return (
     <div className="auth-shell">
@@ -35,7 +40,7 @@ export default function AuthPageShell({ children, mode, title, subtitle }: AuthP
       <section className="auth-shell__form" aria-labelledby="auth-title">
         <div className="auth-shell__body">
           <div className="w-full max-w-[380px]">
-            <Link href="/login" className="auth-logo" aria-label="FeedBackCELL, página de entrada">
+            <Link href="/" className="auth-logo" aria-label="FeedBackCELL, início">
               <span className="auth-logo__mark">
                 <Image src="/brand-mark.svg" alt="" width={32} height={32} unoptimized priority />
               </span>
@@ -58,7 +63,7 @@ export default function AuthPageShell({ children, mode, title, subtitle }: AuthP
             <p className="mt-8 border-t border-line pt-6 text-center text-label text-muted">
               {swap.question}{" "}
               <Link
-                href={swap.href}
+                href={swapHref}
                 className="rounded-sm font-medium text-accent underline-offset-4 hover:text-accent-hover hover:underline"
               >
                 {swap.label}

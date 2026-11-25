@@ -1,6 +1,7 @@
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { apiFetch } from "@/src/lib/http";
+import { caminhoSeguro } from "@/src/lib/rotas";
 
 export default function useRegister() {
   const [nome, setNome] = useState("");
@@ -14,6 +15,7 @@ export default function useRegister() {
     senha: false,
   });
   const router = useRouter();
+  const next = caminhoSeguro(useSearchParams().get("next"));
 
   const validateField = (field: string, value: string) => {
     let isValid = false;
@@ -50,7 +52,7 @@ export default function useRegister() {
         body: { nome, email, senha },
       });
 
-      router.push("/login?success=true");
+      router.push(next ? `/login?success=true&next=${encodeURIComponent(next)}` : "/login?success=true");
     } catch (err: unknown) {
       setErro(err instanceof Error ? err.message : "Erro inesperado");
     } finally {

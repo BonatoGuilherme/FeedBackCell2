@@ -9,6 +9,8 @@
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import { ArrowRight, Box, Camera, Cpu, Plus } from "lucide-react";
+import { useHasSession } from "@/src/lib/useSession";
+import { hrefProtegido } from "@/src/lib/rotas";
 import { PhoneOrbit } from "@/components/ui/phone-orbit";
 
 
@@ -22,6 +24,7 @@ const chips = [
 
 export default function HomeHero() {
   const reduce = useReducedMotion();
+  const logado = useHasSession();
   const rise = (delay: number) =>
     reduce
       ? { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.3 } }
@@ -45,11 +48,11 @@ export default function HomeHero() {
           resolução e o modelo 3D. Depois, quem usa o aparelho conta o que achou.
         </motion.p>
         <motion.div className="hero__actions" {...rise(0.4)}>
-          <Link className="button button--primary hero__cta" href="/catalog">
+          <Link className="button button--primary hero__cta" href="/catalogo">
             Ver o catálogo
             <ArrowRight size={17} strokeWidth={1.8} aria-hidden />
           </Link>
-          <Link className="button button--secondary hero__cta" href="/items/new">
+          <Link className="button button--secondary hero__cta" href={hrefProtegido("/items/new", logado)}>
             <Plus size={17} strokeWidth={1.8} aria-hidden />
             Adicionar celular
           </Link>

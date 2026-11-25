@@ -117,7 +117,7 @@ export default function NewPhoneForm() {
         return;
       }
 
-      router.push("/catalog");
+      router.push("/catalogo");
       router.refresh();
     } catch (error: unknown) {
       setErro(
@@ -146,7 +146,7 @@ export default function NewPhoneForm() {
     <div className="page-shell new-phone-page">
       <header className="page-heading">
         <div>
-          <Link className="back-link" href="/catalog">
+          <Link className="back-link" href="/catalogo">
             <AppIcon name="chevron-left" size={16} />
             Voltar ao catálogo
           </Link>
@@ -306,7 +306,7 @@ export default function NewPhoneForm() {
             <div className="phone-form__buttons">
               <Link
                 className="button button--secondary"
-                href="/catalog"
+                href="/catalogo"
                 aria-disabled={loading || undefined}
                 tabIndex={loading ? -1 : undefined}
               >

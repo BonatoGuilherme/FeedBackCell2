@@ -1,12 +1,13 @@
 "use client";
 
+import { Suspense } from "react";
 import { Loader2, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AuthPageShell from "../components/AuthPageShell";
 import { AuthField, FormAlert } from "../components/AuthField";
 import { useLogin } from "./useLogin";
 
-export default function LoginPage() {
+function LoginForm() {
   const { email, setEmail, senha, setSenha, erro, loading, emailError, validateEmail, handleLogin } =
     useLogin();
 
@@ -49,5 +50,14 @@ export default function LoginPage() {
         </Button>
       </form>
     </AuthPageShell>
+  );
+}
+
+// useSearchParams (parâmetro `next`) exige Suspense na página estática
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

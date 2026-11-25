@@ -1,38 +1,35 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect } from "react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import Navigation from "./Navigation";
-import {
-  getServerSessionSnapshot,
-  getSessionSnapshot,
-  subscribeToSession,
-} from "@/src/lib/session";
+import { useHasSession } from "@/src/lib/useSession";
+import { hrefLogin } from "@/src/lib/rotas";
 
-const publicPaths = ["/login", "/register"];
+// telas de entrada: sem menu
+const authPaths = ["/login", "/register"];
+// o resto do site é aberto a visitantes; só estas rotas exigem conta
+const protectedPrefixes = ["/items"];
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const isPublicPage = publicPaths.includes(pathname);
-  const hasSession = useSyncExternalStore(
-    subscribeToSession,
-    getSessionSnapshot,
-    getServerSessionSnapshot,
-  );
+  const isAuthPage = authPaths.includes(pathname);
+  const needsSession = protectedPrefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  const hasSession = useHasSession();
 
   useEffect(() => {
-    if (!isPublicPage && hasSession === false) {
-      router.replace("/login");
+    if (needsSession && hasSession === false) {
+      router.replace(hrefLogin(pathname));
     }
-  }, [hasSession, isPublicPage, pathname, router]);
+  }, [hasSession, needsSession, pathname, router]);
 
-  if (isPublicPage) {
+  if (isAuthPage) {
     return <main>{children}</main>;
   }
 
-  if (hasSession !== true) {
+  if (needsSession && hasSession !== true) {
     return (
       <main className="app-loading-screen">
         <div className="app-loading-screen__card" role="status" aria-live="polite">
