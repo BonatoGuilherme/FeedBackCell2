@@ -15,10 +15,12 @@ const nextConfig: NextConfig = {
   async redirects() {
     const comId = [{ type: "query" as const, key: "celular", value: "(?<id>[1-9][0-9]{0,9})" }];
     return [
-      { source: "/celulares/:id", destination: "/catalog/:id", permanent: false },
-      { source: "/comments", has: comId, destination: "/catalog/:id#comentarios", permanent: false },
-      { source: "/comments", destination: "/catalog", permanent: false },
-      { source: "/catalog", has: comId, destination: "/catalog/:id", permanent: false },
+      { source: "/celulares/:id", destination: "/catalogo/:id", permanent: false },
+      { source: "/comments", has: comId, destination: "/catalogo/:id#comentarios", permanent: false },
+      { source: "/comments", destination: "/catalogo", permanent: false },
+      // rota antiga do catálogo (renomeada para /catalogo)
+      { source: "/catalog", has: comId, destination: "/catalogo/:id", permanent: false },
+      { source: "/catalog/:path*", destination: "/catalogo/:path*", permanent: false },
     ];
   },
 };

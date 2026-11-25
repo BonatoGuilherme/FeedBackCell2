@@ -4,7 +4,7 @@
  * Prateleira de celulares — adaptada do "Product Shelf" de Aakash Mehra.
  * Cada fileira mostra os aparelhos (a foto do aparelho; sem foto, um celular
  * desenhado), a marca, o modelo e a nota média. Clicar abre a página do
- * aparelho (/catalog/ID), com fotos, especificações e avaliações.
+ * aparelho (/catalogo/ID), com fotos, especificações e avaliações.
  */
 
 import { useEffect, useRef, useState, type RefObject } from "react";
@@ -108,7 +108,7 @@ export function PhoneShelf({ celulares, className }: PhoneShelfProps) {
                     className="pointer-events-none absolute -bottom-3 left-1/2 h-5 w-[min(100%,150px)] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgba(201,151,63,0.35),transparent)]"
                   />
                   <Link
-                    href={`/catalog/${c.idcelular}`}
+                    href={`/catalogo/${c.idcelular}`}
                     aria-label={rotuloAcessivel(c)}
                     className="relative block aspect-[1/2] w-full max-w-[130px] cursor-pointer rounded-[22%/11%] outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-4"
                   >
@@ -149,7 +149,7 @@ export function PhoneShelf({ celulares, className }: PhoneShelfProps) {
 export function PhoneMiniCard({ celular }: { celular: Celular }) {
   return (
     <Link
-      href={`/catalog/${celular.idcelular}`}
+      href={`/catalogo/${celular.idcelular}`}
       aria-label={rotuloAcessivel(celular)}
       className="group flex flex-col items-center gap-3 rounded-[18px] border border-line bg-surface-soft px-3 py-4 outline-none transition-colors hover:border-line-strong focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
     >
