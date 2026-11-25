@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Página de um celular (/catalog/ID): no topo, o carrossel orbital com os
+ * Página de um celular (/catalogo/ID): no topo, o carrossel orbital com os
  * aparelhos do catálogo; embaixo, as especificações completas, a faixa com
  * outros aparelhos da marca e as avaliações da comunidade.
  *
@@ -112,7 +112,7 @@ export default function PhoneDetail() {
   const ir = useCallback(
     (para: number) => {
       const destino = itens?.[para];
-      if (destino) window.history.pushState(null, "", `/catalog/${destino.idcelular}`);
+      if (destino) window.history.pushState(null, "", `/catalogo/${destino.idcelular}`);
     },
     [itens],
   );
@@ -136,7 +136,7 @@ export default function PhoneDetail() {
   return (
     <div className="page-shell phone-page">
       <div className="phone-page__top">
-        <Link className="back-link" href="/catalog">
+        <Link className="back-link" href="/catalogo">
           <ArrowLeft size={15} strokeWidth={1.8} aria-hidden="true" />
           Catálogo
         </Link>
@@ -149,7 +149,7 @@ export default function PhoneDetail() {
           </span>
           <h1>Celular não encontrado</h1>
           <p>Ele pode ter sido removido. Procure outro aparelho no catálogo.</p>
-          <Link className="button button--primary" href="/catalog">
+          <Link className="button button--primary" href="/catalogo">
             Ir para o catálogo
           </Link>
         </div>
@@ -296,6 +296,46 @@ function FaixaAparelhos({ celular, catalogo }: { celular: Celular; catalogo: Cel
   );
 }
 
+/** Linha discreta com as fontes da ficha e das fotos (só aparece se o celular tiver créditos). */
+function CreditosFonte({ creditos }: { creditos: Celular["creditos"] }) {
+  if (!creditos) return null;
+  const externo = { target: "_blank", rel: "noopener noreferrer" } as const;
+  const { ficha, fotos } = creditos;
+
+  return (
+    <p className="phone-detail__meta phone-detail__credits">
+      {ficha.length > 0 && (
+        <span>
+          Ficha:{" "}
+          {ficha.map((f, i) => (
+            <span key={f.url}>
+              {i > 0 && ", "}
+              <a href={f.url} {...externo}>
+                {f.nome}
+              </a>
+            </span>
+          ))}
+        </span>
+      )}
+      {ficha.length > 0 && fotos.length > 0 && " · "}
+      {fotos.length > 0 && (
+        <span>
+          Foto:{" "}
+          {fotos.map((f, i) => (
+            <span key={f.url}>
+              {i > 0 && ", "}
+              <a href={f.url} {...externo}>
+                {f.autor}
+                {f.licenca ? ` (${f.licenca})` : ""}
+              </a>
+            </span>
+          ))}
+        </span>
+      )}
+    </p>
+  );
+}
+
 /** O que fica abaixo do carrossel: especificações completas, outros aparelhos e avaliações. */
 function Ficha({
   celular,
@@ -343,6 +383,8 @@ function Ficha({
           )}
         </section>
       )}
+
+      <CreditosFonte creditos={celular.creditos} />
 
       <MaisAparelhos celular={celular} catalogo={catalogo} />
 
