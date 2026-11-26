@@ -153,8 +153,15 @@ class LimiteBuscaEspecificacoesTest {
     void segundaBuscaEmParaleloDoMesmoUsuarioEhBarrada() {
         LimiteBuscaEspecificacoes limite = limite(1);
         LimiteBuscaEspecificacoes.Reserva primeira = limite.iniciar(COMUM);
-        assertThatThrownBy(() -> limite.iniciar(COMUM)).isInstanceOf(ErroApi.class);
+        assertThatThrownBy(() -> limite.iniciar(COMUM)).isInstanceOfSatisfying(ErroApi.class, e -> {
+            assertThat(e.status()).isEqualTo(429);
+            assertThat(e.corpo()).containsExactlyEntriesOf(
+                    java.util.Map.of("erro", LimiteBuscaEspecificacoes.MENSAGEM_EM_ANDAMENTO));
+        });
         limite.concluir(primeira, 3);
+        // terminou e gastou: agora sim é "já usou a busca de hoje"
+        assertThatThrownBy(() -> limite.iniciar(COMUM)).isInstanceOfSatisfying(ErroApi.class,
+                e -> assertThat(e.corpo().get("erro")).isEqualTo(LimiteBuscaEspecificacoes.MENSAGEM));
     }
 
     @Test

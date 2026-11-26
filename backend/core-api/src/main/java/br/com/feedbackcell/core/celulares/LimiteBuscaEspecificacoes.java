@@ -34,6 +34,8 @@ public class LimiteBuscaEspecificacoes {
     static final ZoneId FUSO = ZoneId.of("America/Sao_Paulo");
     static final String MENSAGEM = "Você já usou sua busca automática de hoje. Ela volta amanhã; "
             + "enquanto isso, dá para preencher a ficha do celular à mão.";
+    /** Outra busca do mesmo usuário ainda não terminou (o front cancela a anterior, mas o core segue nela). */
+    static final String MENSAGEM_EM_ANDAMENTO = "Já tem uma busca sua em andamento; tente de novo em instantes.";
     static final String MENSAGEM_TETO_DIA = "A busca automática atingiu o limite de créditos de hoje. Ela volta "
             + "amanhã; enquanto isso, dá para preencher a ficha do celular à mão.";
     static final String MENSAGEM_TETO_MES = "A busca automática atingiu o limite de créditos do mês (plano gratuito "
@@ -131,7 +133,7 @@ public class LimiteBuscaEspecificacoes {
         if (semLimiteDoUsuario(id)) return new Reserva(id, false);
         // Reserva a vez ANTES de ler a contagem: lendo antes, uma busca paralela podia ler 0, a primeira
         // terminar (contar e liberar a vez) e a paralela pegar a vez com a contagem velha.
-        if (!emAndamento.add(id)) throw ErroApi.de(429, MENSAGEM);
+        if (!emAndamento.add(id)) throw ErroApi.de(429, MENSAGEM_EM_ANDAMENTO);
         boolean liberada = false;
         try {
             liberada = uso.buscasNoDia(id, hojeSaoPaulo()) < porDia;
