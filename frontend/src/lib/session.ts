@@ -2,6 +2,26 @@ const SESSION_EVENT = "feedbackcell-session-change";
 const MAX_TIMEOUT = 2_147_483_647;
 
 const TOKEN_KEY = "token";
+// marca (na aba) que a sessão acabou por expiração ou 401, para o login avisar "sua sessão expirou"
+const EXPIRED_KEY = "feedbackcell-sessao-expirada";
+
+function marcarExpirada(expirou: boolean): void {
+  try {
+    if (expirou) window.sessionStorage.setItem(EXPIRED_KEY, "1");
+    else window.sessionStorage.removeItem(EXPIRED_KEY);
+  } catch {
+    // armazenamento bloqueado: o login só não mostra o aviso
+  }
+}
+
+/** A última sessão terminou por expiração ou 401 (e não por logout). */
+export function sessaoExpirou(): boolean {
+  try {
+    return window.sessionStorage.getItem(EXPIRED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
 
 function decodeTokenPayload(token: string): Record<string, unknown> | null {
   const parts = token.split(".");
@@ -61,11 +81,16 @@ export function getToken(): string | null {
 
 export function saveToken(token: string): void {
   window.localStorage.setItem(TOKEN_KEY, token);
+  marcarExpirada(false);
   notifySessionChange();
 }
 
-/** Sai da conta (logout ou 401 da API): remove o token e avisa o AuthLayout. */
-export function expireSession(): void {
+/**
+ * Sai da conta: remove o token e avisa o AuthLayout. `"expirou"` (401 da API) faz o
+ * login mostrar "sua sessão expirou"; sem motivo é logout.
+ */
+export function expireSession(motivo?: "expirou"): void {
+  marcarExpirada(motivo === "expirou");
   try {
     window.localStorage.removeItem(TOKEN_KEY);
   } catch {
@@ -82,6 +107,7 @@ export function getSessionSnapshot(): boolean {
   if (expiration !== null && expiration > Date.now() / 1000) return true;
 
   window.localStorage.removeItem(TOKEN_KEY);
+  marcarExpirada(true);
   return false;
 }
 
@@ -126,6 +152,7 @@ export function subscribeToSession(callback: () => void): () => void {
           currentExpiration <= Date.now() / 1000
         ) {
           window.localStorage.removeItem(TOKEN_KEY);
+          marcarExpirada(true);
         }
 
         callback();

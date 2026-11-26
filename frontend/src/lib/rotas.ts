@@ -17,10 +17,23 @@ export function caminhoSeguro(valor: string | null | undefined): string | null {
   return valor;
 }
 
-/** Link para a tela de login que volta para `destino` depois de entrar. */
-export function hrefLogin(destino: string, pagina: "login" | "register" = "login"): string {
+/** Valor de `motivo` no login quando a sessão expirou (token vencido ou 401). */
+export const MOTIVO_SESSAO_EXPIRADA = "sessao-expirada";
+
+/**
+ * Link para a tela de login que volta para `destino` depois de entrar.
+ * Com `expirou`, o login mostra o aviso de sessão expirada.
+ */
+export function hrefLogin(
+  destino: string,
+  pagina: "login" | "register" = "login",
+  { expirou = false }: { expirou?: boolean } = {},
+): string {
   const seguro = caminhoSeguro(destino);
-  return seguro && seguro !== "/" ? `/${pagina}?next=${encodeURIComponent(seguro)}` : `/${pagina}`;
+  const params: string[] = [];
+  if (seguro && seguro !== "/") params.push(`next=${encodeURIComponent(seguro)}`);
+  if (expirou) params.push(`motivo=${MOTIVO_SESSAO_EXPIRADA}`);
+  return params.length > 0 ? `/${pagina}?${params.join("&")}` : `/${pagina}`;
 }
 
 /** Destino que exige conta: visitante vai para o login com `next`. */

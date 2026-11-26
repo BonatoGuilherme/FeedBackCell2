@@ -49,7 +49,8 @@ export async function readResponse(response: Response, autenticada = false): Pro
 
   if (!response.ok) {
     if (response.status === 401 && autenticada) {
-      expireSession();
+      // o AuthLayout leva ao login (com next) se a página exigir conta; nas públicas, só sai da conta
+      expireSession("expirou");
       throw new ApiError("Sua sessão expirou. Entre novamente para continuar.", 401);
     }
     throw new ApiError(mensagemDeErro(response.status, payload, texto), response.status);
