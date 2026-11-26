@@ -128,7 +128,7 @@ export function PhotoPicker({ value, onChange, max, accept, validate, disabled, 
           {value.map((foto, i) => (
             <li key={foto.id} className="group relative aspect-square overflow-hidden rounded-control border border-line bg-surface-soft">
               {/* eslint-disable-next-line @next/next/no-img-element -- prévia local (blob:) */}
-              <img src={foto.preview} alt={`Foto ${i + 1}: ${foto.file.name}`} className="size-full object-cover" />
+              <img src={foto.preview} alt={`Foto ${i + 1}: ${foto.file.name}`} width={120} height={120} className="size-full object-cover" />
               {i === 0 && marcarCapa && <span className="absolute bottom-1.5 left-1.5 rounded-md bg-ink/75 px-1.5 py-0.5 text-[11px] font-medium text-white">Capa</span>}
               <button
                 type="button"

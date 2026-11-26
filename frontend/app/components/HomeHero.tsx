@@ -94,7 +94,7 @@ function Outdoor() {
             <span className="billboard__thumb">
               {c.imagens[0] ? (
                 // eslint-disable-next-line @next/next/no-img-element -- imagem servida pela API
-                <img src={c.imagens[0].url} alt="" loading="lazy" />
+                <img src={c.imagens[0].url} alt="" width={26} height={46} loading="lazy" />
               ) : (
                 <PhoneArt celular={c} />
               )}

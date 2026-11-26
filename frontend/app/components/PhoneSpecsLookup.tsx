@@ -323,7 +323,7 @@ export function ModeloAutocomplete({
                 <span className="grid h-11 w-9 flex-none place-items-center overflow-hidden rounded-md bg-surface-soft text-subtle">
                   {s.imagemHd || s.imagem ? (
                     // eslint-disable-next-line @next/next/no-img-element -- miniatura data: (leve e instantânea)
-                    <img src={s.imagem ?? s.imagemHd ?? undefined} alt="" className="size-full object-contain p-0.5 mix-blend-multiply" />
+                    <img src={s.imagem ?? s.imagemHd ?? undefined} alt="" width={36} height={44} className="size-full object-contain p-0.5 mix-blend-multiply" />
                   ) : (
                     <AppIcon name="smartphone" size={16} />
                   )}
@@ -379,7 +379,7 @@ export function PhoneSpecsResult({ lookup }: { lookup: SpecsLookup }) {
           <div className="phone-specs__photo">
             {foto ? (
               // eslint-disable-next-line @next/next/no-img-element -- foto da Wikimedia ou data: da API
-              <img className="foto-aparelho" src={foto} alt={`Foto do ${aparelho.nome ?? "aparelho"}`} />
+              <img className="foto-aparelho" src={foto} width={96} height={120} alt={`Foto do ${aparelho.nome ?? "aparelho"}`} />
             ) : (
               <AppIcon name="smartphone" size={22} />
             )}
@@ -441,7 +441,7 @@ export function PhoneSpecsResult({ lookup }: { lookup: SpecsLookup }) {
             <button type="button" className="phone-specs__poster" onClick={() => setMostrar3d(modelo3d.embedUrl)}>
               {modelo3d.thumbnail && (
                 // eslint-disable-next-line @next/next/no-img-element -- thumbnail externo do Sketchfab
-                <img src={modelo3d.thumbnail} alt="" />
+                <img src={modelo3d.thumbnail} alt="" width={640} height={360} loading="lazy" />
               )}
               <span><Box size={14} aria-hidden="true" />Ver em 3D</span>
             </button>
