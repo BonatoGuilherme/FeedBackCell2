@@ -10,7 +10,9 @@
 @import "./styles/comments.css";
 @import "./styles/phone-carousel.css";
 @import "./styles/home.css";
-@import "./styles/renaissance.css";
+@import "./styles/home-secoes.css";
+@import "./styles/letreiro.css";
+@import "./styles/letreiro-paginas.css";
 @import "./styles/transitions.css";
 
 /*
@@ -22,55 +24,66 @@
   color-scheme: dark;
 
   /*
-   * Paleta "Renascença": tons das pinturas de Leonardo da Vinci.
-   * Fundo bistre (tinta sépia escura), vidro cor de pergaminho, ocre dourado como
-   * destaque, verdete e azul-lápis como apoio, vermelhão para erros.
+   * Paleta "Letreiro": rua à noite com placas acesas.
+   * Primitivas (valores crus) primeiro; os tokens semânticos abaixo apontam para elas.
    */
+  --night: #1c1550;
+  --night-2: #2b2070;
+  --night-deep: #120d3a;
+  --fog: #5a4aa8;
+  --ink: #0d0b22;
+  --ink-2: #221d48;
+  --pink: #ff2d8a;
+  --cyan: #22d8f2;
+  --lime: #dcff2e;
+  --violet: #6b4cff;
+  --cream: #fff6e0;
+  --paper: #f4f1ff;
+  --lavender: #cfc8ef;
 
   /* cores: superfícies */
-  --background: #110c07;
-  --surface: rgb(36 26 17 / 78%);
-  --surface-solid: #1d150d;
-  --surface-soft: rgb(239 227 204 / 6%);
-  --surface-hover: rgb(239 227 204 / 10%);
-  --line: rgb(239 227 204 / 11%);
-  --line-strong: rgb(239 227 204 / 22%);
+  --background: var(--night);
+  --surface: var(--night-2);
+  --surface-solid: var(--ink);
+  --surface-soft: rgb(255 246 224 / 6%);
+  --surface-hover: rgb(255 246 224 / 11%);
+  --line: rgb(255 246 224 / 16%);
+  --line-strong: rgb(255 246 224 / 32%);
 
-  /* cores: texto */
-  --foreground: #efe3cc;
-  --muted: #bba98a;
-  --subtle: #8c7b62; /* só ícones e placeholders, não para texto corrido */
+  /* cores: texto (todas com contraste >= 4.5:1 sobre --night e --night-2) */
+  --foreground: var(--cream);
+  --muted: var(--lavender);
+  --subtle: #a69ce0; /* ícones e placeholders */
 
   /* cores: marca e estados */
-  --accent: #c9973f;
-  --accent-hover: #ddb062;
-  --accent-soft: rgb(201 151 63 / 15%);
-  --accent-on-dark: #e6c27a;
-  --on-accent: #1a1209;
-  --ink: #0b0805;
-  --lapis: #6f8fbf;
-  --verdigris: #6fa58e;
-  --sienna: #b4643a;
-  --success: #8cc4a6;
-  --success-soft: rgb(111 165 142 / 16%);
-  --error: #ec8a6c;
-  --error-soft: rgb(190 70 45 / 16%);
-  --error-line: rgb(236 138 108 / 38%);
-  --focus-ring: rgb(201 151 63 / 40%);
+  --accent: var(--lime);
+  --accent-hover: var(--cyan);
+  --accent-soft: rgb(220 255 46 / 13%);
+  --accent-on-dark: var(--lime);
+  --on-accent: var(--ink);
+  --lapis: var(--cyan);
+  --verdigris: var(--lime);
+  --sienna: var(--pink);
+  --success: var(--cyan);
+  --success-soft: rgb(34 216 242 / 14%);
+  --error: #ff8ab8;
+  --error-soft: rgb(255 45 138 / 16%);
+  --error-line: rgb(255 45 138 / 55%);
+  --focus-ring: var(--pink);
 
   /* aliases antigos, mantidos para o CSS das páginas */
   --accent-strong: var(--accent-hover);
-  --accent-2: var(--lapis);
+  --accent-2: var(--cyan);
   --sidebar: var(--ink);
-  --sidebar-muted: #a3937a;
+  --sidebar-muted: var(--lavender);
   --danger: var(--error);
 
-  /* vidro dos cards */
-  --glass-blur: 18px;
-  --glass-edge: rgb(239 227 204 / 14%);
-  --glass-highlight: linear-gradient(180deg, rgb(239 227 204 / 7%), rgb(239 227 204 / 0%) 40%);
+  /* cards: chapados, sem vidro */
+  --glass-blur: 0px;
+  --glass-edge: var(--line);
+  --glass-highlight: linear-gradient(transparent, transparent);
 
-/* espaçamento: escala de 4 px */
+  /* espaçamento: escala de 4 px */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -82,39 +95,42 @@
   --space-12: 48px;
   --space-16: 64px;
 
-  /* tipografia */
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
+  /* tipografia: condensada para títulos, Archivo para texto, Dela Gothic só nas placas */
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-shoulders), Impact, "Arial Narrow", sans-serif;
+  --font-jp: var(--font-dela), sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --font-size-caption: 12px;
   --font-size-label: 13px;
-  --font-size-body: 15px;
-  --font-size-lead: 17px;
-  --font-size-h3: 18px;
-  --font-size-h2: 22px;
-  --font-size-h1: clamp(28px, 2.4vw + 12px, 36px);
+  --font-size-body: 16px;
+  --font-size-lead: 18px;
+  --font-size-h3: 20px;
+  --font-size-h2: 26px;
+  --font-size-h1: clamp(40px, 5vw + 12px, 72px);
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
 
-  /* raios */
-  --radius-control: 10px;
-  --radius-card: 14px;
-  --radius-panel: 20px;
+  /* raios: placas têm canto reto; só aparelhos e pontos são redondos */
+  --radius-control: 0px;
+  --radius-card: 0px;
+  --radius-panel: 0px;
+  --radius-device: 30px;
   --radius-pill: 999px;
 
-  /* sombras */
-  --shadow-sm: 0 1px 2px rgb(15 16 32 / 6%);
-  --shadow-md: 0 1px 2px rgb(15 16 32 / 4%), 0 4px 12px -2px rgb(15 16 32 / 8%);
-  --shadow-lg: 0 2px 4px rgb(15 16 32 / 4%), 0 16px 40px -12px rgb(15 16 32 / 18%);
+  /* sombras: deslocadas e chapadas, como placa recortada */
+  --shadow-sm: 3px 3px 0 var(--ink);
+  --shadow-md: 6px 6px 0 var(--ink);
+  --shadow-lg: 10px 10px 0 var(--ink);
+  --shadow-pink: 8px 8px 0 var(--pink);
 
   /* layout e movimento */
-  --header-height: 64px;
-  --sidebar-width: 76px;
+  --header-height: 72px;
+  --sidebar-width: 0px;
   --tabbar-height: 64px;
-  --content-width: 1240px;
-  --gutter: clamp(16px, 4vw, 40px);
+  --content-width: 1280px;
+  --gutter: clamp(16px, 4vw, 64px);
   --ease: cubic-bezier(0.2, 0, 0, 1);
   --duration-fast: 120ms;
   --duration: 180ms;
@@ -147,15 +163,22 @@
   --color-error: var(--error);
   --color-error-soft: var(--error-soft);
   --color-error-line: var(--error-line);
+  --color-pink: var(--pink);
+  --color-cyan: var(--cyan);
+  --color-lime: var(--lime);
+  --color-cream: var(--cream);
+  --color-night: var(--night);
+  --color-ink-2: var(--ink-2);
 
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
-  --font-display: var(--font-cormorant), Georgia, serif;
+  --font-display: var(--font-shoulders), Impact, sans-serif;
+  --font-jp: var(--font-dela), sans-serif;
 
   /* rounded-control, rounded-card, rounded-panel */
-  --radius-control: 10px;
-  --radius-card: 14px;
-  --radius-panel: 20px;
+  --radius-control: 0px;
+  --radius-card: 0px;
+  --radius-panel: 0px;
 
   /* shadow-elevation-sm/md/lg */
   --shadow-elevation-sm: var(--shadow-sm);
@@ -167,14 +190,14 @@
   --text-caption--line-height: 16px;
   --text-label: 13px;
   --text-label--line-height: 18px;
-  --text-body: 15px;
-  --text-body--line-height: 24px;
-  --text-lead: 17px;
-  --text-lead--line-height: 26px;
-  --text-h3: 18px;
+  --text-body: 16px;
+  --text-body--line-height: 25px;
+  --text-lead: 18px;
+  --text-lead--line-height: 28px;
+  --text-h3: 20px;
   --text-h3--line-height: 26px;
-  --text-h2: 22px;
+  --text-h2: 26px;
   --text-h2--line-height: 30px;
-  --text-h1: clamp(28px, 2.4vw + 12px, 36px);
-  --text-h1--line-height: 1.15;
+  --text-h1: clamp(40px, 5vw + 12px, 72px);
+  --text-h1--line-height: 0.9;
 }
