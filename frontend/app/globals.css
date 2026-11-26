@@ -99,7 +99,7 @@
   --font-sans: var(--font-archivo), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: var(--font-shoulders), Impact, "Arial Narrow", sans-serif;
   --font-jp: var(--font-dela), sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-mono: ui-monospace, monospace;
   --font-size-caption: 12px;
   --font-size-label: 13px;
   --font-size-body: 16px;
@@ -171,7 +171,7 @@
   --color-ink-2: var(--ink-2);
 
   --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-mono: ui-monospace, monospace;
   --font-display: var(--font-shoulders), Impact, sans-serif;
   --font-jp: var(--font-dela), sans-serif;
 
