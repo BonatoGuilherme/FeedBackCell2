@@ -461,9 +461,8 @@
   }
 }
 
-/* movimento reduzido: sem chuva, piscar, glitch nem pulsos */
+/* movimento reduzido: sem piscar, glitch nem pulsos */
 @media (prefers-reduced-motion: reduce) {
-  .street-hero__rain,
   .street-hero__street .vsign--1,
   .glitch-once,
   .metro__st--train .metro__dot::after,

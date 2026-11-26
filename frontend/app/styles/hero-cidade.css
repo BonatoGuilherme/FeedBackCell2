@@ -1,0 +1,470 @@
+/* Fundo do hero da home: cidade cartoon em três planos e o telão de rua (app/components/hero/). */
+
+.cid-fundo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.cid-ceu {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* cada plano mantém a proporção do viewBox; no celular, corta as laterais */
+.cid-camada {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+}
+
+.cid-camada--longe {
+  height: max(59.7vw, 520px);
+}
+
+.cid-camada--meio {
+  height: max(48.6vw, 400px);
+}
+
+.cid-camada--perto {
+  height: max(36.1vw, 290px);
+}
+
+/* véu escuro à esquerda: o título e o texto ficam legíveis sobre a cidade */
+.cid-veu {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgb(18 13 58 / 62%) 0%, rgb(18 13 58 / 30%) 38%, transparent 58%);
+}
+
+.cid-jp {
+  font-family: var(--font-dela), var(--font-shoulders), sans-serif;
+  font-weight: 400;
+}
+
+/* ---------- luzes da cidade ---------- */
+
+.cid-blink {
+  animation: cid-blink 2.4s steps(1, end) infinite;
+}
+
+.cid-blink--2 {
+  animation-duration: 3.1s;
+  animation-delay: -1.2s;
+}
+
+.cid-blink--3 {
+  animation-duration: 4.3s;
+  animation-delay: -2.6s;
+}
+
+@keyframes cid-blink {
+  50% {
+    opacity: 0.15;
+  }
+}
+
+.cid-flicker {
+  animation: cid-flicker 7s infinite;
+}
+
+.cid-flicker--lento {
+  animation-duration: 11s;
+  animation-delay: -4s;
+}
+
+@keyframes cid-flicker {
+  0%,
+  90%,
+  100% {
+    opacity: 1;
+  }
+
+  91%,
+  94% {
+    opacity: 0.35;
+  }
+
+  92%,
+  95% {
+    opacity: 0.9;
+  }
+}
+
+.cid-janela {
+  animation: cid-janela 14s steps(1, end) infinite;
+}
+
+.cid-janela--2 {
+  animation-duration: 19s;
+  animation-delay: -7s;
+}
+
+.cid-janela--3 {
+  animation-duration: 23s;
+  animation-delay: -15s;
+}
+
+@keyframes cid-janela {
+  60% {
+    opacity: 0.2;
+  }
+}
+
+.cid-nuvem {
+  animation: cid-nuvem 40s ease-in-out infinite alternate;
+}
+
+@keyframes cid-nuvem {
+  to {
+    transform: translateX(60px);
+  }
+}
+
+/* ---------- telão de rua ---------- */
+
+.cid-telao {
+  position: absolute;
+  top: 4.5%;
+  left: 40%;
+  width: clamp(180px, 15vw, 250px);
+}
+
+/* coluna única: o telão vai para a direita do título; no celular não há espaço livre */
+@media (max-width: 960px) {
+  .cid-telao {
+    top: 3%;
+    right: 5%;
+    left: auto;
+    width: clamp(170px, 28vw, 240px);
+  }
+}
+
+@media (max-width: 640px) {
+  .cid-telao {
+    display: none;
+  }
+}
+
+.cid-telao__moldura {
+  position: relative;
+  z-index: 1;
+  padding: 10px;
+  border: 4px solid var(--ink);
+  border-radius: 14px;
+  background: #3b2c8f;
+  box-shadow:
+    inset -10px -8px 0 #271d68,
+    8px 8px 0 var(--ink);
+}
+
+.cid-telao__aovivo {
+  position: absolute;
+  top: -15px;
+  left: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  background: var(--lime);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.cid-telao__aovivo i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pink);
+  animation: cid-blink 1.6s steps(1, end) infinite;
+}
+
+.cid-telao__tela {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  background: radial-gradient(ellipse at 50% 45%, #1d1760 0%, #0a0824 75%);
+}
+
+.cid-telao__conteudo {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 5% 7%;
+  animation: cid-crt-on 380ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.cid-telao[data-fase="desligando"] .cid-telao__conteudo {
+  animation: cid-crt-off 450ms cubic-bezier(0.6, 0, 0.8, 0.4) forwards;
+}
+
+.cid-telao[data-fase="estatica"] .cid-telao__conteudo {
+  opacity: 0;
+}
+
+@keyframes cid-crt-off {
+  0% {
+    transform: none;
+  }
+
+  55% {
+    opacity: 1;
+    transform: scale(1.04, 0.012);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0, 0.012);
+  }
+}
+
+@keyframes cid-crt-on {
+  0% {
+    opacity: 0;
+    transform: scale(1, 0.02);
+  }
+
+  60% {
+    opacity: 1;
+    transform: scale(1.02, 1.04);
+  }
+
+  100% {
+    transform: none;
+  }
+}
+
+.cid-telao__linha {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  margin-top: -1px;
+  background: #fff;
+  box-shadow: 0 0 10px var(--cyan);
+  opacity: 0;
+}
+
+.cid-telao[data-fase="desligando"] .cid-telao__linha {
+  animation: cid-linha 450ms ease-in forwards;
+}
+
+@keyframes cid-linha {
+  0%,
+  40% {
+    opacity: 0;
+    transform: scaleX(1);
+  }
+
+  60% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  100% {
+    opacity: 0.9;
+    transform: scaleX(0);
+  }
+}
+
+/* estática: três camadas de chuvisco em vermelho, verde e azul, deslocadas */
+.cid-telao__estatica {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #120f2c;
+  opacity: 0;
+}
+
+.cid-telao[data-fase="estatica"] .cid-telao__estatica {
+  opacity: 1;
+}
+
+.cid-telao__ruido {
+  position: absolute;
+  inset: -40%;
+  mix-blend-mode: screen;
+  opacity: 0.85;
+}
+
+.cid-telao__ruido--r {
+  background:
+    repeating-linear-gradient(0deg, transparent 0 2px, rgb(255 40 90 / 90%) 2px 3px, transparent 3px 7px),
+    repeating-linear-gradient(90deg, transparent 0 5px, rgb(255 40 90 / 45%) 5px 6px, transparent 6px 11px);
+}
+
+.cid-telao__ruido--g {
+  background:
+    repeating-linear-gradient(0deg, transparent 0 3px, rgb(60 255 140 / 85%) 3px 4px, transparent 4px 9px),
+    repeating-linear-gradient(90deg, transparent 0 7px, rgb(60 255 140 / 40%) 7px 8px, transparent 8px 13px);
+}
+
+.cid-telao__ruido--b {
+  background:
+    repeating-linear-gradient(0deg, transparent 0 1px, rgb(60 120 255 / 90%) 1px 2px, transparent 2px 5px),
+    repeating-linear-gradient(90deg, transparent 0 3px, rgb(60 120 255 / 45%) 3px 4px, transparent 4px 9px);
+}
+
+.cid-telao[data-fase="estatica"] .cid-telao__ruido--r {
+  animation: cid-ruido 0.16s steps(2, end) infinite;
+}
+
+.cid-telao[data-fase="estatica"] .cid-telao__ruido--g {
+  animation: cid-ruido 0.22s steps(3, end) infinite reverse;
+}
+
+.cid-telao[data-fase="estatica"] .cid-telao__ruido--b {
+  animation: cid-ruido 0.12s steps(2, end) infinite;
+  animation-delay: -0.05s;
+}
+
+@keyframes cid-ruido {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  33% {
+    transform: translate(-7%, 5%);
+  }
+
+  66% {
+    transform: translate(4%, -9%);
+  }
+
+  100% {
+    transform: translate(-3%, 3%);
+  }
+}
+
+/* linhas de varredura e brilho do vidro, sempre por cima */
+.cid-telao__scan {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, rgb(255 255 255 / 14%) 0%, transparent 32%),
+    repeating-linear-gradient(0deg, rgb(0 0 0 / 28%) 0 1px, transparent 1px 3px);
+  box-shadow: inset 0 0 28px rgb(0 0 0 / 70%);
+}
+
+/* poste com treliça; o plano do meio cobre a parte de baixo */
+.cid-telao__suporte {
+  position: absolute;
+  top: calc(100% - 6px);
+  left: 50%;
+  width: 26px;
+  height: 900px;
+  margin-left: -13px;
+  border-inline: 4px solid var(--ink);
+  background:
+    repeating-linear-gradient(45deg, transparent 0 9px, var(--ink) 9px 12px),
+    repeating-linear-gradient(-45deg, transparent 0 9px, var(--ink) 9px 12px),
+    #4a3a9a;
+}
+
+/* conteúdo da tela */
+.cid-telao__marca,
+.cid-telao__cel {
+  display: grid;
+  width: 100%;
+  justify-items: center;
+  gap: 3px;
+  text-align: center;
+}
+
+.cid-telao__logo {
+  color: var(--cream);
+  font-family: var(--font-display);
+  font-size: clamp(24px, 2.4vw, 36px);
+  font-weight: 900;
+  line-height: 1;
+  text-shadow:
+    2px 0 var(--pink),
+    -2px 0 var(--cyan);
+  text-transform: uppercase;
+}
+
+.cid-telao__logo b {
+  color: var(--pink);
+  text-shadow:
+    2px 0 var(--cyan),
+    0 0 12px rgb(255 45 138 / 60%);
+}
+
+.cid-telao__sub,
+.cid-telao__marca-cel {
+  color: var(--cyan);
+  font-family: var(--font-display);
+  font-size: clamp(11px, 0.9vw, 14px);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.cid-telao__modelo {
+  display: -webkit-box;
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--cream);
+  font-family: var(--font-display);
+  font-size: clamp(17px, 1.6vw, 26px);
+  font-weight: 900;
+  line-height: 0.95;
+  text-shadow:
+    2px 0 rgb(255 45 138 / 70%),
+    -2px 0 rgb(34 216 242 / 70%);
+  text-transform: uppercase;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.cid-telao__nota {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 2px;
+  color: var(--cream);
+}
+
+.cid-telao__nota b {
+  color: var(--lime);
+  font-family: var(--font-display);
+  font-size: clamp(16px, 1.5vw, 22px);
+  font-weight: 900;
+}
+
+.cid-telao__nota small {
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+/* ---------- pausa e movimento reduzido ---------- */
+
+.cid-fundo--pausado *,
+.cid-fundo--pausado *::before,
+.cid-fundo--pausado *::after {
+  animation-play-state: paused !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cid-fundo *,
+  .cid-fundo *::before,
+  .cid-fundo *::after {
+    animation: none !important;
+  }
+}

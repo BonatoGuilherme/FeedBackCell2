@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * Destaque da página inicial no estilo "Letreiro": rua à noite com prédios,
- * chuva e placas verticais acesas. À direita, um celular-outdoor mostra os
- * últimos aparelhos do catálogo de verdade (com estados de carregando, vazio e erro).
+ * Destaque da página inicial no estilo "Letreiro": cidade noturna cartoon ao
+ * fundo (hero/cidade-fundo.tsx, com o telão de rua) e placas verticais acesas.
+ * À direita, um celular-outdoor mostra os últimos aparelhos do catálogo de verdade (com estados de carregando, vazio e erro).
  * O outdoor é decorativo (aria-hidden): os mesmos aparelhos aparecem, com link,
  * na seção de cartões logo abaixo.
  * As placas sobem em velocidades diferentes ao rolar (parallax), exceto com
@@ -18,6 +18,7 @@ import { hrefProtegido } from "@/src/lib/rotas";
 import { textoAvaliacoes } from "@/components/ui/rating";
 import { PhoneArt } from "@/components/ui/phone-shelf";
 import { useResumoCatalogo } from "./HomeStats";
+import CidadeFundo from "./hero/cidade-fundo";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 const decimal = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -29,33 +30,6 @@ const PLACAS = [
   { texto: "写真あり", className: "vsign--2", velocidade: -90 },
   { texto: "営業中", className: "vsign--4", velocidade: -40 },
 ];
-
-// prédios ao fundo: JSX estático, criado uma vez só (fora do componente)
-const CIDADE = (
-  <div className="street-hero__city" aria-hidden>
-    <svg viewBox="0 0 1440 500" preserveAspectRatio="xMidYMax slice">
-      <path
-        fill="#3d2f8c"
-        d="M0 500V210h80v-70h60v360h20V120h90v380h40V250h70v250h30V90h80v410h40V200h110v300h30V150h60v-40h40v390h40V230h90v270h30V70h70v430h40V180h80v320h40V260h60v-60h50v300h40V140h90v360z"
-      />
-    </svg>
-    <svg viewBox="0 0 1440 400" preserveAspectRatio="xMidYMax slice">
-      <path
-        fill="#271d66"
-        d="M0 400V200h120v200h30V120h110v280h50V230h80v170h40V160h90v240h40V260h120v140h40V110h70v290h40V210h100v190h40V150h80v250h50V240h90v160h40V180h100v220z"
-      />
-      <g fill="#dcff2e">
-        <rect x="1000" y="190" width="14" height="6" />
-        <rect x="1240" y="270" width="14" height="6" />
-      </g>
-      <g fill="#ff2d8a">
-        <rect x="760" y="130" width="12" height="120" />
-        <rect x="1150" y="170" width="12" height="70" />
-      </g>
-      <rect x="890" y="230" width="50" height="10" fill="#22d8f2" />
-    </svg>
-  </div>
-);
 
 function Placa({ texto, className, velocidade, indice }: (typeof PLACAS)[number] & { indice: number }) {
   const reduce = useReducedMotion();
@@ -124,10 +98,7 @@ export default function HomeHero() {
 
   return (
     <section className="street-hero" aria-labelledby="home-title">
-      <div className="street-hero__moon" aria-hidden />
-      {CIDADE}
-      <div className="street-hero__fog" aria-hidden />
-      <div className="street-hero__rain" aria-hidden />
+      <CidadeFundo />
 
       <div className="street-hero__grid">
         <div>
