@@ -1,0 +1,364 @@
+/*
+ * Tema "Letreiro" nas páginas internas: página do celular (carrossel, ficha,
+ * avaliações), busca do catálogo e formulários. Vem depois dos estilos de cada
+ * área (comments.css, phone-carousel.css, phone-form.css) e troca só o visual:
+ * cantos retos, placas chapadas, títulos condensados e sombras deslocadas.
+ */
+
+/* ---------- painel da página do celular ---------- */
+
+.phone-panel {
+  border: 0;
+  background: var(--night-2);
+  box-shadow: var(--shadow-lg);
+}
+
+.phone-detail__specs {
+  background: var(--ink);
+  font-size: 14px;
+}
+
+.phone-detail__specs div {
+  padding: 6px 0;
+  border-top: 2px solid var(--ink-2);
+}
+
+.phone-detail__specs div:first-child {
+  border-top: 0;
+}
+
+.phone-detail__specs dt {
+  color: var(--muted);
+  font-weight: var(--font-weight-semibold);
+}
+
+.phone-detail__meta {
+  color: var(--muted);
+}
+
+.phone-detail__meta a {
+  color: var(--lime);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.phone-related {
+  border-top: 4px solid var(--ink);
+}
+
+.phone-related h2,
+.phone-reviews__header h2 {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 3vw + 12px, 48px);
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.phone-related__list {
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+}
+
+/* ---------- avaliações ---------- */
+
+.phone-reviews {
+  border-top: 4px solid var(--ink);
+}
+
+.reviews-summary {
+  border: 0;
+  background: var(--ink);
+}
+
+.reviews-summary__score {
+  color: var(--lime);
+  font-family: var(--font-display);
+  font-size: 64px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.reviews-summary__stars,
+.comment-item__rating {
+  color: var(--lime);
+}
+
+.comment-list {
+  border: 0;
+  background: var(--ink);
+}
+
+.comment-item + .comment-item {
+  border-top: 2px solid var(--ink-2);
+}
+
+.comment-item__avatar {
+  border-radius: 0;
+  background: var(--pink);
+  color: #fff;
+  font-weight: var(--font-weight-bold);
+}
+
+.comment-item:nth-child(3n + 2) .comment-item__avatar {
+  background: var(--cyan);
+  color: var(--ink);
+}
+
+.comment-item:nth-child(3n + 3) .comment-item__avatar {
+  background: var(--lime);
+  color: var(--ink);
+}
+
+.comment-item__delete {
+  border-radius: 0;
+}
+
+.comments-empty {
+  border: 2px dashed var(--line-strong);
+}
+
+.comments-empty h3 {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.comments-empty__icon {
+  background: var(--lime);
+  color: var(--ink);
+}
+
+.comment-composer.form-field {
+  border: 0;
+  border-radius: 0;
+  background: var(--ink);
+}
+
+.rating-field__star {
+  border-radius: 0;
+}
+
+.rating-field__star.is-on {
+  color: var(--lime);
+}
+
+.rating-field__star:hover {
+  background: var(--accent-soft);
+}
+
+.rating-field__star:has(input:focus-visible) {
+  outline: 3px solid var(--pink);
+}
+
+.skeleton {
+  border-radius: 0;
+  background: linear-gradient(90deg, var(--surface-soft) 0%, rgb(255 246 224 / 14%) 50%, var(--surface-soft) 100%);
+  background-size: 200% 100%;
+}
+
+.skeleton--avatar {
+  border-radius: 0;
+}
+
+.phone-page .collection-empty h1,
+.phone-page .collection-error h1 {
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+/* ---------- carrossel do celular ---------- */
+
+.orb-root:focus-visible {
+  border-radius: 0;
+  outline: 3px solid var(--pink);
+}
+
+.orb-btn:focus-visible,
+.orb-tab:focus-visible {
+  border-radius: 0;
+  outline: 3px solid var(--pink);
+}
+
+.orb-count strong {
+  color: var(--lime);
+  font-size: 46px;
+  font-weight: 900;
+}
+
+.orb-count i {
+  background: var(--pink);
+  box-shadow: 0 0 0 1px var(--pink);
+}
+
+.orb-count span {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.orb-photo {
+  border-radius: var(--radius-device);
+  background: var(--paper);
+  box-shadow: 10px 10px 0 var(--pink);
+}
+
+.orb-art {
+  filter: none;
+}
+
+.orb-eye {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 3px 8px;
+  background: var(--pink);
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+.orb-t1 {
+  font-weight: 800;
+  color: var(--lime);
+}
+
+.orb-t2 {
+  font-weight: 900;
+}
+
+.orb-acts {
+  font-size: 15px;
+  font-weight: var(--font-weight-bold);
+}
+
+.orb-acts .orb-btn:hover,
+.orb-acts a:hover {
+  color: var(--lime);
+}
+
+.orb-card {
+  border-radius: 0;
+  background: var(--ink);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: 8px 8px 0 var(--cyan);
+}
+
+.orb-tab {
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.orb-tab[aria-selected="true"] {
+  color: var(--lime);
+  box-shadow: 0 3px 0 var(--lime);
+}
+
+.orb-badge {
+  border-radius: 0;
+}
+
+.orb-badge strong {
+  font-weight: 900;
+}
+
+.orb-chips li {
+  border-radius: 0;
+  border-left: 4px solid var(--pink);
+  background: var(--ink-2);
+}
+
+.orb-arrow {
+  border-radius: 0;
+}
+
+.orb-arrow:not(:disabled):hover {
+  background: var(--lime);
+  color: var(--ink);
+}
+
+.orb-th .orb-btn {
+  border-radius: 0;
+}
+
+.orb-th .orb-btn[aria-current="true"] {
+  background: var(--ink);
+  box-shadow: 0 -4px 0 var(--lime) inset;
+}
+
+.orb-th img,
+.orb-th .orb-th-art {
+  border-radius: 6px;
+}
+
+.orb-3d {
+  border-radius: 0;
+  box-shadow: 10px 10px 0 var(--pink);
+}
+
+/* ---------- busca do catálogo ---------- */
+
+.catalog-search__list {
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: var(--ink);
+  box-shadow: 6px 6px 0 var(--pink);
+}
+
+.catalog-search__option {
+  border-radius: 0;
+}
+
+.catalog-search__option[aria-selected="true"] {
+  background: var(--lime);
+  color: var(--ink);
+}
+
+/* crédito da ficha: alinhado com o conteúdo do painel */
+.phone-detail__credits {
+  padding: 0 var(--space-8) var(--space-4);
+}
+
+@media (max-width: 600px) {
+  .phone-detail__credits {
+    padding-inline: var(--space-4);
+  }
+}
+
+/* ---------- cadastro de celular ---------- */
+
+.phone-form__section-header h2,
+.phone-preview__title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.phone-preview__model {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.phone-preview__device {
+  border: 0;
+  border-radius: 16px;
+  background: var(--ink);
+  box-shadow: 6px 6px 0 var(--pink);
+}
+
+.phone-preview__screen {
+  border-radius: 10px;
+  background: var(--night-2);
+}
+
+.phone-specs__badge {
+  border-radius: 0;
+}

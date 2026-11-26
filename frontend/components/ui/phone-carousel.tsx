@@ -63,8 +63,8 @@ const ARC_REST = [
 /** O arco no meio da troca: estica entre o aparelho que sai e o que entra. */
 const ARC_SWEEP = [38, 146];
 
-/** Cores da paleta Renascença, em rodízio: ouro, siena, verdete, lápis-lazúli. */
-const CORES = ["#c9973f", "#b4643a", "#6fa58e", "#6f8fbf"];
+/** Cores das placas do letreiro, em rodízio: rosa, ciano, violeta e creme (o verde-limão translúcido sobre o roxo ficava cinza). */
+const CORES = ["#ff2d8a", "#22d8f2", "#8f78ff", "#fff6e0"];
 
 function rodizio<T>(lista: T[], i: number): T {
   return lista[((i % lista.length) + lista.length) % lista.length];
