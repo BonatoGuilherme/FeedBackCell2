@@ -7,13 +7,10 @@ import { hrefProtegido } from "@/src/lib/rotas";
 import AppIcon from "./AppIcon";
 import CatalogSearch from "./CatalogSearch";
 import { lembrarOrdemCelulares, prepararOrdemCelulares } from "./PhoneNavigation";
-import { PhoneShelf } from "@/components/ui/phone-shelf";
-import { TiltCard } from "@/components/ui/tilt-card";
+import { PhoneCard, PhoneShelf } from "@/components/ui/phone-shelf";
 import { Reveal, RevealItem } from "@/components/ui/reveal";
-import { NotaResumo } from "@/components/ui/rating";
 import {
   listarCelulares,
-  type Celular,
   type ListaCelulares,
 } from "@/src/lib/celulares";
 
@@ -28,60 +25,6 @@ type PhoneCollectionProps = {
  * dados são revalidados no efeito logo em seguida.
  */
 const cacheListas = new Map<string, ListaCelulares>();
-
-function PhoneCard({ celular }: { celular: Celular }) {
-  const cover = celular.imagens[0]?.url;
-  return (
-    <TiltCard className="phone-card card group relative overflow-hidden rounded-[22px] has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent">
-      <div className="relative aspect-[4/3] overflow-hidden bg-[radial-gradient(80%_80%_at_50%_0%,rgba(201,151,63,0.2),rgba(239,227,204,0.03)_70%)]">
-        {cover ? (
-          // eslint-disable-next-line @next/next/no-img-element -- imagem servida pela API
-          <img
-            src={cover}
-            alt={`${celular.marca} ${celular.modelo}`}
-            loading="lazy"
-            className="foto-aparelho size-full object-contain p-5 transition-transform duration-500 group-hover:scale-[1.06]"
-          />
-        ) : (
-          <div className="grid size-full place-items-center" aria-hidden="true">
-            <span className="h-[78%] aspect-[1/2] rounded-[22%/11%] bg-[#3b2818] p-[4%] shadow-[0_20px_30px_-16px_rgba(15,16,32,0.6)] transition-transform duration-500 group-hover:-rotate-3">
-              <span className="block size-full rounded-[18%/9%] bg-[linear-gradient(160deg,#e6c27a,#7a4a1c_60%,#120c06)]" />
-            </span>
-          </div>
-        )}
-        {celular.imagens.length > 1 && (
-          <span className="absolute right-3 top-3 rounded-full bg-black/65 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
-            {celular.imagens.length} fotos
-          </span>
-        )}
-      </div>
-      <div className="flex items-end justify-between gap-3 p-4">
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">{celular.marca}</p>
-          <h3 className="truncate text-[16px] font-semibold text-foreground">{celular.modelo}</h3>
-          <NotaResumo
-            compacto
-            notaMedia={celular.notaMedia}
-            avaliacoes={celular.avaliacoes}
-            className="mt-0.5 text-[14px]"
-          />
-        </div>
-        <span
-          aria-hidden="true"
-          className="shrink-0 rounded-full bg-accent px-3.5 py-2 text-[13px] font-semibold text-on-accent transition-colors group-hover:bg-accent-hover"
-        >
-          Ver avaliações
-        </span>
-      </div>
-      {/* o card inteiro abre a página do celular */}
-      <Link
-        href={`/catalogo/${celular.idcelular}`}
-        aria-label={`Ver ${celular.marca} ${celular.modelo}`}
-        className="absolute inset-0 z-[1] rounded-[22px] outline-none"
-      />
-    </TiltCard>
-  );
-}
 
 function EmptyState({ onRetry }: { onRetry?: () => void }) {
   const logado = useHasSession();
@@ -200,37 +143,39 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
 
   if (isOverview) {
     return (
-      <div className="page-shell overview-page">
-        <section className="overview-catalog" aria-labelledby="latest-phones-title">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">Catálogo de celulares</p>
-              <h2 id="latest-phones-title">Últimos celulares cadastrados</h2>
+      <section className="letreiro-shop" aria-labelledby="latest-phones-title">
+        <div className="page-shell">
+          <div className="s-head">
+            <h2 id="latest-phones-title" className="s-head__title">
+              <span className="s-head__jp" aria-hidden>
+                新機種入荷
+              </span>
+              Últimos celulares cadastrados
+            </h2>
+            <div className="s-head__aside">
+              <p>Cada aparelho tem ficha técnica, fotos enviadas no cadastro e a nota média de quem avaliou.</p>
+              {paginacao && (
+                <p className="s-head__meta">
+                  {paginacao.totalItems} {paginacao.totalItems === 1 ? "aparelho" : "aparelhos"} no catálogo ·{" "}
+                  <Link href="/catalogo">ver todos</Link>
+                </p>
+              )}
             </div>
-            {paginacao && (
-              <p className="section-heading__meta">
-                {paginacao.totalItems}{" "}
-                {paginacao.totalItems === 1 ? "aparelho" : "aparelhos"} no catálogo
-              </p>
-            )}
           </div>
 
           {loading ? (
-            <div className="collection-message" role="status">
-              <span className="loading-indicator" />
-              Carregando celulares…
-            </div>
+            <ul className="letreiro-cards" aria-busy="true" aria-label="Carregando celulares">
+              {Array.from({ length: 4 }, (_, i) => (
+                <li key={i} className="letreiro-card letreiro-card--skeleton" aria-hidden />
+              ))}
+            </ul>
           ) : erro ? (
             <div className="collection-error" role="alert">
               <div>
                 <h3>Não foi possível carregar os celulares</h3>
                 <p>{erro}</p>
               </div>
-              <button
-                className="button button--secondary"
-                type="button"
-                onClick={atualizarLista}
-              >
+              <button className="button button--secondary" type="button" onClick={atualizarLista}>
                 <AppIcon name="refresh" size={17} />
                 Tentar novamente
               </button>
@@ -238,16 +183,16 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
           ) : celulares.length === 0 ? (
             <EmptyState onRetry={atualizarLista} />
           ) : (
-            <Reveal className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4" stagger={0.06}>
+            <Reveal as="ul" className="letreiro-cards" stagger={0.06}>
               {celulares.map((celular) => (
-                <RevealItem key={celular.idcelular}>
+                <RevealItem as="li" key={celular.idcelular}>
                   <PhoneCard celular={celular} />
                 </RevealItem>
               ))}
             </Reveal>
           )}
-        </section>
-      </div>
+        </div>
+      </section>
     );
   }
 
@@ -299,10 +244,11 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
       </div>
 
       {loading ? (
-        <div className="collection-message" role="status">
-          <span className="loading-indicator" />
-          Carregando celulares…
-        </div>
+        <ul className="letreiro-cards mt-7" aria-busy="true" aria-label="Carregando celulares">
+          {Array.from({ length: 8 }, (_, i) => (
+            <li key={i} className="letreiro-card letreiro-card--skeleton" aria-hidden />
+          ))}
+        </ul>
       ) : erro ? (
         <div className="collection-error" role="alert">
           <div>

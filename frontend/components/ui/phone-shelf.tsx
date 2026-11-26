@@ -1,30 +1,17 @@
 "use client";
 
 /**
- * Prateleira de celulares — adaptada do "Product Shelf" de Aakash Mehra.
- * Cada fileira mostra os aparelhos (a foto do aparelho; sem foto, um celular
- * desenhado), a marca, o modelo e a nota média. Clicar abre a página do
- * aparelho (/catalogo/ID), com fotos, especificações e avaliações.
+ * Cartões de celular no estilo "Letreiro": faixa colorida com a marca, o
+ * aparelho sobre fundo noturno (a foto; sem foto, um celular desenhado de costas),
+ * o modelo em letra condensada e a nota grande em verde-limão.
+ * Clicar abre a página do aparelho (/catalogo/ID).
  */
 
-import { useEffect, useRef, useState, type RefObject } from "react";
 import Link from "next/link";
-import { motion } from "motion/react";
-import { NotaResumo, textoAvaliacoes } from "@/components/ui/rating";
+import { textoAvaliacoes } from "@/components/ui/rating";
 import { CelularTransicao } from "@/components/ui/transicoes";
 import { cn } from "@/lib/utils";
 import { type Celular, type Especificacoes } from "@/src/lib/celulares";
-
-const SPRING = { type: "spring" as const, bounce: 0, duration: 0.5 };
-
-const FRAMES = ["#1f2027", "#d7d9df", "#26335c", "#4b3d7a", "#6b2433", "#244c42", "#b9a27c", "#3a3b44"];
-const SCREENS = [
-  "linear-gradient(160deg,#e6c27a,#7a4a1c 60%,#120c06)",
-  "linear-gradient(160deg,#8fb0de,#2b3f68 60%,#0c0d14)",
-  "linear-gradient(160deg,#e08a68,#7a2e1c 60%,#140906)",
-  "linear-gradient(160deg,#efd9a8,#a0682c 55%,#1c1309)",
-  "linear-gradient(160deg,#9cc9b2,#2f5a49 60%,#08100c)",
-];
 
 /** Especificações mostradas na página do aparelho, na ordem. */
 export const ROTULOS_ESPECIFICACOES: [keyof Especificacoes, string][] = [
@@ -39,47 +26,19 @@ export const ROTULOS_ESPECIFICACOES: [keyof Especificacoes, string][] = [
   ["espessura", "Espessura"],
 ];
 
+const decimal = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
 function hash(text: string) {
   let h = 0;
   for (const ch of text) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   return h;
 }
 
-const frameOf = (c: Celular) => FRAMES[hash(c.marca.toLowerCase()) % FRAMES.length];
-const screenOf = (c: Celular) => SCREENS[hash(c.modelo.toLowerCase()) % SCREENS.length];
+/** Cor da faixa da marca: a mesma marca sempre cai na mesma placa. */
+const FAIXAS = ["faixa-pink", "faixa-cyan", "faixa-cream", "faixa-violet", "faixa-lime"] as const;
+const faixaDe = (c: Celular) => FAIXAS[hash(c.marca.trim().toLowerCase()) % FAIXAS.length];
 
-// Aparelhos por prateleira: cada coluna ocupa pelo menos LARGURA_MINIMA (com
-// GAP entre elas) e o aparelho em si tem no máximo 130 px, centralizado na
-// coluna. Nunca menos de 2 colunas. Medidas: 8 colunas a 2000 px, 5 a 1366 px,
-// 2 a 375 px.
-const LARGURA_MINIMA = 200;
-const GAP = 20;
-const COLUNAS_MINIMAS = 2;
-const COLUNAS_INICIAIS = 6;
-
-function useColunas(ref: RefObject<HTMLElement | null>) {
-  const [colunas, setColunas] = useState(COLUNAS_INICIAIS);
-
-  useEffect(() => {
-    const elemento = ref.current;
-    if (!elemento) return;
-    const observador = new ResizeObserver(([entrada]) => {
-      const largura = entrada.contentRect.width;
-      setColunas(Math.max(COLUNAS_MINIMAS, Math.floor((largura + GAP) / (LARGURA_MINIMA + GAP))));
-    });
-    observador.observe(elemento);
-    return () => observador.disconnect();
-  }, [ref]);
-
-  return colunas;
-}
-
-type PhoneShelfProps = {
-  celulares: Celular[];
-  className?: string;
-};
-
-function rotuloAcessivel(c: Celular) {
+export function rotuloAcessivel(c: Celular) {
   const nota =
     c.notaMedia === null || c.avaliacoes === 0
       ? "sem avaliações"
@@ -87,140 +46,140 @@ function rotuloAcessivel(c: Celular) {
   return `${c.marca} ${c.modelo}, ${nota}`;
 }
 
-export function PhoneShelf({ celulares, className }: PhoneShelfProps) {
-  const prateleiraRef = useRef<HTMLDivElement>(null);
-  const colunas = useColunas(prateleiraRef);
-  const grade = { gridTemplateColumns: `repeat(${colunas}, minmax(0, 1fr))` };
-  const rows: Celular[][] = [];
-  for (let i = 0; i < celulares.length; i += colunas) rows.push(celulares.slice(i, i + colunas));
+type PhoneShelfProps = {
+  celulares: Celular[];
+  className?: string;
+};
 
+export function PhoneShelf({ celulares, className }: PhoneShelfProps) {
   return (
-    <>
-      <div ref={prateleiraRef} className={cn("relative px-2 sm:px-6", className)}>
-        {rows.map((row, r) => (
-          <section key={r} aria-label={`Prateleira ${r + 1}`} className="relative mb-6 last:mb-0">
-            <div className="relative z-10 grid items-end gap-5" style={grade}>
-              {row.map((c) => (
-                <div key={c.idcelular} className="relative flex justify-center">
-                  {/* sombra de chão sob o aparelho (no lugar da prateleira branca) */}
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute -bottom-3 left-1/2 h-5 w-[min(100%,150px)] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgba(201,151,63,0.35),transparent)]"
-                  />
-                  <Link
-                    href={`/catalogo/${c.idcelular}`}
-                    aria-label={rotuloAcessivel(c)}
-                    className="relative block aspect-[1/2] w-full max-w-[130px] cursor-pointer rounded-[22%/11%] outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-4"
-                  >
-                    <motion.span
-                      className="absolute inset-0 block"
-                      transition={SPRING}
-                      whileHover={{ y: -10, rotateY: -18, rotateX: 8, scale: 1.06 }}
-                      style={{ transformPerspective: 600 }}
-                    >
-                      <CelularTransicao id={c.idcelular}>
-                        <PhoneVisual celular={c} />
-                      </CelularTransicao>
-                    </motion.span>
-                  </Link>
-                </div>
-              ))}
-            </div>
-            <div className="mt-6 grid gap-5" style={grade}>
-              {row.map((c) => (
-                <div key={c.idcelular} className="min-w-0 text-center">
-                  <ShelfLabel celular={c} />
-                </div>
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
-    </>
+    <ul className={cn("letreiro-cards", className)}>
+      {celulares.map((c) => (
+        <li key={c.idcelular}>
+          <PhoneCard celular={c} />
+        </li>
+      ))}
+    </ul>
   );
 }
 
-/**
- * Aparelho pequeno com marca, modelo e nota, usado na faixa "Mais da marca" da
- * página do celular: mesma linguagem da prateleira, numa caixa menor.
- * Sem nome de transição: só a foto principal voa entre o catálogo e o celular
- * (com nome, cada mini-cartão voava até o cartão igual na prateleira).
- */
-export function PhoneMiniCard({ celular }: { celular: Celular }) {
+/** Cartão completo: faixa da marca, aparelho, modelo, nota e descrição. */
+export function PhoneCard({ celular: c }: { celular: Celular }) {
+  const temNota = c.notaMedia !== null && c.avaliacoes > 0;
   return (
-    <Link
-      href={`/catalogo/${celular.idcelular}`}
-      aria-label={rotuloAcessivel(celular)}
-      className="group flex flex-col items-center gap-3 rounded-[18px] border border-line bg-surface-soft px-3 py-4 outline-none transition-colors hover:border-line-strong focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
-    >
-      <span className="relative block aspect-[1/2] w-full max-w-[64px]">
-        <span className="absolute inset-0 block transition-transform duration-300 ease-out group-hover:-translate-y-1 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0">
-          <PhoneVisual celular={celular} />
+    <Link href={`/catalogo/${c.idcelular}`} aria-label={rotuloAcessivel(c)} className="letreiro-card">
+      <span className={cn("letreiro-card__band", faixaDe(c))}>
+        <span className="truncate">{c.marca}</span>
+        {c.imagens.length > 1 && <span className="letreiro-card__count">{c.imagens.length} fotos</span>}
+      </span>
+      <span className="letreiro-card__fig">
+        <span className="letreiro-card__device">
+          <CelularTransicao id={c.idcelular}>
+            <PhoneVisual celular={c} />
+          </CelularTransicao>
         </span>
       </span>
-      <div className="min-w-0 self-stretch text-center">
-        <ShelfLabel celular={celular} />
-      </div>
+      <span className="letreiro-card__body">
+        <span className="letreiro-card__model" title={c.modelo}>
+          {c.modelo}
+        </span>
+        <span className="letreiro-card__rate">
+          {temNota ? decimal.format(c.notaMedia as number) : "—"}
+          <small>{temNota ? textoAvaliacoes(c.avaliacoes) : "sem nota"}</small>
+        </span>
+        {c.descricao && <span className="letreiro-card__desc">{c.descricao}</span>}
+      </span>
     </Link>
   );
 }
 
-function ShelfLabel({ celular }: { celular: Celular }) {
+/**
+ * Cartão pequeno com marca, modelo e nota, usado na faixa "Mais da marca" da
+ * página do celular. Sem nome de transição: só a foto principal voa entre o
+ * catálogo e o celular.
+ */
+export function PhoneMiniCard({ celular }: { celular: Celular }) {
+  const temNota = celular.notaMedia !== null && celular.avaliacoes > 0;
   return (
-    <>
-      <div className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle" title={celular.marca}>{celular.marca}</div>
-      <div className="mt-1 truncate text-[16px] font-medium leading-snug text-foreground" title={celular.modelo}>{celular.modelo}</div>
-      <NotaResumo compacto notaMedia={celular.notaMedia} avaliacoes={celular.avaliacoes} className="mt-1 text-[14px]" />
-    </>
+    <Link href={`/catalogo/${celular.idcelular}`} aria-label={rotuloAcessivel(celular)} className="letreiro-mini">
+      <span className="letreiro-mini__device">
+        <PhoneVisual celular={celular} />
+      </span>
+      <span className="min-w-0 self-stretch text-center">
+        <span className="letreiro-mini__brand" title={celular.marca}>
+          {celular.marca}
+        </span>
+        <span className="letreiro-mini__model" title={celular.modelo}>
+          {celular.modelo}
+        </span>
+        <span className="letreiro-mini__rate">{temNota ? decimal.format(celular.notaMedia as number) : "sem nota"}</span>
+      </span>
+    </Link>
   );
 }
 
 /**
- * A foto do aparelho (da API ou enviada) num cartão do mesmo tamanho do celular
- * desenhado, para todos ficarem iguais na prateleira; sem foto, o celular desenhado.
- * `ajuste`: "cover" preenche o cartão; "contain" mostra a foto inteira.
+ * A foto do aparelho (da API ou enviada) num cartão do tamanho do celular
+ * desenhado; sem foto, o celular desenhado.
  */
-function PhoneVisual({
-  celular,
-  src = celular.imagens[0]?.url,
-  ajuste = "contain",
-}: {
-  celular: Celular;
-  src?: string;
-  ajuste?: "cover" | "contain";
-}) {
+function PhoneVisual({ celular, src = celular.imagens[0]?.url }: { celular: Celular; src?: string }) {
   if (src) {
     return (
-      <span className="absolute inset-0 overflow-hidden rounded-[14%/7%] bg-surface-solid shadow-[0_18px_30px_-16px_rgba(15,16,32,0.45)] ring-1 ring-line">
+      <span className="phone-visual">
         {/* eslint-disable-next-line @next/next/no-img-element -- imagem servida pela API */}
-        <img
-          src={src}
-          alt=""
-          loading="lazy"
-          className={cn("foto-aparelho size-full", ajuste === "cover" ? "object-cover" : "object-contain p-[8%]")}
-        />
+        <img src={src} alt="" loading="lazy" className="foto-aparelho size-full object-contain" />
       </span>
     );
   }
   return <PhoneArt celular={celular} />;
 }
 
-/** Celular de frente, desenhado em HTML (para aparelhos sem foto). */
+/** Cores chapadas do corpo, da lateral e do módulo de câmera (paleta do letreiro). */
+const CORPOS = [
+  { corpo: "#ff8fc4", lado: "#ff6fb2", modulo: "#ffb3d6", lente: "#22d8f2" },
+  { corpo: "#22d8f2", lado: "#14b7d0", modulo: "#7beafa", lente: "#ff2d8a" },
+  { corpo: "#dcff2e", lado: "#b9db17", modulo: "#0d0b22", lente: "#2b2070" },
+  { corpo: "#fff6e0", lado: "#e9dcb8", modulo: "#0d0b22", lente: "#6b4cff" },
+  { corpo: "#8f78ff", lado: "#6b4cff", modulo: "#b9abff", lente: "#dcff2e" },
+];
+
+/** Celular de costas, desenhado em SVG com cor chapada (para aparelhos sem foto). */
 export function PhoneArt({ celular }: { celular: Celular }) {
+  const cor = CORPOS[hash(celular.marca.trim().toLowerCase()) % CORPOS.length];
+  const desenho = hash(celular.modelo.toLowerCase()) % 3;
   return (
-    <span
-      className="absolute inset-0 rounded-[22%/11%] p-[5%] shadow-[0_18px_30px_-14px_rgba(15,16,32,0.55),inset_0_0_0_1px_rgba(255,255,255,0.25)]"
-      style={{ background: frameOf(celular) }}
-    >
-      <span className="relative block size-full overflow-hidden rounded-[18%/9%]" style={{ background: screenOf(celular) }}>
-        <span className="absolute inset-x-0 top-[22%] text-center text-[13px] font-semibold text-white/90">9:41</span>
-        <span className="absolute left-1/2 top-[3%] h-[4%] w-[30%] -translate-x-1/2 rounded-full bg-black" />
-        <span className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.22),rgba(255,255,255,0)_40%)]" />
-      </span>
-      {/* botões laterais */}
-      <span className="absolute -right-[2.5%] top-[24%] h-[12%] w-[2.5%] rounded-r" style={{ background: frameOf(celular) }} />
-      <span className="absolute -left-[2.5%] top-[20%] h-[7%] w-[2.5%] rounded-l" style={{ background: frameOf(celular) }} />
-      <span className="absolute -left-[2.5%] top-[30%] h-[7%] w-[2.5%] rounded-l" style={{ background: frameOf(celular) }} />
-    </span>
+    <svg className="phone-art" viewBox="0 0 120 240" aria-hidden="true">
+      <rect x="4" y="4" width="112" height="232" rx="20" fill={cor.corpo} />
+      <rect x="96" y="4" width="20" height="232" rx="10" fill={cor.lado} />
+      {desenho === 0 && (
+        <g>
+          <rect x="14" y="14" width="46" height="46" rx="13" fill={cor.modulo} />
+          <circle cx="27" cy="27" r="9" fill="#0d0b22" />
+          <circle cx="47" cy="47" r="9" fill="#0d0b22" />
+          <circle cx="47" cy="27" r="3.5" fill="#fff6e0" />
+          <circle cx="29" cy="25" r="3" fill={cor.lente} />
+          <circle cx="49" cy="45" r="3" fill={cor.lente} />
+        </g>
+      )}
+      {desenho === 1 && (
+        <g>
+          <circle cx="24" cy="26" r="9" fill="#0d0b22" />
+          <circle cx="24" cy="48" r="9" fill="#0d0b22" />
+          <circle cx="24" cy="70" r="9" fill="#0d0b22" />
+          <circle cx="42" cy="26" r="3.5" fill="#fff6e0" />
+          <circle cx="26" cy="24" r="3" fill={cor.lente} />
+          <circle cx="26" cy="46" r="3" fill={cor.lente} />
+          <circle cx="26" cy="68" r="3" fill={cor.lente} />
+        </g>
+      )}
+      {desenho === 2 && (
+        <g>
+          <rect x="4" y="40" width="112" height="24" rx="12" fill="#0d0b22" />
+          <circle cx="30" cy="52" r="7" fill={cor.lente} />
+          <circle cx="52" cy="52" r="7" fill={cor.lente} />
+          <circle cx="80" cy="52" r="3" fill="#fff6e0" />
+        </g>
+      )}
+    </svg>
   );
 }
