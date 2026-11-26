@@ -76,9 +76,16 @@ public class LimiteBuscaEspecificacoes {
     public boolean iniciar(Autenticacao.Usuario usuario) {
         long id = id(usuario);
         if (semLimite(id)) return false;
-        if (uso.buscasNoDia(id, hoje()) >= porDia || !emAndamento.add(id)) {
-            throw ErroApi.de(429, MENSAGEM);
+        // Reserva a vez ANTES de ler a contagem: lendo antes, uma busca paralela podia ler 0, a primeira
+        // terminar (contar e liberar a vez) e a paralela pegar a vez com a contagem velha.
+        if (!emAndamento.add(id)) throw ErroApi.de(429, MENSAGEM);
+        boolean liberada = false;
+        try {
+            liberada = uso.buscasNoDia(id, hoje()) < porDia;
+        } finally {
+            if (!liberada) emAndamento.remove(id);
         }
+        if (!liberada) throw ErroApi.de(429, MENSAGEM);
         return true;
     }
 

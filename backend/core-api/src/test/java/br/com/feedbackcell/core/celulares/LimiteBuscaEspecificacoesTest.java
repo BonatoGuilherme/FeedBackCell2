@@ -21,6 +21,8 @@ class LimiteBuscaEspecificacoesTest {
     /** Repositório em memória no lugar do MySQL. */
     private static final class UsoEmMemoria extends UsoBuscaRepositorio {
         final Map<String, Integer> contagem = new HashMap<>();
+        /** Roda depois de ler e antes de devolver: simula outra requisição no meio da leitura. */
+        Runnable aoLer;
 
         UsoEmMemoria() {
             super(null);
@@ -28,7 +30,9 @@ class LimiteBuscaEspecificacoesTest {
 
         @Override
         public int buscasNoDia(long idusuario, LocalDate dia) {
-            return contagem.getOrDefault(idusuario + "|" + dia, 0);
+            int lido = contagem.getOrDefault(idusuario + "|" + dia, 0);
+            if (aoLer != null) aoLer.run();
+            return lido;
         }
 
         @Override
@@ -127,6 +131,31 @@ class LimiteBuscaEspecificacoesTest {
         assertThat(limite.iniciar(COMUM)).isTrue();
         assertThatThrownBy(() -> limite.iniciar(COMUM)).isInstanceOf(ErroApi.class);
         limite.concluir(COMUM, true);
+    }
+
+    @Test
+    void buscaParalelaQueLeuAContagemAntesDaPrimeiraTerminarEhBarrada() {
+        LimiteBuscaEspecificacoes limite = limite(1);
+        assertThat(limite.iniciar(COMUM)).isTrue();
+        // a primeira busca termina (conta e libera a vez) bem no meio da leitura da paralela
+        uso.aoLer = () -> limite.concluir(COMUM, true);
+        assertThatThrownBy(() -> limite.iniciar(COMUM)).isInstanceOfSatisfying(ErroApi.class,
+                e -> assertThat(e.status()).isEqualTo(429));
+        uso.aoLer = null;
+        // a primeira (se ainda não terminou) conclui; só ela foi contada e o dia acabou para o usuário
+        if (uso.contagem.isEmpty()) limite.concluir(COMUM, true);
+        assertThat(uso.contagem).containsEntry("5|2026-11-10", 1);
+        assertThatThrownBy(() -> limite.iniciar(COMUM)).isInstanceOf(ErroApi.class);
+    }
+
+    @Test
+    void reservaRecusadaPelaContagemLiberaAVez() {
+        LimiteBuscaEspecificacoes limite = limite(1);
+        buscar(limite, COMUM);
+        assertThatThrownBy(() -> limite.iniciar(COMUM)).isInstanceOf(ErroApi.class);
+        // passou o dia: a vez não pode ter ficado presa pela tentativa recusada
+        relogio.agora = Instant.parse("2026-11-11T15:00:00Z");
+        assertThat(limite.iniciar(COMUM)).isTrue();
     }
 
     @Test
