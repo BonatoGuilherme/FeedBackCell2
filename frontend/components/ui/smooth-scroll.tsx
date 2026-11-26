@@ -26,7 +26,13 @@ export function SmoothScroll() {
         return;
       }
       if (lenis) return;
-      const { default: LenisClasse } = await import("lenis");
+      let LenisClasse: typeof Lenis;
+      try {
+        ({ default: LenisClasse } = await import("lenis"));
+      } catch {
+        // falha no download (rede, ou chunk antigo depois de um deploy): fica a rolagem nativa
+        return;
+      }
       // a página pode ter sido fechada, ou a preferência mudado, durante o download
       if (!ativo || media.matches || lenis) return;
       lenis = new LenisClasse({ autoRaf: true, lerp: 0.1, anchors: true });
