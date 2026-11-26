@@ -1,22 +1,18 @@
 "use client";
 
 /**
- * Navegação em formato de painel:
- * - desktop: menu lateral fino só com ícones (rótulo aparece ao passar o mouse)
- *   e barra de topo com o caminho da página e as ações;
- * - celular: barra de topo compacta e barra de abas fixa embaixo.
- * O item ativo é marcado por uma pílula que "estica" (useSlidePill, com GSAP).
+ * Navegação no estilo "Letreiro":
+ * - barra de topo fixa com a marca FeedBack[CELL], os links (sublinhado verde-limão
+ *   no item ativo) e o botão de entrar ou sair;
+ * - no celular, os links vão para uma barra de abas fixa embaixo.
  */
 
-import { useRef } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Home, LayoutGrid, LogIn, LogOut, Plus } from "lucide-react";
 import { expireSession } from "@/src/lib/session";
 import { useHasSession } from "@/src/lib/useSession";
 import { hrefLogin, hrefProtegido } from "@/src/lib/rotas";
-import { useSlidePill } from "@/components/ui/use-slide-pill";
 
 type Item = { href: string; label: string; short?: string; icon: typeof Home; exigeConta?: boolean };
 
@@ -26,13 +22,8 @@ const links: Item[] = [
   { href: "/items/new", label: "Adicionar celular", short: "Adicionar", icon: Plus, exigeConta: true },
 ];
 
-const titles: Record<string, string> = {
-  "/": "Painel",
-  "/catalog": "Catálogo",
-  "/items/new": "Novo celular",
-};
-
 function activeHref(pathname: string) {
+  // /catalogo também ativa o item "Catálogo" (/catalog redireciona para lá)
   const match = links
     .filter((l) => pathname === l.href || (l.href !== "/" && pathname.startsWith(l.href)))
     .sort((a, b) => b.href.length - a.href.length)[0];
@@ -48,124 +39,68 @@ export default function Navigation() {
   const destino = (l: Item) => (l.exigeConta ? hrefProtegido(l.href, logado) : l.href);
   const hrefEntrar = hrefLogin(pathname);
 
-  const railRef = useRef<HTMLUListElement>(null);
-  const railPill = useRef<HTMLSpanElement>(null);
-  const tabsRef = useRef<HTMLUListElement>(null);
-  const tabsPill = useRef<HTMLSpanElement>(null);
-  useSlidePill(railRef, railPill, active, "y");
-  useSlidePill(tabsRef, tabsPill, active, "x");
-
   function handleLogout() {
     expireSession();
     router.replace("/");
   }
 
-  const title = titles[active ?? ""] ?? "FeedBackCELL";
-
   return (
     <>
-      {/* menu lateral (desktop) */}
-      <aside className="app-rail" aria-label="Navegação principal">
-        <Link href="/" className="app-rail__brand" aria-label="FeedBackCELL, início">
-          <Image src="/brand-mark.svg" alt="" width={44} height={44} unoptimized priority />
-        </Link>
-
-        <nav className="app-rail__nav">
-          <ul ref={railRef} className="app-rail__list">
-            <span ref={railPill} className="app-pill" aria-hidden />
-            {links.map((l) => {
-              const { href, label, icon: Icon } = l;
-              return (
-              <li key={href}>
-                <Link
-                  href={destino(l)}
-                  data-pill-key={href}
-                  className="app-rail__link"
-                  aria-current={active === href ? "page" : undefined}
-                  aria-label={label}
-                >
-                  <Icon className="size-[19px]" strokeWidth={1.7} aria-hidden />
-                  <span className="app-rail__tip" role="tooltip">
-                    {label}
-                  </span>
-                </Link>
-              </li>
-              );
-            })}
-          </ul>
-        </nav>
-
-        {logado === true && (
-          <button type="button" className="app-rail__link app-rail__logout" onClick={handleLogout} aria-label="Sair">
-            <LogOut className="size-[18px]" strokeWidth={1.7} aria-hidden />
-            <span className="app-rail__tip" role="tooltip">
-              Sair
-            </span>
-          </button>
-        )}
-        {logado === false && (
-          <Link href={hrefEntrar} className="app-rail__link app-rail__logout" aria-label="Entrar">
-            <LogIn className="size-[18px]" strokeWidth={1.7} aria-hidden />
-            <span className="app-rail__tip" role="tooltip">
-              Entrar
-            </span>
-          </Link>
-        )}
-      </aside>
-
-      {/* barra de topo */}
       <header className="app-topbar">
-        <Link href="/" className="app-topbar__brand" aria-label="FeedBackCELL, início">
-          <span className="app-topbar__mark">
-            <Image src="/brand-mark.svg" alt="" width={30} height={30} unoptimized priority />
-          </span>
-          <span>
-            FeedBack<em>CELL</em>
-          </span>
-        </Link>
+        <div className="app-topbar__inner">
+          <Link href="/" className="brand-sign" aria-label="FeedBackCELL, início">
+            FeedBack<span>CELL</span>
+          </Link>
 
-        <nav className="app-crumbs" aria-label="Você está em">
-          <span>FeedBackCELL</span>
-          <span aria-hidden>/</span>
-          <span aria-current="page">{title}</span>
-        </nav>
+          <nav className="app-topbar__nav" aria-label="Navegação principal">
+            <ul>
+              {links.map((l) => (
+                <li key={l.href}>
+                  <Link
+                    href={destino(l)}
+                    className="app-topbar__link"
+                    aria-current={active === l.href ? "page" : undefined}
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
 
-        <div className="app-topbar__actions">
-          <span className="app-live" title="Catálogo sincronizado">
-            <i aria-hidden />
-            Ao vivo
-          </span>
-          {logado === true && (
-            <button type="button" className="app-topbar__logout" onClick={handleLogout} aria-label="Sair">
-              <LogOut className="size-[17px]" strokeWidth={1.7} aria-hidden />
-            </button>
-          )}
-          {logado === false && (
-            <Link href={hrefEntrar} className="app-topbar__logout" aria-label="Entrar" title="Entrar">
-              <LogIn className="size-[17px]" strokeWidth={1.7} aria-hidden />
-            </Link>
-          )}
+          <div className="app-topbar__actions">
+            {logado === true && (
+              <button type="button" className="app-topbar__session" onClick={handleLogout}>
+                <LogOut className="size-[18px]" strokeWidth={2.2} aria-hidden />
+                Sair
+              </button>
+            )}
+            {logado === false && (
+              <Link href={hrefEntrar} className="app-topbar__session">
+                <LogIn className="size-[18px]" strokeWidth={2.2} aria-hidden />
+                Entrar
+              </Link>
+            )}
+          </div>
         </div>
       </header>
 
       {/* abas (celular) */}
       <nav className="app-tabs" aria-label="Navegação principal">
-        <ul ref={tabsRef} className="app-tabs__list">
-          <span ref={tabsPill} className="app-pill" aria-hidden />
+        <ul className="app-tabs__list">
           {links.map((l) => {
             const { href, label, short, icon: Icon } = l;
             return (
-            <li key={href}>
-              <Link
-                href={destino(l)}
-                data-pill-key={href}
-                className="app-tabs__link"
-                aria-current={active === href ? "page" : undefined}
-              >
-                <Icon className="size-5" strokeWidth={1.7} aria-hidden />
-                <span>{short ?? label}</span>
-              </Link>
-            </li>
+              <li key={href}>
+                <Link
+                  href={destino(l)}
+                  className="app-tabs__link"
+                  aria-current={active === href ? "page" : undefined}
+                >
+                  <Icon className="size-5" strokeWidth={2} aria-hidden />
+                  <span>{short ?? label}</span>
+                </Link>
+              </li>
             );
           })}
         </ul>

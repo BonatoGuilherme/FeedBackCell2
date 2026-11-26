@@ -11,34 +11,13 @@
   min-height: 100dvh;
   place-items: center;
   padding: var(--space-6);
-  background: transparent;
 }
 
 .app-loading-screen__card {
   display: grid;
   justify-items: center;
-  gap: var(--space-3);
+  gap: var(--space-4);
   animation: auth-fade-in 240ms var(--ease) 150ms both;
-}
-
-.app-loading-screen__mark {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  place-items: center;
-  border-radius: 12px;
-  box-shadow: 0 0 28px -6px rgb(201 151 63 / 60%);
-}
-
-.app-loading-screen__name {
-  color: var(--foreground);
-  font-size: var(--font-size-h3);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: -0.02em;
-}
-
-.app-loading-screen__name span {
-  color: var(--accent);
 }
 
 .app-loading-screen__status {
@@ -47,13 +26,14 @@
   gap: var(--space-2);
   color: var(--muted);
   font-size: var(--font-size-label);
+  font-weight: var(--font-weight-semibold);
 }
 
 .app-loading-screen__spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid var(--line-strong);
-  border-top-color: var(--accent);
+  border: 3px solid var(--line-strong);
+  border-top-color: var(--lime);
   border-radius: 50%;
   animation: spin 750ms linear infinite;
 }
@@ -67,11 +47,6 @@
 
 /* ---------- login e cadastro ---------- */
 
-/*
- * O base.css reserva a calha da barra de rolagem no <html> (scrollbar-gutter: stable),
- * pintada com a cor do <html>. Aqui não há modal que precise dela, então a calha some
- * e o <html> assume a cor da coluna do formulário, sem faixa clara ao lado do painel.
- */
 html:has(.auth-shell) {
   scrollbar-gutter: auto;
 }
@@ -80,14 +55,13 @@ html:has(.auth-shell) {
   display: grid;
   min-height: 100dvh;
   grid-template-rows: 1fr auto;
-  background: transparent;
 }
 
 .auth-shell__form {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  padding: var(--space-6) var(--space-5) var(--space-8);
+  padding: var(--space-6) var(--space-4) var(--space-8);
 }
 
 .auth-shell__body {
@@ -103,28 +77,14 @@ html:has(.auth-shell) {
   margin: 0;
 }
 
-.auth-logo {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  align-self: flex-start;
-  border-radius: var(--radius-control);
-}
-
-.auth-logo__mark {
-  display: grid;
-  width: 32px;
-  height: 32px;
-  place-items: center;
-  border-radius: 9px;
-  box-shadow: 0 0 20px -6px rgb(201 151 63 / 55%);
-}
-
-.auth-logo__name {
+.auth-title {
+  margin: 0;
   color: var(--foreground);
-  font-size: 17px;
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: -0.02em;
+  font-family: var(--font-display);
+  font-size: clamp(40px, 6vw, 56px);
+  font-weight: 900;
+  line-height: 0.9;
+  text-transform: uppercase;
 }
 
 .auth-field {
@@ -132,112 +92,118 @@ html:has(.auth-shell) {
   gap: var(--space-2);
 }
 
-/* painel da marca */
+/* painel da marca: rua à noite com placas */
 
 .auth-brand {
   position: relative;
   overflow: hidden;
-  background: rgb(11 8 5 / 55%);
+  background: linear-gradient(180deg, var(--night-deep) 0%, var(--night-2) 60%, #5b3f9e 100%);
   color: var(--foreground);
   isolation: isolate;
 }
 
-/* brilho índigo discreto e grade fina, só decoração */
+/* chuva fina, só decoração */
 .auth-brand::before {
   position: absolute;
   z-index: -1;
   inset: 0;
-  background:
-    radial-gradient(60% 50% at 50% 40%, rgb(201 151 63 / 26%), transparent 70%),
-    linear-gradient(rgb(239 227 204 / 4%) 1px, transparent 1px) 0 0 / 40px 40px,
-    linear-gradient(90deg, rgb(239 227 204 / 4%) 1px, transparent 1px) 0 0 / 40px 40px;
+  background: repeating-linear-gradient(102deg, transparent 0 22px, rgb(255 255 255 / 7%) 22px 23px);
   content: "";
-  -webkit-mask-image: radial-gradient(80% 70% at 50% 40%, #000 30%, transparent 100%);
-  mask-image: radial-gradient(80% 70% at 50% 40%, #000 30%, transparent 100%);
 }
 
 .auth-brand__inner {
+  position: relative;
   display: flex;
-  max-width: 520px;
+  max-width: 560px;
   flex-direction: column;
   margin: 0 auto;
-  padding: var(--space-8) var(--space-5) var(--space-10);
+  padding: var(--space-10) var(--space-4) var(--space-12);
 }
 
-.auth-brand__eyebrow {
-  margin: 0 0 var(--space-3);
-  color: var(--accent-on-dark);
-  font-size: var(--font-size-label);
-  font-weight: var(--font-weight-medium);
+.auth-brand .kicker {
+  align-self: flex-start;
 }
 
 .auth-brand__title {
   margin: 0;
-  font-size: 22px;
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: -0.025em;
-  line-height: 1.2;
+  font-family: var(--font-display);
+  font-size: clamp(40px, 3.6vw + 8px, 64px);
+  font-weight: 900;
+  line-height: 0.88;
+  text-transform: uppercase;
 }
 
 .auth-brand__lead {
-  margin: var(--space-3) 0 0;
-  color: var(--sidebar-muted);
+  max-width: 30em;
+  margin: var(--space-4) 0 0;
+  color: var(--muted);
   font-size: var(--font-size-body);
   line-height: 1.6;
 }
 
-/* o celular 3D só aparece no desktop */
-.auth-brand__stage {
+/* placas verticais só no desktop */
+.auth-brand__signs {
   display: none;
-}
-
-.auth-brand__orbit {
-  width: min(100%, 420px, 48vh);
 }
 
 .auth-brand__features {
   display: grid;
-  gap: var(--space-3);
-  margin: var(--space-6) 0 0;
-  padding: var(--space-5) 0 0;
-  border-top: 1px solid var(--line);
+  margin: var(--space-8) 0 0;
+  padding: var(--space-5);
+  background: var(--ink);
   list-style: none;
 }
 
 .auth-brand__feature {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: 2px solid var(--ink-2);
+}
+
+.auth-brand__feature:first-child {
+  border-top: 0;
+  padding-top: 0;
 }
 
 .auth-brand__feature-icon {
   display: grid;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   flex-shrink: 0;
   place-items: center;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface-soft);
-  color: var(--accent-on-dark);
+  background: var(--lime);
+  color: var(--ink);
+}
+
+.auth-brand__feature:nth-child(2) .auth-brand__feature-icon {
+  background: var(--cyan);
+}
+
+.auth-brand__feature:nth-child(3) .auth-brand__feature-icon {
+  background: var(--pink);
+  color: #fff;
 }
 
 .auth-brand__feature-icon svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
 }
 
 .auth-brand__feature-title {
   display: block;
-  font-size: 14px;
-  font-weight: var(--font-weight-medium);
-  line-height: 1.4;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-transform: uppercase;
 }
 
 .auth-brand__feature-text {
-  display: none;
+  display: block;
   margin-top: 2px;
-  color: var(--sidebar-muted);
+  color: var(--muted);
   font-size: var(--font-size-label);
   line-height: 1.5;
 }
@@ -250,24 +216,12 @@ html:has(.auth-shell) {
   .auth-brand__inner {
     padding: var(--space-12) var(--space-10);
   }
-
-  .auth-brand__features {
-    gap: var(--space-4);
-  }
-
-  .auth-brand__feature {
-    align-items: flex-start;
-  }
-
-  .auth-brand__feature-text {
-    display: block;
-  }
 }
 
 /* desktop: painel da marca à esquerda, formulário à direita */
 @media (min-width: 1024px) {
   .auth-shell {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
     grid-template-rows: none;
   }
 
@@ -296,35 +250,36 @@ html:has(.auth-shell) {
   .auth-brand__inner {
     height: 100%;
     justify-content: center;
-    padding: var(--space-12) var(--space-12);
+    padding: var(--space-12) calc(var(--space-12) + 80px) var(--space-12) var(--space-12);
   }
 
-  .auth-brand__title {
-    font-size: clamp(28px, 1.6vw + 10px, 36px);
+  .auth-brand__signs {
+    position: absolute;
+    inset: 0 var(--space-6) 0 auto;
+    display: block;
+    width: 150px;
+    pointer-events: none;
   }
 
-  .auth-brand__lead {
-    max-width: 420px;
-    font-size: var(--font-size-lead);
+  .auth-brand__signs .vsign--1 {
+    top: 6%;
+    right: 0;
+    height: 62%;
   }
 
-  .auth-brand__stage {
-    display: flex;
-    min-height: 0;
-    flex: none;
-    padding-bottom: var(--space-2);
-    justify-content: center;
-    margin-top: var(--space-6);
+  .auth-brand__signs .vsign--2 {
+    top: 18%;
+    right: 72px;
   }
 
-  .auth-brand__features {
-    margin-top: var(--space-6);
+  .auth-brand__signs .vsign--3 {
+    right: 30px;
+    bottom: 8%;
   }
 }
 
-/* telas baixas: sem o celular, para o texto não ficar espremido */
-@media (min-width: 1024px) and (max-height: 820px) {
-  .auth-brand__stage {
+@media (min-width: 1024px) and (max-height: 760px) {
+  .auth-brand__feature-text {
     display: none;
   }
 }
