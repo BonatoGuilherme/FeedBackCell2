@@ -2,7 +2,9 @@ package br.com.feedbackcell.core.celulares;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -147,6 +149,29 @@ class EspecificacoesLimiteApiTest {
         buscar(30).andExpect(status().isOk());
         mvc.perform(get("/celulares/especificacoes/creditos").header("Authorization", bearer(30)))
                 .andExpect(jsonPath("$.usuarioPodeBuscarHoje").value(false));
+    }
+
+    @Test
+    void creditosUsaOMenorEntreOSaldoGravadoEODoSpecsService() throws Exception {
+        // o specs-service reiniciou (diz 12/41), mas o MySQL lembra 14 de 15 hoje e 45 de 50 no mês
+        when(uso.creditosNoDia(any(LocalDate.class))).thenReturn(14);
+        when(uso.creditosNoPeriodo(any(LocalDate.class), any(LocalDate.class))).thenReturn(45);
+        mvc.perform(get("/celulares/especificacoes/creditos").header("Authorization", bearer(32)))
+                .andExpect(content().json(
+                        "{\"restantesMes\":5,\"restantesHoje\":1,\"usuarioPodeBuscarHoje\":true}", true));
+    }
+
+    @Test
+    void tetoGlobalGravadoEsgotadoDa429AteParaAdmin() throws Exception {
+        when(uso.creditosNoDia(any(LocalDate.class))).thenReturn(15);
+        buscar(1).andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.erro").value(Matchers.containsString("limite de créditos de hoje")));
+    }
+
+    @Test
+    void creditosGastosSaoSomadosAoTetoGravado() throws Exception {
+        buscar(33).andExpect(status().isOk());
+        verify(uso).somarCreditos(any(LocalDate.class), eq(3));
     }
 
     @Test

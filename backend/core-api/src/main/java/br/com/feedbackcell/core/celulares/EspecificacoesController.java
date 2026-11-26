@@ -83,15 +83,15 @@ public class EspecificacoesController {
         boolean somente3d = "1".equals(req.getParameter("somente3d"));
         if (somente3d) url.append("&somente3d=1");
 
-        boolean controlado = !somente3d && limite.iniciar(usuario);
-        boolean gastou = false;
+        LimiteBuscaEspecificacoes.Reserva reserva = somente3d ? null : limite.iniciar(usuario);
+        int gastos = 0;
         try {
             HttpResponse<String> resposta = chamar(url.toString());
-            gastou = resposta.statusCode() == 200 && creditosGastos(resposta) > 0;
+            gastos = resposta.statusCode() == 200 ? creditosGastos(resposta) : 0;
             return ResponseEntity.status(resposta.statusCode()).contentType(MediaType.APPLICATION_JSON)
                     .body(resposta.body());
         } finally {
-            if (controlado) limite.concluir(usuario, gastou);
+            if (reserva != null) limite.concluir(reserva, gastos);
         }
     }
 
@@ -108,10 +108,18 @@ public class EspecificacoesController {
             throw ErroApi.de(503, "Serviço de especificações indisponível");
         }
         Map<String, Object> corpo = new LinkedHashMap<>();
-        corpo.put("restantesMes", inteiroOuNull(saldo.get("restantesMes")));
-        corpo.put("restantesHoje", inteiroOuNull(saldo.get("restantesHoje")));
+        // vale o menor entre o saldo gravado no MySQL e o do specs-service (que zera ao reiniciar)
+        LimiteBuscaEspecificacoes.Saldo gravado = limite.saldoGlobal();
+        corpo.put("restantesMes", menor(inteiroOuNull(saldo.get("restantesMes")), gravado.restantesMes()));
+        corpo.put("restantesHoje", menor(inteiroOuNull(saldo.get("restantesHoje")), gravado.restantesHoje()));
         corpo.put("usuarioPodeBuscarHoje", limite.podeBuscarHoje(usuario));
         return corpo;
+    }
+
+    /** O menor dos dois; null (teto desligado) cede ao outro. */
+    static Integer menor(Integer a, Integer b) {
+        if (a == null) return b;
+        return b == null ? a : Math.min(a, b);
     }
 
     private static Integer inteiroOuNull(JsonNode no) {
