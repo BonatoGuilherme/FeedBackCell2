@@ -28,7 +28,8 @@ import tools.jackson.databind.ObjectMapper;
  * GET /celulares/especificacoes?marca=&modelo=[&q=][&somente3d=1] (autenticado).
  * Valida a consulta como o Node e repassa ao specs-service, devolvendo o mesmo status e corpo.
  * A busca completa (que gasta crédito da MobileAPI) tem limite por usuário por dia; com
- * {@code somente3d=1} não há consulta à MobileAPI, então não conta nem é barrada.
+ * {@code somente3d=1} não há consulta à MobileAPI, então não conta nem é barrada. Sem busca disponível
+ * (429), ainda devolve o resultado que o specs-service tiver em cache (sem gastar crédito, não conta).
  *
  * <p>GET /celulares/especificacoes/creditos (autenticado): quantos créditos restam e se o usuário
  * ainda pode buscar hoje, para o aviso do front.
@@ -83,7 +84,15 @@ public class EspecificacoesController {
         boolean somente3d = "1".equals(req.getParameter("somente3d"));
         if (somente3d) url.append("&somente3d=1");
 
-        LimiteBuscaEspecificacoes.Reserva reserva = somente3d ? null : limite.iniciar(usuario);
+        LimiteBuscaEspecificacoes.Reserva reserva = null;
+        if (!somente3d) {
+            try {
+                reserva = limite.iniciar(usuario);
+            } catch (ErroApi barrada) {
+                if (barrada.status() != 429) throw barrada;
+                return doCache(url.append("&somenteCache=1").toString(), barrada);
+            }
+        }
         int gastos = 0;
         try {
             HttpResponse<String> resposta = chamar(url.toString());
@@ -93,6 +102,18 @@ public class EspecificacoesController {
         } finally {
             if (reserva != null) limite.concluir(reserva, gastos);
         }
+    }
+
+    /** Só o cache do specs-service (não gasta crédito); sem resultado lá, vale o 429 do limite. */
+    private ResponseEntity<String> doCache(String url, ErroApi barrada) {
+        HttpResponse<String> resposta;
+        try {
+            resposta = chamar(url);
+        } catch (ErroApi e) {
+            throw barrada;
+        }
+        if (resposta.statusCode() != 200) throw barrada;
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(resposta.body());
     }
 
     @GetMapping("/celulares/especificacoes/creditos")

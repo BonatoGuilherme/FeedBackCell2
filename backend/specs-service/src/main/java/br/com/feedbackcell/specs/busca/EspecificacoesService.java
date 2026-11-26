@@ -217,6 +217,14 @@ public class EspecificacoesService {
         }
     }
 
+    /**
+     * Só o que já está no cache da busca completa (nunca consulta nada, não gasta cota); null se não houver.
+     * O core-api usa quando o usuário já gastou a busca do dia.
+     */
+    public Resultado doCache(String marca, String modelo) {
+        return lerCache("full|" + normalizarChave(marca) + "|" + normalizarChave(modelo));
+    }
+
     static String normalizarChave(String texto) {
         return texto == null ? "" : texto.strip().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
     }

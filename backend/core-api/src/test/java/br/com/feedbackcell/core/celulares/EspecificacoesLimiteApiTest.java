@@ -1,9 +1,12 @@
 package br.com.feedbackcell.core.celulares;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -44,6 +47,8 @@ class EspecificacoesLimiteApiTest {
     /** Créditos que o specs-service falso diz ter gastado na próxima busca. */
     private static final AtomicInteger GASTOS = new AtomicInteger(3);
     private static volatile int statusCreditos = 200;
+    /** Quantas consultas "só cache" chegaram ao specs-service falso (que tem só o Galaxy S23 em cache). */
+    private static final AtomicInteger SO_CACHE = new AtomicInteger();
 
     private static HttpServer subir() {
         try {
@@ -52,6 +57,13 @@ class EspecificacoesLimiteApiTest {
                     "{\"restantesHoje\":12,\"restantesMes\":41}", null));
             s.createContext("/especificacoes", ex -> {
                 if (ex.getRequestURI().getPath().endsWith("/creditos")) return;
+                String consulta = ex.getRequestURI().getRawQuery();
+                if (consulta.contains("somenteCache=1")) {
+                    SO_CACHE.incrementAndGet();
+                    if (consulta.contains("Galaxy+S23")) responder(ex, 200, "{\"consulta\":\"cache\"}", 0);
+                    else responder(ex, 404, "{\"erro\":\"Sem resultado em cache\"}", null);
+                    return;
+                }
                 responder(ex, 200, "{\"consulta\":\"x\"}", GASTOS.get());
             });
             s.start();
@@ -89,6 +101,7 @@ class EspecificacoesLimiteApiTest {
     @BeforeEach
     void preparar() {
         GASTOS.set(3);
+        SO_CACHE.set(0);
         statusCreditos = 200;
         contagem.clear();
         when(uso.buscasNoDia(anyLong(), any(LocalDate.class)))
@@ -112,6 +125,36 @@ class EspecificacoesLimiteApiTest {
         buscar(20).andExpect(status().isTooManyRequests())
                 .andExpect(jsonPath("$.erro").value(Matchers.containsString("amanhã")));
         buscar(21).andExpect(status().isOk());
+    }
+
+    private ResultActions buscar(long id, String modelo) throws Exception {
+        return mvc.perform(get("/celulares/especificacoes").param("marca", "Samsung").param("modelo", modelo)
+                .header("Authorization", bearer(id)));
+    }
+
+    @Test
+    void semBuscaNoDiaAindaServeOCacheSemContar() throws Exception {
+        buscar(24).andExpect(status().isOk());
+        // sem busca no dia: o Galaxy S23 está no cache do specs-service e sai sem gastar nem contar
+        buscar(24, "Galaxy S23").andExpect(status().isOk()).andExpect(jsonPath("$.consulta").value("cache"));
+        buscar(24, "Galaxy S23").andExpect(status().isOk());
+        assertThat(SO_CACHE.get()).isEqualTo(2);
+        assertThat(contagem).containsEntry("24", 1);
+        verify(uso, times(1)).somarCreditos(any(LocalDate.class), anyInt());
+    }
+
+    @Test
+    void semBuscaNoDiaEForaDoCacheContinua429() throws Exception {
+        buscar(25).andExpect(status().isOk());
+        buscar(25, "Galaxy S22").andExpect(status().isTooManyRequests())
+                .andExpect(content().json("{\"erro\":\"" + LimiteBuscaEspecificacoes.MENSAGEM + "\"}", true));
+        assertThat(SO_CACHE.get()).isEqualTo(1);
+    }
+
+    @Test
+    void comBuscaDisponivelNaoConsultaSoOCache() throws Exception {
+        buscar(26, "Galaxy S23").andExpect(status().isOk()).andExpect(jsonPath("$.consulta").value("x"));
+        assertThat(SO_CACHE.get()).isZero();
     }
 
     @Test

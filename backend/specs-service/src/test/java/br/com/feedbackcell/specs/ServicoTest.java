@@ -55,6 +55,26 @@ class ServicoTest {
     }
 
     @Test
+    void somenteCacheNaoConsultaNadaEResponde404SemCache() {
+        given().queryParam("marca", "Samsung").queryParam("modelo", "Galaxy S24").queryParam("somenteCache", "1")
+                .when().get("/especificacoes")
+                .then().statusCode(404).body("erro", equalTo("Sem resultado em cache"));
+        assertEquals(0, http.chamadas.size());
+    }
+
+    @Test
+    void somenteCacheServeOQueJaFoiBuscadoSemGastar() {
+        given().queryParam("marca", "Samsung").queryParam("modelo", "Galaxy S24")
+                .when().get("/especificacoes").then().statusCode(200);
+        int chamadas = http.chamadas.size();
+        given().queryParam("marca", " samsung ").queryParam("modelo", "galaxy  s24").queryParam("somenteCache", "1")
+                .when().get("/especificacoes")
+                .then().statusCode(200).header("X-Creditos-Gastos", "0")
+                .body("aparelho.nome", equalTo("Galaxy S24"));
+        assertEquals(chamadas, http.chamadas.size());
+    }
+
+    @Test
     void restValidaAConsulta() {
         given().queryParam("modelo", "S24<script>").when().get("/especificacoes")
                 .then().statusCode(400).body("erro", equalTo("O nome do celular contém caracteres inválidos."));

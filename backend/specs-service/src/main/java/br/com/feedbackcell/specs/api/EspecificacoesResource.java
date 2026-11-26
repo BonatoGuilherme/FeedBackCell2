@@ -16,7 +16,9 @@ import java.util.regex.Pattern;
 import org.jboss.logging.Logger;
 
 /**
- * GET /especificacoes?marca=&modelo=[&q=][&somente3d=1] — mesmas regras de especificacoesController.js.
+ * GET /especificacoes?marca=&modelo=[&q=][&somente3d=1][&somenteCache=1] — mesmas regras de
+ * especificacoesController.js. Com {@code somenteCache=1} responde só do cache da busca completa (200, sem
+ * gastar crédito) ou 404 se o modelo não estiver lá.
  * Interno: só o core-api chama (proxy autenticado); com SPECS_TOKEN exige o header (TokenInternoFiltro).
  */
 @Path("/especificacoes")
@@ -63,12 +65,18 @@ public class EspecificacoesResource {
 
     @GET
     public Response buscar(@QueryParam("marca") String marcaBruta, @QueryParam("modelo") String modeloBruto,
-                           @QueryParam("q") String q, @QueryParam("somente3d") String somente3d) {
+                           @QueryParam("q") String q, @QueryParam("somente3d") String somente3d,
+                           @QueryParam("somenteCache") String somenteCache) {
         String marca = limpar(marcaBruta);
         String modelo = limpar(modeloBruto);
         if (modelo.isEmpty()) modelo = limpar(q);
         String erro = validar(marca, modelo);
         if (erro != null) return Response.status(400).entity(Map.of("erro", erro)).build();
+        if ("1".equals(somenteCache)) {
+            Resultado emCache = service.doCache(marca, modelo);
+            if (emCache == null) return Response.status(404).entity(Map.of("erro", "Sem resultado em cache")).build();
+            return Response.ok(emCache).header(HEADER_CREDITOS_GASTOS, 0).build();
+        }
         try {
             AtomicInteger gastos = new AtomicInteger();
             Resultado resultado = service.buscar(marca, modelo, "1".equals(somente3d), gastos);
