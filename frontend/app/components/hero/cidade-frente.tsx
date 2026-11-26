@@ -46,52 +46,58 @@ const CORTINAS: Record<string, string> = {
 };
 const PISCA = ["cid-janela cid-janela--1", "cid-janela cid-janela--2", "cid-janela cid-janela--3"];
 
+// Peças repetidas da fachada ficam em <defs> e são reaproveitadas com <use>
+// (posição por x/y; a cor da luz vem do fill do <use>): o HTML fica bem menor.
+const PECAS = (
+  <>
+    <g id="cid-ja">
+      <rect width={14} height={20} fill="#1b1446" stroke={TRACO} strokeWidth={2} />
+      <path d="M3 12L10 4" stroke="#8f86e8" strokeWidth={1.5} opacity={0.45} />
+    </g>
+    <g id="cid-jl">
+      <rect x={-3} y={-3} width={20} height={26} opacity={0.16} />
+      <rect width={14} height={20} stroke={TRACO} strokeWidth={2} />
+      <path d="M7 0v20" stroke={TRACO} strokeWidth={1} opacity={0.5} />
+    </g>
+    <path id="cid-d-cortina" d="M0 0h6q-3 10 0 20h-6zM14 0h-5q2 10 0 20h5z" stroke={TRACO} strokeWidth={1} />
+    <g id="cid-d-planta" stroke={TRACO} strokeWidth={1}>
+      <path d="M4 17h6l-1 3h-4z" fill="#b0532e" />
+      <circle cx={5} cy={14} r={2.6} fill="#3ccf7a" />
+      <circle cx={9} cy={13} r={3} fill="#2fb46a" />
+    </g>
+    <path id="cid-d-persiana" d="M0 5h14M0 10h14M0 15h14" stroke={TRACO} strokeWidth={1} opacity={0.35} />
+    <path id="cid-d-pessoa" d="M3 20q1 -7 4 -7q3 0 4 7zM7 12a3 3 0 1 0 0 -6a3 3 0 1 0 0 6" fill="#2a1d5e" />
+    <path id="cid-d-brilho" d="M1 1h12" stroke="#fff" strokeWidth={2} opacity={0.6} />
+    <g id="cid-ac" stroke={TRACO} strokeWidth={1.6}>
+      <rect width={16} height={9} fill="#c9c2ee" />
+      <path d="M3 3h10M3 6h10" strokeWidth={0.8} />
+    </g>
+  </>
+);
+
 function janela(r: Rng, x: number, y: number, chave: string, piscar: boolean) {
-  const w = 14;
-  const h = 20;
-  if (r() < 0.42) {
-    return (
-      <g key={chave}>
-        <rect x={x} y={y} width={w} height={h} fill="#1b1446" stroke={TRACO} strokeWidth={2} />
-        <path d={`M${x + 3} ${y + 12}L${x + 10} ${y + 4}`} stroke="#8f86e8" strokeWidth={1.5} opacity={0.45} />
-      </g>
-    );
-  }
+  if (r() < 0.42) return <use key={chave} href="#cid-ja" x={x} y={y} />;
   const luz = sortear(r, LUZES);
   const extra = r();
+  const classe = piscar ? sortear(r, PISCA) : undefined;
   let detalhe: React.ReactNode = null;
   if (extra < 0.24) {
-    const c = CORTINAS[luz] ?? "#c44a86";
-    detalhe = (
-      <path
-        d={`M${x} ${y}h6q-3 10 0 ${h}h-6zM${x + w} ${y}h-5q2 10 0 ${h}h5z`}
-        fill={c}
-        stroke={TRACO}
-        strokeWidth={1}
-      />
-    );
+    detalhe = <use href="#cid-d-cortina" x={x} y={y} fill={CORTINAS[luz] ?? "#c44a86"} className={classe} />;
   } else if (extra < 0.38) {
-    detalhe = (
-      <g stroke={TRACO} strokeWidth={1}>
-        <path d={`M${x + 4} ${y + h - 3}h6l-1 3h-4z`} fill="#b0532e" />
-        <circle cx={x + 5} cy={y + h - 6} r={2.6} fill="#3ccf7a" />
-        <circle cx={x + 9} cy={y + h - 7} r={3} fill="#2fb46a" />
-      </g>
-    );
+    detalhe = <use href="#cid-d-planta" x={x} y={y} className={classe} />;
   } else if (extra < 0.5) {
-    detalhe = <path d={`M${x} ${y + 5}h${w}M${x} ${y + 10}h${w}M${x} ${y + 15}h${w}`} stroke="#0d0b22" strokeWidth={1} opacity={0.35} />;
+    detalhe = <use href="#cid-d-persiana" x={x} y={y} className={classe} />;
   } else if (extra < 0.56) {
     // silhueta de alguém olhando o celular
-    detalhe = <path d={`M${x + 3} ${y + h}q1 -7 4 -7q3 0 4 7zM${x + 7} ${y + 12}a3 3 0 1 0 0 -6a3 3 0 1 0 0 6`} fill="#2a1d5e" />;
+    detalhe = <use href="#cid-d-pessoa" x={x} y={y} className={classe} />;
   } else if (extra < 0.62) {
-    detalhe = <path d={`M${x + 1} ${y + 1}h${w - 2}`} stroke="#fff" strokeWidth={2} opacity={0.6} />;
+    detalhe = <use href="#cid-d-brilho" x={x} y={y} className={classe} />;
   }
+  if (!detalhe) return <use key={chave} href="#cid-jl" x={x} y={y} fill={luz} className={classe} />;
   return (
-    <g key={chave} className={piscar ? sortear(r, PISCA) : undefined}>
-      <rect x={x - 3} y={y - 3} width={w + 6} height={h + 6} fill={luz} opacity={0.16} />
-      <rect x={x} y={y} width={w} height={h} fill={luz} stroke={TRACO} strokeWidth={2} />
+    <g key={chave}>
+      <use href="#cid-jl" x={x} y={y} fill={luz} className={classe} />
       {detalhe}
-      <path d={`M${x + w / 2} ${y}v${h}`} stroke={TRACO} strokeWidth={1} opacity={0.5} />
     </g>
   );
 }
@@ -141,9 +147,7 @@ function escadaIncendio(x: number, w: number, topo: number, andares: number[]) {
       <g key={i}>
         <rect x={x} y={py} width={largura} height={4} fill={TRACO} />
         <path d={`M${x} ${py - 11}h${largura}`} strokeWidth={1.6} />
-        {Array.from({ length: Math.floor(largura / 8) + 1 }, (_, k) => (
-          <path key={k} d={`M${x + k * 8} ${py - 11}v11`} strokeWidth={1.2} />
-        ))}
+        <path d={Array.from({ length: Math.floor(largura / 8) + 1 }, (_, k) => `M${x + k * 8} ${py - 11}v11`).join("")} strokeWidth={1.2} />
         {i < andares.length - 1 && (
           <path
             d={lado ? `M${x + 6} ${py + 4}L${x + largura - 10} ${andares[i + 1] + 24}` : `M${x + largura - 6} ${py + 4}L${x + 10} ${andares[i + 1] + 24}`}
@@ -210,12 +214,7 @@ function predio(r: Rng, p: Predio, i: number) {
       if (p.escada && jx < x + inicioEscada && r() < 0.5) continue;
       janelas.push(janela(r, jx, y, `${a}-${c}`, r() < 0.035));
       if (!p.escada && r() < 0.16) {
-        arCond.push(
-          <g key={`ac${a}-${c}`} stroke={TRACO} strokeWidth={1.6}>
-            <rect x={jx - 1} y={y + 24} width={16} height={9} fill="#c9c2ee" />
-            <path d={`M${jx + 2} ${y + 27}h10M${jx + 2} ${y + 30}h10`} strokeWidth={0.8} />
-          </g>,
-        );
+        arCond.push(<use key={`ac${a}-${c}`} href="#cid-ac" x={jx - 1} y={y + 24} />);
       }
     }
   });
@@ -304,22 +303,22 @@ function fios(r: Rng) {
 }
 
 function rua(r: Rng) {
-  const reflexos: React.ReactNode[] = [];
+  // reflexos de neon na água: um <path> por cor e intensidade, em vez de 90 <rect>
+  const CORES_REFLEXO = [COR.pink, COR.cyan, COR.lime, COR.cream, "#ffcf7a"];
+  const grupos = new Map<string, string>();
   for (let k = 0; k < 90; k++) {
     const x = inteiro(r, 0, 1430);
     const y = inteiro(r, CHAO + 8, 516);
-    reflexos.push(
-      <rect
-        key={k}
-        x={x}
-        y={y}
-        width={inteiro(r, 8, 46)}
-        height={2}
-        fill={sortear(r, [COR.pink, COR.cyan, COR.lime, COR.cream, "#ffcf7a"])}
-        opacity={Math.round((0.15 + r() * 0.4) * 100) / 100}
-      />,
-    );
+    const w = inteiro(r, 8, 46);
+    const cor = sortear(r, CORES_REFLEXO);
+    const opacidade = r() < 0.5 ? 0.25 : 0.45;
+    const chave = `${cor}|${opacidade}`;
+    grupos.set(chave, `${grupos.get(chave) ?? ""}M${x} ${y}h${w}v2h${-w}z`);
   }
+  const reflexos = [...grupos].map(([chave, d]) => {
+    const [cor, opacidade] = chave.split("|");
+    return <path key={chave} d={d} fill={cor} opacity={Number(opacidade)} />;
+  });
   const poças = [
     [160, 492, 80, 10],
     [520, 470, 110, 9],
@@ -339,11 +338,11 @@ function rua(r: Rng) {
       <rect x={0} y={CHAO} width={1440} height={80} fill="url(#cid-rua)" />
       <use href="#cid-perto-predios" transform={`matrix(1 0 0 -0.55 0 ${Math.round(CHAO * 1.55)})`} opacity={0.34} clipPath="url(#cid-clip-rua)" />
       {luzLojas}
-      <g opacity={0.45}>
-        {Array.from({ length: 13 }, (_, k) => (
-          <rect key={k} x={0} y={CHAO + 6 + k * 6} width={1440} height={2} fill={COR.ink} />
-        ))}
-      </g>
+      <path
+        d={Array.from({ length: 13 }, (_, k) => `M0 ${CHAO + 6 + k * 6}h1440v2h-1440z`).join("")}
+        fill={COR.ink}
+        opacity={0.45}
+      />
       {poças}
       {reflexos}
       <rect x={-4} y={CHAO - 2} width={1448} height={7} fill="#2b2070" stroke={TRACO} strokeWidth={3} />
@@ -356,6 +355,7 @@ function criarFrente() {
   return (
     <svg className="cid-camada cid-camada--perto" viewBox="0 0 1440 520" preserveAspectRatio="xMidYMax slice">
       <defs>
+        {PECAS}
         <pattern id="cid-ret-perto" width={5} height={5} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
           <circle cx={2.5} cy={2.5} r={1.15} fill={COR.ink} opacity={0.6} />
         </pattern>

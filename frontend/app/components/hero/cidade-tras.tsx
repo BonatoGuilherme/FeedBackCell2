@@ -306,18 +306,11 @@ function criarCeu() {
       estrelas.push(<rect key={k} x={x} y={y} width={2} height={2} fill={t < 0.5 ? "#b9a8ff" : COR.cream} opacity={0.7} />);
     }
   }
-  // lua cartoon: contorno grosso, sombra chapada com retícula e crateras
-  const lx = 884;
-  const ly = 122;
-  const raio = 58;
   return (
     <svg className="cid-ceu" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMin slice">
       <defs>
         <pattern id="cid-ret-ceu" width={9} height={9} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
           <circle cx={4.5} cy={4.5} r={1.4} fill="#ff6fb4" />
-        </pattern>
-        <pattern id="cid-ret-lua" width={6} height={6} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-          <circle cx={3} cy={3} r={1.2} fill="#c9a86a" />
         </pattern>
         <linearGradient id="cid-ret-ceu-fade" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0.35" stopColor="#fff" stopOpacity={0} />
@@ -326,36 +319,67 @@ function criarCeu() {
         <mask id="cid-ret-ceu-mask">
           <rect width="1440" height="900" fill="url(#cid-ret-ceu-fade)" />
         </mask>
-        <clipPath id="cid-clip-lua">
-          <circle cx={lx} cy={ly} r={raio} />
-        </clipPath>
       </defs>
       <rect width="1440" height="900" fill="url(#cid-ret-ceu)" mask="url(#cid-ret-ceu-mask)" opacity={0.16} />
-      {estrelas}
-      <g>
-        <circle cx={lx} cy={ly} r={raio + 26} fill={COR.cream} opacity={0.07} />
-        <circle cx={lx} cy={ly} r={raio + 12} fill={COR.cream} opacity={0.1} />
-        <circle cx={lx} cy={ly} r={raio} fill={COR.cream} />
-        <g clipPath="url(#cid-clip-lua)">
-          <circle cx={lx + 26} cy={ly + 18} r={raio} fill="#f0dca8" />
-          <circle cx={lx + 26} cy={ly + 18} r={raio} fill="url(#cid-ret-lua)" />
-          <circle cx={lx - 34} cy={ly - 30} r={raio} fill="none" stroke="#fff" strokeWidth={6} opacity={0.7} />
-        </g>
-        <g fill="#e8d098" stroke={COR.ink} strokeWidth={2.5}>
-          <circle cx={lx - 18} cy={ly - 14} r={11} />
-          <circle cx={lx + 22} cy={ly + 22} r={7} />
-          <circle cx={lx + 14} cy={ly - 26} r={5} />
-        </g>
-        <circle cx={lx} cy={ly} r={raio} fill="none" stroke={COR.ink} strokeWidth={4} />
-      </g>
-      <g className="cid-nuvem" fill="#3a2c8a" stroke={COR.ink} strokeWidth={3} strokeLinejoin="round">
-        <path d={`M${lx - 120} ${ly + 52}q8 -22 32 -16q10 -20 34 -12q16 -14 36 4q26 -4 30 16q14 2 14 12h-150q-6 0 4 -4z`} />
-        <path d="M150 230q10 -18 30 -12q12 -18 34 -8q20 -8 28 12q16 2 16 14h-114q-4 -4 6 -6z" opacity={0.85} />
-      </g>
+      <g className="cid-estrelas">{estrelas}</g>
+      <path
+        className="cid-nuvem cid-nuvem--longe"
+        d="M150 230q10 -18 30 -12q12 -18 34 -8q20 -8 28 12q16 2 16 14h-114q-4 -4 6 -6z"
+        fill="#3a2c8a"
+        stroke={COR.ink}
+        strokeWidth={3}
+        strokeLinejoin="round"
+        opacity={0.85}
+      />
     </svg>
   );
 }
 
+/**
+ * Lua cartoon (contorno grosso, sombra chapada com retícula e crateras) num SVG
+ * à parte: o CSS escolhe tamanho e posição por largura de tela.
+ */
+function criarLua() {
+  const lx = 100;
+  const ly = 86;
+  const raio = 58;
+  return (
+    <svg className="cid-lua" viewBox="-24 2 220 168">
+      <defs>
+        <pattern id="cid-ret-lua" width={6} height={6} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <circle cx={3} cy={3} r={1.2} fill="#c9a86a" />
+        </pattern>
+        <clipPath id="cid-clip-lua">
+          <circle cx={lx} cy={ly} r={raio} />
+        </clipPath>
+      </defs>
+      <circle cx={lx} cy={ly} r={raio + 26} fill={COR.cream} opacity={0.07} />
+      <circle cx={lx} cy={ly} r={raio + 12} fill={COR.cream} opacity={0.1} />
+      <circle cx={lx} cy={ly} r={raio} fill={COR.cream} />
+      <g clipPath="url(#cid-clip-lua)">
+        <circle cx={lx + 26} cy={ly + 18} r={raio} fill="#f0dca8" />
+        <circle cx={lx + 26} cy={ly + 18} r={raio} fill="url(#cid-ret-lua)" />
+        <circle cx={lx - 34} cy={ly - 30} r={raio} fill="none" stroke="#fff" strokeWidth={6} opacity={0.7} />
+      </g>
+      <g fill="#e8d098" stroke={COR.ink} strokeWidth={2.5}>
+        <circle cx={lx - 18} cy={ly - 14} r={11} />
+        <circle cx={lx + 22} cy={ly + 22} r={7} />
+        <circle cx={lx + 14} cy={ly - 26} r={5} />
+      </g>
+      <circle cx={lx} cy={ly} r={raio} fill="none" stroke={COR.ink} strokeWidth={4} />
+      <path
+        className="cid-nuvem"
+        d={`M${lx - 120} ${ly + 52}q8 -22 32 -16q10 -20 34 -12q16 -14 36 4q26 -4 30 16q14 2 14 12h-150q-6 0 4 -4z`}
+        fill="#3a2c8a"
+        stroke={COR.ink}
+        strokeWidth={3}
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export const LUA = criarLua();
 export const CEU = criarCeu();
 export const HORIZONTE = criarHorizonte();
 export const CIDADE_MEIO = criarMeio();

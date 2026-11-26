@@ -39,7 +39,46 @@
 .cid-veu {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgb(18 13 58 / 62%) 0%, rgb(18 13 58 / 30%) 38%, transparent 58%);
+  background: linear-gradient(90deg, rgb(18 13 58 / 78%) 0%, rgb(18 13 58 / 72%) 36%, rgb(18 13 58 / 40%) 46%, transparent 60%);
+}
+
+.cid-lua {
+  position: absolute;
+  top: 38px;
+  left: calc(50% + 40px);
+  width: 220px;
+}
+
+/* coluna única: a lua fica à esquerda do telão e as estrelas somem (o texto ocupa a largura toda) */
+@media (max-width: 960px) {
+  .cid-estrelas {
+    display: none;
+  }
+
+  .cid-lua {
+    top: 4px;
+    right: calc(5% + clamp(170px, 28vw, 240px) - 30px);
+    left: auto;
+    width: 180px;
+  }
+}
+
+/* celular: lua pequena no canto, sem nuvem atrás do texto */
+@media (max-width: 640px) {
+  .cid-lua {
+    top: -14px;
+    right: -29px;
+    width: 167px;
+  }
+
+  .cid-lua .cid-nuvem {
+    display: none;
+  }
+
+  /* os prédios do fundo sobem até atrás dos botões */
+  .cid-camada--longe {
+    height: 920px;
+  }
 }
 
 .cid-jp {

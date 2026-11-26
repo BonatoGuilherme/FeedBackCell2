@@ -14,7 +14,7 @@ import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import type { Celular } from "@/src/lib/celulares";
 import { useResumoCatalogo } from "../HomeStats";
-import { CEU, CIDADE_MEIO, HORIZONTE } from "./cidade-tras";
+import { CEU, CIDADE_MEIO, HORIZONTE, LUA } from "./cidade-tras";
 import { CIDADE_FRENTE } from "./cidade-frente";
 
 const NO_AR_MS = 10_000;
@@ -133,6 +133,7 @@ export default function CidadeFundo() {
   return (
     <div ref={ref} className={`cid-fundo${ativo ? "" : " cid-fundo--pausado"}`} aria-hidden>
       {CEU}
+      {LUA}
       {HORIZONTE}
       <Telao ativo={ativo} />
       {CIDADE_MEIO}
