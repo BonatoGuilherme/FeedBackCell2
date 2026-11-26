@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import localFont from "next/font/local";
 import "./globals.css";
 import AuthLayout from "./components/AuthLayout";
@@ -40,11 +41,14 @@ export const viewport: Viewport = {
   colorScheme: "dark",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // a CSP usa nonce por requisição (proxy.ts): ler os cabeçalhos torna a
+  // renderização dinâmica, senão o HTML pré-gerado sairia sem o nonce
+  await headers();
   return (
     <html
       lang="pt-BR"

@@ -1,5 +1,6 @@
 import path from "node:path";
 import type { NextConfig } from "next";
+import { CABECALHOS_SEGURANCA } from "./src/lib/csp";
 
 // a raiz do app é esta pasta (há outro lockfile na raiz do repositório)
 const raiz = path.join(__dirname);
@@ -11,6 +12,10 @@ const nextConfig: NextConfig = {
   turbopack: { root: raiz },
   // View Transitions (components/ui/transicoes.tsx): React ViewTransition no App Router
   experimental: { viewTransition: true },
+  // cabeçalhos simples em toda resposta; a CSP (com nonce) sai do proxy.ts
+  async headers() {
+    return [{ source: "/:path*", headers: CABECALHOS_SEGURANCA }];
+  },
   // links antigos; todos temporários (permanent: false)
   async redirects() {
     const comId = [{ type: "query" as const, key: "celular", value: "(?<id>[1-9][0-9]{0,9})" }];
