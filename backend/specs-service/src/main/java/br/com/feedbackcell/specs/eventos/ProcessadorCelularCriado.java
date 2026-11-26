@@ -14,6 +14,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
@@ -65,18 +66,19 @@ public class ProcessadorCelularCriado {
         String marca = limpar(evento.get("marca"));
         String modelo = limpar(evento.get("modelo"));
 
+        AtomicInteger gastos = new AtomicInteger();
         Map<String, Object> especificacoes = null;
         String modelo3d = null;
         if ((precisaSpec || precisa3d) && EspecificacoesResource.validar(marca, modelo) == null) {
             // sem precisar de especificações a busca é só do 3D (não gasta cota da MobileAPI)
-            Resultado r = service.buscar(marca, modelo, !precisaSpec);
+            Resultado r = service.buscar(marca, modelo, !precisaSpec, gastos);
             if (precisaSpec) especificacoes = especificacoes(r);
             if (precisa3d) modelo3d = uid(r);
             // repete uma vez só a fonte que falhou de forma temporária: cada consulta à MobileAPI gasta cota
             boolean repetirSpec = especificacoes == null && precisaSpec && r.falhaTemporariaSpec();
             boolean repetir3d = modelo3d == null && precisa3d && r.falhaTemporaria3d();
             if ((repetirSpec || repetir3d) && dormir(idcelular, r)) {
-                r = service.buscar(marca, modelo, !repetirSpec);
+                r = service.buscar(marca, modelo, !repetirSpec, gastos);
                 if (repetirSpec) especificacoes = especificacoes(r);
                 if (modelo3d == null && precisa3d) modelo3d = uid(r);
             }
@@ -90,6 +92,8 @@ public class ProcessadorCelularCriado {
         saida.put("idcelular", idcelular);
         saida.put("especificacoes", especificacoes);
         saida.put("modelo3d", modelo3d);
+        // créditos da MobileAPI que a busca reservou: o core-api soma no teto persistido e no limite do usuário
+        saida.put("creditosGastos", gastos.get());
         saida.put("ocorridoEm", Instant.now().truncatedTo(ChronoUnit.SECONDS).toString());
         try {
             return Optional.of(new Resposta(String.valueOf(idcelular), json.writeValueAsString(saida)));
