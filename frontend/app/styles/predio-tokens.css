@@ -1,0 +1,71 @@
+/*
+ * Tokens da home em forma de prédio (/predio). Só valem dentro de .predio,
+ * para não mudar o resto do site. Mesma paleta em src/lib/predio/paleta.ts
+ * (para os canvas das próximas fases).
+ *
+ * Camadas: primitivas (valores crus) → semânticas (para que servem) → componentes.
+ * Lima, rosa e creme reaproveitam os tokens do Letreiro (app/globals.css).
+ */
+
+.predio {
+  /* ---------- primitivas ---------- */
+  --noite-0: #06070f;
+  --noite-1: #0c1022;
+  --indigo: #1a1240;
+  --roxo: #3a2a78;
+  --lavanda: #8a74c9;
+  --petroleo: #0b2f3f;
+  --ciano: #3fd6ff;
+  --azul-neon: #2f7bff;
+  --magenta: #d93cff;
+  --vermelho: #ff3b3b;
+  --ambar: #ffb347;
+  --lima: var(--lime);
+  --rosa: var(--pink);
+  --creme: var(--cream);
+
+  /* ---------- semânticas: céu → rua (o fundo muda de cor ao descer) ---------- */
+  --ceu-topo: var(--roxo);
+  --ceu-meio: var(--indigo);
+  --ceu-baixo: color-mix(in oklab, var(--indigo) 55%, var(--noite-1));
+  --vao: var(--noite-0);
+  --rua-alto: color-mix(in oklab, var(--noite-1) 60%, var(--petroleo));
+  --rua: var(--petroleo);
+  --rua-chao: color-mix(in oklab, var(--petroleo) 55%, var(--noite-0));
+
+  /* elementos do site (botões, título, notas) usam lima e rosa; o cenário usa o resto */
+  --texto: var(--creme);
+  --texto-suave: var(--lavender);
+  --destaque-site: var(--lima);
+  --nota: var(--lima);
+  --foco: var(--ciano);
+
+  /* ---------- componentes ---------- */
+  --telao-fundo: var(--noite-0);
+  --telao-borda: var(--ciano);
+  --telao-brilho: color-mix(in oklab, var(--ciano) 35%, transparent);
+  --fachada-fundo: color-mix(in oklab, var(--noite-1) 82%, transparent);
+  --fachada-borda: color-mix(in oklab, var(--lavanda) 35%, transparent);
+  --led-fundo: var(--noite-0);
+  --led-texto: var(--ambar);
+  --display-segmento: var(--vermelho);
+  --display-apagado: color-mix(in oklab, var(--vermelho) 14%, var(--noite-0));
+  --font-led: var(--font-dotgothic), var(--font-mono);
+  --largura-predio: 1120px;
+  --espaco-elevador: 0px;
+
+  color: var(--texto);
+}
+
+@media (min-width: 640px) {
+  .predio {
+    /* abre espaço à direita para o elevador fixo */
+    --espaco-elevador: 88px;
+  }
+}
+
+/* foco visível do prédio: contorno ciano */
+.predio :focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 3px;
+}
