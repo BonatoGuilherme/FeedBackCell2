@@ -1,0 +1,704 @@
+/*
+ * /predio — R: céu, estrelas, lua, telhado e o telão de LED do topo
+ * (components/predio/andares/Topo.tsx e o que ele usa).
+ * Só `transform` e `opacity` animam; com prefers-reduced-motion tudo para.
+ */
+
+/* ---------- céu ---------- */
+
+.andar--topo {
+  --altura: 150vh;
+  --lua-d: min(70vw, 820px);
+
+  isolation: isolate;
+  background:
+    radial-gradient(70% 55% at 50% 0%, var(--roxo), transparent 75%),
+    linear-gradient(180deg, var(--indigo) 0%, var(--ceu-meio) 100%);
+}
+
+.topo__ceu {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.camada {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+/* perto do telhado a luz da cidade apaga as estrelas */
+.camada--estrelas {
+  mask-image: linear-gradient(180deg, #000 45%, transparent 80%);
+}
+
+/* grão de pintura por cima do céu */
+.topo__grao {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+  opacity: 0.2;
+  /* some antes do fim do topo, para emendar sem degrau com o andar de baixo */
+  mask-image: linear-gradient(180deg, #000 55%, transparent 90%);
+}
+
+/* ---------- estrelas ---------- */
+
+.estrelas,
+.estrelas__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.estrelas__cintila {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--creme);
+  box-shadow: 0 0 6px color-mix(in oklab, var(--creme) 70%, transparent);
+  animation: cintilar ease-in-out infinite alternate;
+}
+
+@keyframes cintilar {
+  from {
+    opacity: 0.15;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.estrelas__cadente {
+  position: absolute;
+  width: 160px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--creme));
+  border-radius: 2px;
+  opacity: 0;
+  transform-origin: right center;
+  animation: cadente 1s ease-out forwards;
+}
+
+@keyframes cadente {
+  0% {
+    opacity: 0;
+    transform: rotate(24deg) translateX(0) scaleX(0.3);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(24deg) translateX(380px) scaleX(1);
+  }
+}
+
+/* ---------- lua: o disco fica 40% para cima da borda (só ~60% aparece) ---------- */
+
+.lua {
+  /* o canvas tem folga em volta do disco: disco = 88% da largura */
+  position: absolute;
+  left: 50%;
+  top: calc(var(--lua-d) * -0.468);
+  width: calc(var(--lua-d) / 0.88);
+  aspect-ratio: 1;
+  translate: -50% 0;
+  filter: drop-shadow(0 0 70px color-mix(in oklab, #ffc6a8 38%, transparent));
+}
+
+.lua__esboco,
+.lua__desenho {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: opacity 400ms ease;
+}
+
+/* enquanto a pintura não fica pronta: um disco pêssego simples */
+.lua__esboco {
+  inset: 6%;
+  width: auto;
+  height: auto;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #ffe2cc, #e8aaa0 45%, #564296 82%, #34266c);
+}
+
+.lua__desenho {
+  opacity: 0;
+}
+
+.lua--pronta .lua__desenho {
+  opacity: 1;
+}
+
+.lua--pronta .lua__esboco {
+  opacity: 0;
+}
+
+/* ---------- cena: telão sobre o telhado, depois a fachada ---------- */
+
+.andar--topo .topo__cena {
+  justify-content: flex-start;
+  gap: 0;
+  padding: clamp(90px, 17vh, 200px) 0 0;
+  border: 0;
+  background: none;
+}
+
+.topo__estrutura {
+  position: relative;
+  width: min(100%, 1000px);
+  margin-inline: auto;
+}
+
+/* ---------- telhado ---------- */
+
+.telhado {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.telhado > svg {
+  position: absolute;
+  bottom: 0;
+  height: auto;
+}
+
+.telhado__antena {
+  left: -56px;
+  width: 64px;
+  z-index: -1;
+}
+
+.telhado__caixa {
+  right: -96px;
+  width: 112px;
+  z-index: -1;
+}
+
+.telhado__parabolica {
+  right: -170px;
+  width: 84px;
+  z-index: -1;
+}
+
+/* o cone do holofote passa por cima do telão, clareando de leve */
+.telhado__holofote {
+  left: 2%;
+  width: 26%;
+  z-index: 2;
+  mix-blend-mode: screen;
+}
+
+/* luz de aviso aéreo: uma piscada a cada 1,5 s */
+.telhado__luz {
+  animation: aviso-aereo 1.5s steps(1) infinite;
+}
+
+@keyframes aviso-aereo {
+  0%,
+  20% {
+    opacity: 1;
+  }
+  21%,
+  100% {
+    opacity: 0.15;
+  }
+}
+
+.trelica {
+  display: block;
+  width: 92%;
+  height: 44px;
+  margin-inline: auto;
+}
+
+@media (max-width: 1023px) {
+  .telhado__caixa,
+  .telhado__parabolica {
+    display: none;
+  }
+}
+
+@media (max-width: 639px) {
+  .telhado__antena,
+  .telhado__holofote {
+    display: none;
+  }
+}
+
+/* ---------- telão de LED ---------- */
+
+.telao-led {
+  position: relative;
+  z-index: 1;
+  padding: 18px 18px 0;
+  border: 2px solid #2a2452;
+  background: linear-gradient(180deg, #221c46, #120e2a 60%, #0c0a1e);
+  box-shadow:
+    0 0 0 4px var(--noite-0),
+    0 24px 90px color-mix(in oklab, var(--lavanda) 30%, transparent),
+    0 0 160px color-mix(in oklab, var(--ciano) 12%, transparent);
+}
+
+.telao-led__parafuso {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #9a92c4, #3a3466 70%);
+}
+
+.telao-led__parafuso--no {
+  top: 5px;
+  left: 5px;
+}
+
+.telao-led__parafuso--ne {
+  top: 5px;
+  right: 5px;
+}
+
+.telao-led__parafuso--so {
+  bottom: 5px;
+  left: 5px;
+}
+
+.telao-led__parafuso--se {
+  bottom: 5px;
+  right: 5px;
+}
+
+.telao-led__tela {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 3.4 / 1;
+  overflow: hidden;
+  border: 2px solid #000;
+  background: radial-gradient(ellipse at 50% 55%, #181036, var(--noite-0) 75%);
+}
+
+/* scanlines e pontos de LED por cima do texto */
+.telao-led__tela::before,
+.telao-led__tela::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.telao-led__tela::before {
+  background: repeating-linear-gradient(0deg, rgb(255 255 255 / 0.08) 0 1px, transparent 1px 3px);
+}
+
+.telao-led__tela::after {
+  background: radial-gradient(circle, transparent 55%, rgb(0 0 0 / 0.55) 60%) 0 0 / 4px 4px;
+}
+
+.topo__titulo {
+  position: relative;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(56px, 10.5vw, 148px);
+  font-synthesis: none;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  line-height: 0.88;
+  color: var(--creme);
+  text-align: center;
+  /* aberração cromática + brilho em 3 camadas da cor do texto */
+  text-shadow:
+    -1px 0 rgb(255 46 136 / 0.6),
+    1px 0 rgb(63 214 255 / 0.6),
+    0 0 4px color-mix(in oklab, currentColor 80%, transparent),
+    0 0 14px color-mix(in oklab, currentColor 50%, transparent),
+    0 0 36px color-mix(in oklab, currentColor 35%, transparent);
+}
+
+.topo__titulo span {
+  color: var(--lima);
+}
+
+/* cópias do texto para o glitch (fatias deslocadas), só durante o data-glitch */
+.topo__titulo::before,
+.topo__titulo::after {
+  content: attr(data-texto);
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  text-shadow: none;
+}
+
+.topo__titulo::before {
+  color: var(--rosa);
+}
+
+.topo__titulo::after {
+  color: var(--ciano);
+}
+
+.telao-led[data-glitch] .topo__titulo::before {
+  opacity: 0.85;
+  animation: glitch-a 240ms steps(1) both;
+}
+
+.telao-led[data-glitch] .topo__titulo::after {
+  opacity: 0.85;
+  animation: glitch-b 240ms steps(1) both;
+}
+
+@keyframes glitch-a {
+  0% {
+    clip-path: inset(12% 0 64% 0);
+    transform: translateX(-6px);
+  }
+  50% {
+    clip-path: inset(58% 0 20% 0);
+    transform: translateX(5px);
+  }
+}
+
+@keyframes glitch-b {
+  0% {
+    clip-path: inset(70% 0 8% 0);
+    transform: translateX(6px);
+  }
+  50% {
+    clip-path: inset(30% 0 52% 0);
+    transform: translateX(-4px);
+  }
+}
+
+/* ruído de TV: no glitch e no "ligar" */
+.telao-led__ruido {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.4' numOctaves='1' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.4 -0.2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0;
+  pointer-events: none;
+  animation: ruido-ligar 600ms ease-out both;
+}
+
+.telao-led[data-glitch] .telao-led__ruido {
+  opacity: 0.18;
+  animation: none;
+}
+
+/* ligar: a tela abre a partir de uma linha no meio (scaleY), com ruído no fim */
+.telao-led__ligar {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent calc(50% - 1px), var(--creme) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px));
+  animation: linha-ligar 380ms ease-out forwards;
+}
+
+.telao-led__ligar::before,
+.telao-led__ligar::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  height: 50%;
+  background: var(--noite-0);
+  animation: abrir-tela 350ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+
+.telao-led__ligar::before {
+  top: 0;
+  transform-origin: top;
+}
+
+.telao-led__ligar::after {
+  bottom: 0;
+  transform-origin: bottom;
+}
+
+@keyframes abrir-tela {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes linha-ligar {
+  0%,
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes ruido-ligar {
+  0%,
+  58% {
+    opacity: 0;
+  }
+  70% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* selo "● NO AR" no canto do telão */
+.telao-led__selo {
+  position: absolute;
+  top: 26px;
+  right: 30px;
+  z-index: 5;
+  padding: 2px 8px;
+  border: 1px solid var(--vermelho);
+  background: rgb(6 7 15 / 0.8);
+  color: var(--creme);
+  font-family: var(--font-led);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+}
+
+.telao-led__bolinha {
+  color: var(--vermelho);
+  text-shadow: 0 0 6px var(--vermelho);
+  animation: piscar-selo 1.2s steps(1) infinite;
+}
+
+@keyframes piscar-selo {
+  50% {
+    opacity: 0.2;
+  }
+}
+
+.telao-led__rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  height: 26px;
+  padding-inline: 14px;
+}
+
+.telao-led__ventilacao {
+  width: min(40%, 280px);
+  height: 8px;
+  background: repeating-linear-gradient(90deg, #06050f 0 6px, #2a2452 6px 9px);
+}
+
+.telao-led__etiqueta {
+  padding: 0 6px;
+  border: 1px solid #3a3466;
+  color: #9a92c4;
+  font-family: var(--font-led);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+.telao-led__jp {
+  font-family: var(--font-jp);
+}
+
+/* celular: telão vertical, FEEDBACK e CELL em duas linhas */
+@media (max-width: 639px) {
+  .andar--topo {
+    --lua-d: 110vw;
+  }
+
+  .telao-led {
+    padding: 14px 12px 0;
+  }
+
+  .telao-led__tela {
+    aspect-ratio: 4 / 3;
+  }
+
+  .andar--topo .topo__cena {
+    padding-top: 24vw;
+  }
+
+  .topo__titulo {
+    font-size: clamp(56px, 18.5vw, 104px);
+  }
+
+  .trelica {
+    height: 28px;
+  }
+
+  .topo__titulo span {
+    display: block;
+  }
+
+  .telao-led__selo {
+    top: 20px;
+    right: 18px;
+  }
+}
+
+/* ---------- faixa de LED corrida ---------- */
+
+.faixa-led {
+  position: relative;
+  width: min(100%, 1040px);
+  margin: var(--space-2) auto 0;
+  overflow: hidden;
+  border: 2px solid color-mix(in oklab, var(--ambar) 45%, transparent);
+  background: var(--led-fundo);
+}
+
+.faixa-led::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle, transparent 50%, rgb(0 0 0 / 0.5) 58%) 0 0 / 3px 3px;
+}
+
+.faixa-led__trilho {
+  display: flex;
+  width: max-content;
+  margin: 0;
+  animation: faixa-correr 45s linear infinite;
+}
+
+.faixa-led__texto {
+  padding-inline: 1em;
+  color: var(--led-texto);
+  font-family: var(--font-led);
+  font-size: clamp(16px, 2vw, 22px);
+  line-height: 2.2;
+  white-space: nowrap;
+  text-shadow:
+    0 0 3px var(--ambar),
+    0 0 12px color-mix(in oklab, var(--ambar) 45%, transparent);
+}
+
+@keyframes faixa-correr {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ---------- mureta do telhado e o começo da fachada ---------- */
+
+.topo__mureta {
+  position: relative;
+  z-index: 1;
+  width: min(calc(100% + 32px), calc(var(--largura-predio) + 48px));
+  height: 22px;
+  margin: var(--space-4) auto 0;
+  border-top: 3px solid color-mix(in oklab, var(--lavanda) 45%, transparent);
+  background: linear-gradient(180deg, var(--indigo), var(--noite-1));
+  box-shadow: 0 10px 24px rgb(0 0 0 / 0.45);
+}
+
+.topo__predio {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-10) clamp(var(--space-4), 3vw, var(--space-10)) var(--space-16);
+  border-inline: 2px solid var(--fachada-borda);
+  /* opaca: a lua e as estrelas (parallax) passam por trás do prédio, não através dele */
+  background: linear-gradient(180deg, var(--noite-1), color-mix(in oklab, var(--noite-1) 70%, var(--indigo)));
+}
+
+.topo__botoes {
+  justify-content: center;
+}
+
+/* letreiro vertical pendurado na fachada */
+.topo__vertical {
+  position: absolute;
+  top: var(--space-6);
+  left: var(--space-4);
+  padding: var(--space-3) var(--space-2);
+  color: var(--vermelho);
+  font-size: 26px;
+  writing-mode: vertical-rl;
+  background: rgb(6 7 15 / 0.85);
+  text-shadow: 0 0 8px color-mix(in oklab, var(--vermelho) 70%, transparent);
+  box-shadow: 0 0 18px color-mix(in oklab, var(--vermelho) 35%, transparent);
+}
+
+@media (max-width: 639px) {
+  .topo__vertical {
+    display: none;
+  }
+}
+
+.topo__descer {
+  margin: 0;
+  color: var(--texto-suave);
+  font-family: var(--font-led);
+  font-size: 18px;
+  text-align: center;
+  animation: piscar-devagar 2.4s ease-in-out infinite;
+  transition: opacity 400ms ease;
+}
+
+.topo__descer--sumiu {
+  opacity: 0 !important;
+  animation: none;
+}
+
+@keyframes piscar-devagar {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* ---------- menos movimento: tudo parado, e continua bonito ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .estrelas__cintila,
+  .telhado__luz,
+  .telao-led__bolinha,
+  .topo__descer {
+    animation: none;
+  }
+
+  .telao-led__ligar,
+  .estrelas__cadente {
+    display: none;
+  }
+
+  .telao-led__ruido {
+    animation: none;
+    opacity: 0;
+  }
+
+  .faixa-led__trilho {
+    width: auto;
+    animation: none;
+  }
+
+  .faixa-led__texto {
+    white-space: normal;
+    text-align: center;
+  }
+
+  .faixa-led__copia {
+    display: none;
+  }
+
+  .camada {
+    will-change: auto;
+  }
+}

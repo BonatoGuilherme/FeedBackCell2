@@ -20,7 +20,10 @@ export function Predio({ className }: { className?: string }) {
   return (
     <div className={cn("predio", className)}>
       <ProvedorCatalogo>
-        {/* primeiro na ordem de tab: o elevador funciona como um índice da página */}
+        {/* o elevador vem antes do conteúdo no Tab (é um índice); o link pula direto para o telão */}
+        <a className="predio__pular" href="#topo">
+          Pular para o conteúdo
+        </a>
         <Elevador />
         <Topo />
         <EmDestaque />

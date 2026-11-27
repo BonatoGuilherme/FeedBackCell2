@@ -55,12 +55,6 @@
   background: var(--fachada-fundo);
 }
 
-.andar--topo {
-  --altura: 150vh;
-  --fundo-de: var(--ceu-topo);
-  --fundo-ate: var(--ceu-meio);
-}
-
 .andar--destaque {
   --altura: 120vh;
   --fundo-de: var(--ceu-meio);
@@ -127,70 +121,7 @@
   }
 }
 
-/* ---------- R: céu, lua e telhado ---------- */
-
-.andar--topo .andar__fachada {
-  justify-content: flex-start;
-  padding-top: var(--space-10);
-}
-
-.topo__lua {
-  /* espaço reservado à lua cortada no topo (fase posterior) */
-  height: clamp(160px, 32vh, 340px);
-}
-
-.topo__telhado {
-  width: min(100%, calc(var(--largura-predio) + 48px));
-  height: 28px;
-  margin-inline: auto;
-  border-bottom: 4px solid var(--fachada-borda);
-  background: linear-gradient(180deg, transparent 60%, var(--noite-1) 60%);
-}
-
-.topo__placa {
-  font-size: clamp(20px, 3vw, 30px);
-  color: var(--ciano);
-}
-
-.topo__titulo {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(56px, 13vw, 168px);
-  font-synthesis: none;
-  font-weight: 900;
-  letter-spacing: -0.01em;
-  line-height: 0.86;
-  color: var(--creme);
-  overflow-wrap: anywhere;
-}
-
-.topo__titulo span {
-  color: var(--lima);
-}
-
-.topo__led {
-  margin: 0;
-  padding: var(--space-3) var(--space-4);
-  border: 2px solid color-mix(in oklab, var(--ambar) 45%, transparent);
-  background: var(--led-fundo);
-  color: var(--led-texto);
-  font-family: var(--font-led);
-  font-size: clamp(16px, 2vw, 20px);
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-
-.topo__botoes {
-  justify-content: center;
-}
-
-.topo__descer {
-  margin: 0;
-  color: var(--texto-suave);
-  font-family: var(--font-led);
-  font-size: 18px;
-  text-align: center;
-}
+/* R: céu, lua e telhado ficam em predio-topo.css */
 
 /* ---------- passarela ---------- */
 
@@ -280,4 +211,36 @@
 
 .endereco__autor {
   color: var(--texto-suave);
+}
+
+.endereco__aviso {
+  color: var(--ambar);
+  font-family: var(--font-led);
+  font-size: 16px;
+}
+
+/* o rodapé geral do site não aparece no prédio: a placa de endereço faz esse papel */
+body:has(.predio) .app-footer {
+  display: none;
+}
+
+/* "pular para o conteúdo": só aparece quando recebe foco pelo Tab */
+.predio__pular {
+  position: fixed;
+  top: calc(var(--header-height) + var(--space-2));
+  left: var(--space-2);
+  z-index: 60;
+  padding: var(--space-2) var(--space-4);
+  background: var(--noite-0);
+  color: var(--creme);
+  font-weight: var(--font-weight-semibold);
+}
+
+.predio__pular:not(:focus-visible) {
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

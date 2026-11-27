@@ -55,3 +55,28 @@ test("o telão de destaque mostra SEM SINAL quando a API falha", async ({ page }
   await expect(destaque.getByText("SEM SINAL")).toBeVisible();
   await expect(destaque.getByRole("button", { name: "Tentar de novo" })).toBeVisible();
 });
+
+test("topo: pular para o conteúdo, rodapé geral escondido e aviso na placa", async ({ page }) => {
+  await mockarApi(page, 200);
+  await page.goto("/predio");
+
+  await expect(page.locator(".app-footer")).toBeHidden();
+  await expect(page.locator("#entrada").getByText("Projeto de demonstração: não use dados reais.")).toBeAttached();
+
+  const pular = page.getByRole("link", { name: "Pular para o conteúdo" });
+  await pular.focus();
+  await expect(pular).toBeVisible();
+  await pular.press("Enter");
+  await expect(page.locator("#topo")).toBeFocused();
+});
+
+test("com menos movimento a faixa de LED para e a cópia some", async ({ browser }) => {
+  const contexto = await browser.newContext({ reducedMotion: "reduce" });
+  const page = await contexto.newPage();
+  await mockarApi(page, 200);
+  await page.goto("/predio");
+
+  await expect(page.locator(".faixa-led__copia")).toBeHidden();
+  await expect(page.locator(".faixa-led__trilho")).toHaveCSS("animation-name", "none");
+  await contexto.close();
+});

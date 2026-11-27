@@ -66,26 +66,6 @@
   color: var(--ambar);
 }
 
-/* telão do topo: o letreiro principal, com o selo "NO AR" no canto */
-.telao--letreiro {
-  --telao-borda: var(--lavanda);
-  padding-top: var(--space-12);
-  text-align: center;
-  justify-items: center;
-}
-
-.telao__selo {
-  position: absolute;
-  top: var(--space-3);
-  right: var(--space-3);
-  padding: var(--space-1) var(--space-2);
-  border: 2px solid var(--vermelho);
-  color: var(--vermelho);
-  font-family: var(--font-led);
-  font-size: 16px;
-  letter-spacing: 0.06em;
-}
-
 /* ---------- estados: carregando, sem sinal, vazio ---------- */
 
 .tela-estado {

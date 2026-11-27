@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
-import { DotGothic16 } from "next/font/google";
+import localFont from "next/font/local";
 import { Predio } from "@/components/predio/Predio";
 import "../styles/predio-tokens.css";
 import "../styles/predio-andares.css";
+import "../styles/predio-topo.css";
 import "../styles/predio-telas.css";
 import "../styles/predio-conteudo.css";
 import "../styles/predio-elevador.css";
 
-// fonte de LED dos displays, só nesta rota (o next/font hospeda o arquivo no próprio site)
-const dotGothic = DotGothic16({
+// fonte de LED dos displays, só nesta rota. Arquivo em app/fonts (subconjunto
+// latin do Google Fonts): o build não depende de baixar nada da internet
+const dotGothic = localFont({
+  src: "../fonts/DotGothic16.woff2",
   weight: "400",
-  subsets: ["latin"],
   display: "swap",
   variable: "--font-dotgothic",
 });

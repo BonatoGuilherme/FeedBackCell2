@@ -53,6 +53,8 @@ export function Terreo() {
             </li>
           </ul>
         </nav>
+        {/* o rodapé geral do site fica escondido no /predio: o aviso vem para a placa */}
+        <p className="endereco__aviso">Projeto de demonstração: não use dados reais.</p>
         <p className="endereco__autor">
           feito por Guilherme Bonato · <span>{ano}</span>
         </p>
