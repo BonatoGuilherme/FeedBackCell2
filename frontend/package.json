@@ -19,7 +19,7 @@
     "clsx": "^2.1.1",
     "lucide-react": "^1.70.0",
     "motion": "^14.10.1",
-    "next": "16.1.6",
+    "next": "16.4.5",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "simple-icons": "13.21.0",
@@ -34,7 +34,7 @@
     "@types/react-dom": "^19",
     "@types/three": "^0.187.0",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "16.4.5",
     "postcss": "^8.5.8",
     "tailwindcss": "^4",
     "typescript": "^5"
