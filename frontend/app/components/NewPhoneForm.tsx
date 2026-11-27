@@ -338,7 +338,7 @@ export default function NewPhoneForm() {
           <div className="phone-preview__art" aria-hidden="true">
             {imagemApi || fotos[0] ? (
               // eslint-disable-next-line @next/next/no-img-element -- data: da API ou blob: local
-              <img className="phone-preview__photo foto-aparelho" src={imagemApi ?? fotos[0].preview} alt="" />
+              <img className="phone-preview__photo foto-aparelho" src={imagemApi ?? fotos[0].preview} alt="" width={400} height={300} />
             ) : (
               <div className="phone-preview__device">
                 <span className="phone-preview__speaker" />
