@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { apiFetch, isRecord } from "@/src/lib/http";
 import { saveToken } from "@/src/lib/session";
-import { caminhoSeguro } from "@/src/lib/rotas";
+import { MOTIVO_SESSAO_EXPIRADA, caminhoSeguro } from "@/src/lib/rotas";
 
 export function useLogin() {
   const [email, setEmail] = useState("");
@@ -13,7 +13,9 @@ export function useLogin() {
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
   const router = useRouter();
-  const next = caminhoSeguro(useSearchParams().get("next"));
+  const searchParams = useSearchParams();
+  const next = caminhoSeguro(searchParams.get("next"));
+  const sessaoExpirada = searchParams.get("motivo") === MOTIVO_SESSAO_EXPIRADA;
 
   const validateEmail = (value: string) => {
     if (!value) {
@@ -65,6 +67,7 @@ export function useLogin() {
     erro,
     loading,
     emailError,
+    sessaoExpirada,
     validateEmail,
     handleLogin,
   };

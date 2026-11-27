@@ -333,3 +333,25 @@ export async function buscarEspecificacoes(
 export async function buscarCelular(idcelular: number, signal?: AbortSignal): Promise<Celular> {
   return parseCelular(await apiFetch(`/celulares/${idcelular}`, { signal }));
 }
+
+/** Saldo da busca automática: créditos da MobileAPI e se o usuário ainda tem a busca de hoje. */
+export type CreditosBusca = {
+  restantesMes: number | null;
+  restantesHoje: number | null;
+  usuarioPodeBuscarHoje: boolean;
+};
+
+const inteiroOuNull = (v: unknown) => (typeof v === "number" && Number.isInteger(v) && v >= 0 ? v : null);
+
+/** GET /celulares/especificacoes/creditos (exige login; 503 com o specs-service fora). */
+export async function buscarCreditosEspecificacoes(token: string, signal?: AbortSignal): Promise<CreditosBusca> {
+  const payload = await apiFetch("/celulares/especificacoes/creditos", { token, signal });
+  if (!isRecord(payload) || typeof payload.usuarioPodeBuscarHoje !== "boolean") {
+    throw new Error("A API retornou o saldo de buscas em formato inválido.");
+  }
+  return {
+    restantesMes: inteiroOuNull(payload.restantesMes),
+    restantesHoje: inteiroOuNull(payload.restantesHoje),
+    usuarioPodeBuscarHoje: payload.usuarioPodeBuscarHoje,
+  };
+}

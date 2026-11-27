@@ -8,13 +8,17 @@ import { AuthField, FormAlert } from "../components/AuthField";
 import { useLogin } from "./useLogin";
 
 function LoginForm() {
-  const { email, setEmail, senha, setSenha, erro, loading, emailError, validateEmail, handleLogin } =
+  const { email, setEmail, senha, setSenha, erro, loading, emailError, sessaoExpirada, validateEmail, handleLogin } =
     useLogin();
 
   return (
     <AuthPageShell mode="login" title="Entrar na sua conta" subtitle="Use seu e-mail e senha para acessar o catálogo.">
       <form className="space-y-5" onSubmit={handleLogin} noValidate>
-        {erro && <FormAlert>{erro}</FormAlert>}
+        {erro ? (
+          <FormAlert>{erro}</FormAlert>
+        ) : (
+          sessaoExpirada && <FormAlert>Sua sessão expirou. Entre novamente para continuar.</FormAlert>
+        )}
 
         <AuthField
           id="email"
