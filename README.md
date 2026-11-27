@@ -1,5 +1,8 @@
 # FeedBackCELL
 
+![CI](https://github.com/BonatoGuilherme/FeedBackCell2/actions/workflows/ci.yml/badge.svg?branch=master)
+![CodeQL](https://github.com/BonatoGuilherme/FeedBackCell2/actions/workflows/codeql.yml/badge.svg?branch=master)
+![Dependabot](https://img.shields.io/badge/dependabot-ativo-025E8C?logo=dependabot)
 ![Docker](https://img.shields.io/badge/docker-ready-blue)
 ![Java](https://img.shields.io/badge/java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/spring%20boot-core--api-green)

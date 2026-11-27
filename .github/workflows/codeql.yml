@@ -1,0 +1,44 @@
+name: CodeQL
+
+# Análise estática do GitHub: procura padrões de vulnerabilidade no código
+# (SQL injection, XSS, caminho de arquivo vindo de fora...). Os alertas
+# aparecem na aba Security e como comentário no PR. Não é um check obrigatório.
+on:
+  push:
+    branches: [dev, master]
+  pull_request:
+    branches: [dev]
+  schedule:
+    - cron: "0 9 * * 1" # segunda, 06h em Brasília
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        # build-mode none: lê o código sem compilar, então não precisa de Maven aqui
+        language: [java-kotlin, javascript-typescript]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-extended
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:${{ matrix.language }}

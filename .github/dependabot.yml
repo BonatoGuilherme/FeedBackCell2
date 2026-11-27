@@ -1,0 +1,40 @@
+# Dependabot: confere toda semana as bibliotecas do projeto e abre PR para a
+# dev quando sai versão nova ou correção de segurança. As atualizações de cada
+# pasta vêm agrupadas num PR só (as de segurança chegam separadas, na hora).
+version: 2
+updates:
+  - package-ecosystem: maven
+    directories: ["/backend/core-api", "/backend/specs-service"]
+    target-branch: dev
+    schedule: { interval: weekly, day: monday, time: "06:00", timezone: America/Sao_Paulo }
+    open-pull-requests-limit: 5
+    groups:
+      maven:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /frontend
+    target-branch: dev
+    schedule: { interval: weekly, day: monday, time: "06:00", timezone: America/Sao_Paulo }
+    open-pull-requests-limit: 5
+    groups:
+      frontend:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directories: ["/backend/core-api", "/backend/specs-service", "/frontend", "/infra/backup"]
+    target-branch: dev
+    schedule: { interval: weekly, day: monday, time: "06:00", timezone: America/Sao_Paulo }
+    groups:
+      docker:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: dev
+    schedule: { interval: weekly, day: monday, time: "06:00", timezone: America/Sao_Paulo }
+    groups:
+      actions:
+        patterns: ["*"]

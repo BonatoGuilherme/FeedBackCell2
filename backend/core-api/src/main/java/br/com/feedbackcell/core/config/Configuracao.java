@@ -21,6 +21,9 @@ public class Configuracao {
     private static final Logger LOG = LoggerFactory.getLogger(Configuracao.class);
     private static final Pattern ID_POSITIVO = Pattern.compile("^[1-9]\\d*$");
 
+    /** Duração padrão do token JWT quando JWT_EXPIRATION não está definida. */
+    public static final String PADRAO_JWT_EXPIRACAO = "4h";
+
     private final boolean producao;
     private final String jwtSecret;
     private final String jwtExpiracao;
@@ -47,7 +50,7 @@ public class Configuracao {
             @Value("${app.specs-token}") String specsToken) {
         this.producao = "production".equalsIgnoreCase(env.trim());
         this.jwtSecret = jwtSecret;
-        this.jwtExpiracao = jwtExpiracao.isBlank() ? "24h" : jwtExpiracao.trim();
+        this.jwtExpiracao = jwtExpiracao.isBlank() ? PADRAO_JWT_EXPIRACAO : jwtExpiracao.trim();
         if (DuracaoMs.parse(this.jwtExpiracao) == null) {
             throw new IllegalStateException("JWT_EXPIRATION inválido: use valores como 24h, 30m ou 7d");
         }

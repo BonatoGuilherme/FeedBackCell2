@@ -1,5 +1,6 @@
 package br.com.feedbackcell.core.eventos;
 
+import java.util.function.IntConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -14,7 +15,8 @@ public class EventosDesligados implements EventosCelular {
 
     @Override
     public void celularCriado(long idcelular, String marca, String modelo,
-                              boolean precisaEspecificacoes, boolean precisaModelo3d) {
+                              boolean precisaEspecificacoes, boolean precisaModelo3d, IntConsumer fim) {
         LOG.debug("Busca automática desligada; celular {} fica sem especificações automáticas", idcelular);
+        fim.accept(0);
     }
 }

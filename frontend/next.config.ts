@@ -10,8 +10,6 @@ const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: raiz,
   turbopack: { root: raiz },
-  // View Transitions (components/ui/transicoes.tsx): React ViewTransition no App Router
-  experimental: { viewTransition: true },
   // cabeçalhos simples em toda resposta; a CSP (com nonce) sai do proxy.ts
   async headers() {
     return [{ source: "/:path*", headers: CABECALHOS_SEGURANCA }];

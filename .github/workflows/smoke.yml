@@ -35,7 +35,7 @@ jobs:
       ESPERADO: ${{ github.event.workflow_run.head_sha || github.sha }}
     steps:
       # Histórico completo para comparar o commit no ar com o esperado.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.ESPERADO }}
           fetch-depth: 0

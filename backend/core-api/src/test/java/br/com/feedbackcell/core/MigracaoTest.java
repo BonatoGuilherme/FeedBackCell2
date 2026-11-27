@@ -46,6 +46,14 @@ class MigracaoTest {
     }
 
     @Test
+    void v4GuardaOsCreditosDaMobileApiPorDia() throws Exception {
+        assertThat(recurso("db/migration/V4__uso_creditos_mobileapi.sql"))
+                .contains("CREATE TABLE `UsoCreditosMobileApi`", "PRIMARY KEY (`dia`)");
+        // a V3 segue só com o limite por usuário (editar migração aplicada quebra o checksum)
+        assertThat(recurso("db/migration/V3__uso_busca_especificacoes.sql")).doesNotContain("UsoCreditosMobileApi");
+    }
+
+    @Test
     void bancoExistenteRecebeBaselineNaVersao1() throws Exception {
         Properties p = new Properties();
         p.load(new java.io.StringReader(recurso("application.properties")));
