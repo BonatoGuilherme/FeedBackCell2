@@ -3,6 +3,8 @@
 /**
  * Fundo do hero da home: céu, três planos de cidade cartoon (SVG gerado com
  * seed fixa, ver cidade-tras/cidade-frente) e o telão de rua.
+ * Os planos ficam no cliente de propósito: como server components, o SVG ia
+ * duas vezes no HTML (markup + payload RSC) e a página ficava maior no total.
  *
  * O telão mostra os celulares do catálogo, um a cada ~10 s, com o efeito de
  * TV de tubo desligando e voltando com estática. Sem dados, mostra a marca.
@@ -67,7 +69,17 @@ function Telao({ ativo }: { ativo: boolean }) {
   const total = telas.length === 1 ? 2 : telas.length;
   const [indice, setIndice] = useState(0);
   const [fase, setFase] = useState<Fase>("ligado");
-  const girar = ativo && !reduce && total > 1;
+  // display:none (celular) ou fora da tela: isIntersecting=false e o relógio para
+  const ref = useRef<HTMLDivElement>(null);
+  const [visivel, setVisivel] = useState(true);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setVisivel(e.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  const girar = ativo && visivel && !reduce && total > 1;
 
   useEffect(() => {
     if (!girar) return;
@@ -86,7 +98,7 @@ function Telao({ ativo }: { ativo: boolean }) {
   const atual = total > 0 ? telas[indice % total] : undefined;
 
   return (
-    <div className="cid-telao" data-fase={girar ? fase : "ligado"}>
+    <div ref={ref} className="cid-telao" data-fase={girar ? fase : "ligado"}>
       <div className="cid-telao__moldura">
         <span className="cid-telao__aovivo">
           <i /> no ar
