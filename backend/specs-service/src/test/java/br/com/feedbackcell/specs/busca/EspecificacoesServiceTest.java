@@ -349,4 +349,33 @@ class EspecificacoesServiceTest {
         assertEquals(thumb, r.aparelho().imagemHd());
         assertNull(r.aparelho().tela());
     }
+
+    /** O core-api só conta a busca do usuário quando ela gastou crédito: cache e 3D não gastam. */
+    @Test
+    void contaOsCreditosGastosPorBusca() {
+        http.responder(c -> c.url().startsWith("https://api.mobileapi.dev/")
+                ? Resposta.ok("{\"devices\":[{\"name\":\"Galaxy S24\",\"manufacturer_name\":\"Samsung\"}]}")
+                : Resposta.ok("{}"));
+        EspecificacoesService s = servico("chave-teste");
+
+        java.util.concurrent.atomic.AtomicInteger primeira = new java.util.concurrent.atomic.AtomicInteger();
+        s.buscar("Samsung", "Galaxy S24", false, primeira);
+        assertTrue(primeira.get() >= 1);
+
+        java.util.concurrent.atomic.AtomicInteger repetida = new java.util.concurrent.atomic.AtomicInteger();
+        s.buscar("samsung", "galaxy  s24", false, repetida);
+        assertEquals(0, repetida.get());
+
+        java.util.concurrent.atomic.AtomicInteger so3d = new java.util.concurrent.atomic.AtomicInteger();
+        s.buscar("Samsung", "Galaxy S23", true, so3d);
+        assertEquals(0, so3d.get());
+    }
+
+    @Test
+    void semChaveNaoGastaCredito() {
+        http.responder(c -> Resposta.ok("{}"));
+        java.util.concurrent.atomic.AtomicInteger gastos = new java.util.concurrent.atomic.AtomicInteger();
+        servico(null).buscar("Samsung", "Galaxy S24", false, gastos);
+        assertEquals(0, gastos.get());
+    }
 }
