@@ -1,5 +1,5 @@
 # Build: compila com o Maven Wrapper (Java 21) no formato fast-jar do Quarkus.
-FROM eclipse-temurin:21-jdk AS build
+FROM eclipse-temurin:25-jdk AS build
 # unzip: o mvnw só baixa o .zip (cujo SHA-256 está fixado no wrapper) quando ele existe
 RUN apt-get update && apt-get install -y --no-install-recommends unzip && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
@@ -10,7 +10,7 @@ RUN sed -i 's/\r$//' mvnw .mvn/wrapper/maven-wrapper.properties && chmod +x mvnw
 COPY src src
 RUN ./mvnw -B -q -DskipTests package
 
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:25-jre
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/* \

@@ -1,4 +1,4 @@
-FROM mysql:8.0
+FROM mysql:26.7
 
 COPY backup.sh /usr/local/bin/feedbackcell-backup
 # o script pode chegar com CRLF de um checkout no Windows sem o .gitattributes aplicado

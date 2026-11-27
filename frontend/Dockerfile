@@ -1,12 +1,12 @@
 # Dependências: pnpm na versão fixada do package.json, via corepack
-FROM node:20-alpine AS deps
+FROM node:26-alpine AS deps
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
 # Build: NEXT_PUBLIC_API_URL é embutido no bundle do navegador
-FROM node:20-alpine AS builder
+FROM node:26-alpine AS builder
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
 ARG NEXT_PUBLIC_API_URL=/api
@@ -18,7 +18,7 @@ COPY . .
 RUN pnpm build
 
 # Execução: só o servidor standalone, os assets estáticos e public/
-FROM node:20-alpine AS runner
+FROM node:26-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
