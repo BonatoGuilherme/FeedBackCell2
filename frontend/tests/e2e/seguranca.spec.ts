@@ -89,7 +89,7 @@ test("arquivos estáticos recebem os cabeçalhos simples", async ({ request }) =
   expect(h["x-content-type-options"]).toBe("nosniff");
 });
 
-for (const rota of ["/", "/catalogo", "/catalogo/7", "/login", "/register"]) {
+for (const rota of ["/", "/catalogo", "/catalogo/7", "/login", "/register", "/predio"]) {
   test(`${rota} não viola a CSP`, async ({ page }) => {
     await mockarApi(page);
     await coletarViolacoes(page);
