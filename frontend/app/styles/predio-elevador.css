@@ -1,0 +1,135 @@
+/*
+ * /predio — painel do elevador (components/predio/navegacao/Elevador.tsx).
+ * Fixo à direita no meio da tela; abaixo de 640px vira um botão flutuante
+ * acima da barra de abas, que abre a lista de andares.
+ */
+
+.elevador {
+  position: fixed;
+  z-index: 35;
+  top: 50%;
+  right: var(--space-4);
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+  padding: var(--space-2);
+  border: 2px solid var(--fachada-borda);
+  background: var(--noite-0);
+  transform: translateY(-50%);
+}
+
+.elevador__painel {
+  margin: 0;
+}
+
+.elevador__display {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--display-apagado);
+  background: var(--noite-0);
+}
+
+.elevador__digito {
+  width: 24px;
+  height: 42px;
+}
+
+.segmento {
+  fill: var(--display-apagado);
+}
+
+.segmento--aceso {
+  fill: var(--display-segmento);
+}
+
+.elevador__direcao {
+  color: var(--vermelho);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.elevador__abrir {
+  display: none;
+}
+
+.elevador__botoes {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.elevador__botao {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--fachada-borda);
+  border-radius: var(--radius-pill);
+  background: var(--noite-1);
+  color: var(--creme);
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.elevador__botao:hover {
+  border-color: var(--ciano);
+  color: var(--ciano);
+}
+
+/* andar atual: o botão aceso */
+.elevador__botao[aria-current="location"] {
+  border-color: var(--ambar);
+  color: var(--ambar);
+  box-shadow: 0 0 12px color-mix(in oklab, var(--ambar) 45%, transparent);
+}
+
+@media (max-width: 639px) {
+  .elevador {
+    top: auto;
+    right: var(--space-4);
+    bottom: calc(var(--tabbar-height) + env(safe-area-inset-bottom) + var(--space-4));
+    padding: 0;
+    border: 0;
+    background: none;
+    transform: none;
+  }
+
+  .elevador__painel {
+    display: none;
+  }
+
+  .elevador__abrir {
+    display: grid;
+    place-items: center;
+    min-width: 56px;
+    min-height: 56px;
+    padding: var(--space-1);
+    border: 2px solid var(--fachada-borda);
+    background: var(--noite-0);
+    cursor: pointer;
+  }
+
+  .elevador__abrir[aria-expanded="true"] {
+    border-color: var(--ciano);
+  }
+
+  .elevador__botoes {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + var(--space-2));
+    display: none;
+    padding: var(--space-2);
+    border: 2px solid var(--fachada-borda);
+    background: var(--noite-0);
+  }
+
+  .elevador--aberto .elevador__botoes {
+    display: grid;
+  }
+}

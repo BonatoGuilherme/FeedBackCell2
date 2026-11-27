@@ -1,0 +1,283 @@
+/*
+ * /predio — fachada e andares (components/predio/andares/*).
+ * O fundo de cada andar continua o do anterior: roxo/lavanda no céu,
+ * azul-petróleo com vermelho e rosa no térreo. Sem efeitos nesta fase.
+ */
+
+/* a página ocupa a largura toda, logo abaixo da barra fixa */
+.main-content:has(> .predio) {
+  padding: var(--header-height) 0 0;
+}
+
+@media (max-width: 860px) {
+  /* a barra de abas do celular fica por cima do fim da página */
+  .main-content:has(> .predio) {
+    padding-bottom: calc(var(--tabbar-height) + env(safe-area-inset-bottom));
+  }
+}
+
+.predio {
+  overflow-x: clip;
+  background: var(--noite-0);
+  font-size: var(--font-size-body);
+}
+
+/* ---------- andar: o céu dos lados e a fachada no meio ---------- */
+
+.andar {
+  --altura: 120vh;
+  --fundo-de: var(--ceu-meio);
+  --fundo-ate: var(--ceu-baixo);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: var(--altura);
+  padding-inline: var(--gutter) calc(var(--gutter) + var(--espaco-elevador));
+  background: linear-gradient(180deg, var(--fundo-de), var(--fundo-ate));
+  scroll-margin-top: var(--header-height);
+}
+
+.andar:focus {
+  outline: none;
+}
+
+.andar__fachada {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-8);
+  width: min(100%, var(--largura-predio));
+  margin-inline: auto;
+  padding: var(--space-16) clamp(var(--space-4), 3vw, var(--space-10));
+  border-inline: 2px solid var(--fachada-borda);
+  background: var(--fachada-fundo);
+}
+
+.andar--topo {
+  --altura: 150vh;
+  --fundo-de: var(--ceu-topo);
+  --fundo-ate: var(--ceu-meio);
+}
+
+.andar--destaque {
+  --altura: 120vh;
+  --fundo-de: var(--ceu-meio);
+  --fundo-ate: var(--ceu-baixo);
+  --telao-borda: var(--magenta);
+}
+
+.andar--catalogo {
+  --altura: 140vh;
+  --fundo-de: var(--ceu-baixo);
+  --fundo-ate: var(--noite-1);
+  --telao-borda: var(--ciano);
+}
+
+.andar--passarela {
+  --altura: 60vh;
+  --fundo-de: var(--noite-1);
+  --fundo-ate: var(--noite-1);
+  justify-content: center;
+}
+
+.andar--como-funciona {
+  --altura: 130vh;
+  --fundo-de: var(--noite-1);
+  --fundo-ate: var(--rua-alto);
+  --telao-borda: var(--azul-neon);
+}
+
+.andar--marcas {
+  --altura: 120vh;
+  --fundo-de: var(--rua-alto);
+  --fundo-ate: var(--rua);
+  --telao-borda: var(--vermelho);
+}
+
+.andar--adicionar {
+  --altura: 110vh;
+  --fundo-de: var(--rua);
+  --fundo-ate: var(--rua-chao);
+  --telao-borda: var(--ambar);
+}
+
+.andar--entrada {
+  --altura: 130vh;
+  --fundo-de: var(--rua-chao);
+  --fundo-ate: var(--rua);
+  --telao-borda: var(--ciano);
+
+  /* luz parada da rua: vermelho e rosa refletidos no chão molhado (sem animação) */
+  background:
+    radial-gradient(60% 30% at 15% 100%, color-mix(in oklab, var(--vermelho) 30%, transparent), transparent 70%),
+    radial-gradient(60% 30% at 85% 100%, color-mix(in oklab, var(--rosa) 26%, transparent), transparent 70%),
+    linear-gradient(180deg, var(--fundo-de), var(--fundo-ate));
+}
+
+/* no celular encurtam os espaços entre os telões, não os telões */
+@media (max-width: 640px) {
+  .andar {
+    min-height: calc(var(--altura) * 0.6);
+  }
+
+  .andar__fachada {
+    padding-block: var(--space-12);
+  }
+}
+
+/* ---------- R: céu, lua e telhado ---------- */
+
+.andar--topo .andar__fachada {
+  justify-content: flex-start;
+  padding-top: var(--space-10);
+}
+
+.topo__lua {
+  /* espaço reservado à lua cortada no topo (fase posterior) */
+  height: clamp(160px, 32vh, 340px);
+}
+
+.topo__telhado {
+  width: min(100%, calc(var(--largura-predio) + 48px));
+  height: 28px;
+  margin-inline: auto;
+  border-bottom: 4px solid var(--fachada-borda);
+  background: linear-gradient(180deg, transparent 60%, var(--noite-1) 60%);
+}
+
+.topo__placa {
+  font-size: clamp(20px, 3vw, 30px);
+  color: var(--ciano);
+}
+
+.topo__titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(56px, 13vw, 168px);
+  font-synthesis: none;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  line-height: 0.86;
+  color: var(--creme);
+  overflow-wrap: anywhere;
+}
+
+.topo__titulo span {
+  color: var(--lima);
+}
+
+.topo__led {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid color-mix(in oklab, var(--ambar) 45%, transparent);
+  background: var(--led-fundo);
+  color: var(--led-texto);
+  font-family: var(--font-led);
+  font-size: clamp(16px, 2vw, 20px);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.topo__botoes {
+  justify-content: center;
+}
+
+.topo__descer {
+  margin: 0;
+  color: var(--texto-suave);
+  font-family: var(--font-led);
+  font-size: 18px;
+  text-align: center;
+}
+
+/* ---------- passarela ---------- */
+
+.passarela__ponte {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline: calc(var(--gutter) * -1) calc((var(--gutter) + var(--espaco-elevador)) * -1);
+  padding: var(--space-6) var(--gutter);
+  border-block: 4px solid color-mix(in oklab, var(--azul-neon) 55%, transparent);
+  background:
+    repeating-linear-gradient(90deg, transparent 0 46px, color-mix(in oklab, var(--lavanda) 30%, transparent) 46px 50px),
+    var(--indigo);
+}
+
+.passarela__placa {
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  background: var(--noite-0);
+  color: var(--creme);
+  font-family: var(--font-led);
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ---------- T: marquise e placa de endereço ---------- */
+
+.terreo__marquise {
+  height: 24px;
+  margin-inline: calc(clamp(var(--space-4), 3vw, var(--space-10)) * -1);
+  border-bottom: 4px solid var(--vermelho);
+  background: var(--noite-0);
+}
+
+.andar--entrada .andar__fachada {
+  justify-content: space-between;
+  padding-top: 0;
+}
+
+.endereco {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: center;
+  padding: var(--space-6);
+  border: 3px solid var(--ciano);
+  background: var(--petroleo);
+  text-align: center;
+}
+
+.endereco p {
+  margin: 0;
+}
+
+.endereco__placa {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.endereco__links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.endereco__links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--creme);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.endereco__links a:hover {
+  color: var(--ciano);
+}
+
+.endereco__autor {
+  color: var(--texto-suave);
+}

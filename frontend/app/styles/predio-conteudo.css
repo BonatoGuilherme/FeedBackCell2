@@ -1,0 +1,296 @@
+/*
+ * /predio — conteúdo dos andares: TVs do catálogo, passos, marcas,
+ * adicionar e a porta do térreo. Telões e estados em predio-telas.css.
+ */
+
+/* ---------- 4: parede de TVs ---------- */
+
+.tvs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 2×3 no celular, 3×3 no tablet, 4×3 no computador */
+.tvs__item:nth-child(n + 7) {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .tvs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .tvs__item:nth-child(n + 7) {
+    display: block;
+  }
+
+  .tvs__item:nth-child(n + 10) {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tvs {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .tvs__item:nth-child(n + 10) {
+    display: block;
+  }
+}
+
+.tv {
+  display: grid;
+  gap: var(--space-2);
+  height: 100%;
+  padding: var(--space-2);
+  border: 2px solid color-mix(in oklab, var(--ciano) 50%, transparent);
+  background: var(--noite-1);
+  transition: border-color var(--duration) var(--ease);
+}
+
+.tv:hover {
+  border-color: var(--ciano);
+}
+
+.tv__foto {
+  aspect-ratio: 4 / 3;
+  background: var(--noite-0);
+}
+
+.tv__modelo {
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.tv__marca {
+  color: var(--texto-suave);
+}
+
+.tv__nota {
+  color: var(--nota);
+  font-family: var(--font-led);
+  font-size: 18px;
+}
+
+.painel-busca {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border: 2px solid var(--fachada-borda);
+  background: var(--noite-0);
+}
+
+.painel-busca__rotulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+@media (min-width: 900px) {
+  .painel-busca {
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+  }
+}
+
+/* ---------- 3: como funciona ---------- */
+
+.passos {
+  display: grid;
+  gap: var(--space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.passo {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding: var(--space-6);
+  border: 2px solid color-mix(in oklab, var(--azul-neon) 60%, transparent);
+  background: var(--noite-1);
+}
+
+.passo__numero {
+  color: var(--ambar);
+  font-family: var(--font-led);
+  font-size: 56px;
+  line-height: 1;
+}
+
+.passo__titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.passo__texto {
+  margin: 0;
+  color: var(--texto-suave);
+  line-height: 1.55;
+}
+
+@media (min-width: 900px) {
+  .passos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ---------- 2: parede de marcas ---------- */
+
+.marcas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.letreiro-marca {
+  --cor-letreiro: var(--ciano);
+
+  display: grid;
+  gap: var(--space-1);
+  min-height: 44px;
+  padding: var(--space-3) var(--space-5);
+  border: 3px solid var(--cor-letreiro);
+  background: var(--noite-1);
+}
+
+.marcas li:nth-child(5n + 2) .letreiro-marca {
+  --cor-letreiro: var(--vermelho);
+}
+
+.marcas li:nth-child(5n + 3) .letreiro-marca {
+  --cor-letreiro: var(--ambar);
+}
+
+.marcas li:nth-child(5n + 4) .letreiro-marca {
+  --cor-letreiro: var(--magenta);
+}
+
+.marcas li:nth-child(5n + 5) .letreiro-marca {
+  --cor-letreiro: var(--azul-neon);
+}
+
+.letreiro-marca:hover {
+  background: var(--noite-0);
+}
+
+.letreiro-marca__nome {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.letreiro-marca__qtd {
+  color: var(--texto-suave);
+  font-family: var(--font-led);
+  font-size: 16px;
+}
+
+.marcas__nota {
+  margin: var(--space-4) 0 0;
+  color: var(--texto-suave);
+}
+
+/* ---------- 1: adicionar ---------- */
+
+.adicionar {
+  display: grid;
+  gap: var(--space-8);
+  align-items: center;
+}
+
+.adicionar__holograma {
+  /* espaço do holograma (fase posterior) */
+  width: min(100%, 260px);
+  aspect-ratio: 1;
+  margin-inline: auto;
+  border: 2px dashed color-mix(in oklab, var(--ambar) 55%, transparent);
+  border-radius: var(--radius-pill);
+}
+
+.adicionar__texto {
+  display: grid;
+  gap: var(--space-5);
+  justify-items: start;
+}
+
+.adicionar__texto p {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(30px, 4vw, 48px);
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+@media (min-width: 768px) {
+  .adicionar {
+    grid-template-columns: 1fr 1.4fr;
+  }
+}
+
+/* ---------- T: porta de entrada ---------- */
+
+.porta {
+  display: grid;
+  gap: var(--space-5);
+  justify-items: center;
+  padding: var(--space-8) var(--space-4);
+  border: 4px solid color-mix(in oklab, var(--ciano) 55%, transparent);
+  border-bottom: 0;
+  text-align: center;
+}
+
+.porta p {
+  margin: 0;
+}
+
+.porta__placa {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-display);
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: 900;
+}
+
+.porta__placa .placa-jp {
+  font-size: 0.7em;
+}
+
+.porta__contador {
+  color: var(--texto-suave);
+  font-family: var(--font-led);
+  font-size: 18px;
+}
+
+.porta__botoes {
+  justify-content: center;
+}
+
+.btn-sign--escuro {
+  background: var(--noite-0);
+  box-shadow: 6px 6px 0 var(--rosa);
+  color: var(--creme);
+  border: 2px solid var(--creme);
+}
+
+.btn-sign--escuro:hover {
+  color: var(--ink);
+}

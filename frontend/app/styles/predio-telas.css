@@ -1,0 +1,259 @@
+/*
+ * /predio — telões e o que aparece neles (components/predio/telas/* e o
+ * destaque). A borda do telão muda por andar (--telao-borda).
+ */
+
+/* ---------- telão ---------- */
+
+.telao {
+  position: relative;
+  display: grid;
+  gap: var(--space-6);
+  padding: clamp(var(--space-4), 3vw, var(--space-8));
+  border: 3px solid var(--telao-borda);
+  background: var(--telao-fundo);
+  box-shadow:
+    0 0 0 6px var(--noite-0),
+    0 0 48px color-mix(in oklab, var(--telao-borda) 30%, transparent);
+}
+
+.telao__cabeca {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+}
+
+.telao__andar {
+  display: grid;
+  place-items: center;
+  min-width: 48px;
+  height: 48px;
+  border: 2px solid var(--vermelho);
+  color: var(--vermelho);
+  font-family: var(--font-led);
+  font-size: 26px;
+}
+
+.telao__titulo {
+  flex: 1;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(36px, 6vw, 72px);
+  font-synthesis: none;
+  font-weight: 900;
+  line-height: 0.95;
+  text-transform: uppercase;
+  color: var(--creme);
+}
+
+.telao__placas {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.placa-jp {
+  padding: var(--space-1) var(--space-2);
+  border: 2px solid currentColor;
+  color: var(--ciano);
+  font-family: var(--font-jp);
+  font-size: 22px;
+  font-synthesis: none;
+  line-height: 1.2;
+}
+
+.placa-jp--ambar {
+  color: var(--ambar);
+}
+
+/* telão do topo: o letreiro principal, com o selo "NO AR" no canto */
+.telao--letreiro {
+  --telao-borda: var(--lavanda);
+  padding-top: var(--space-12);
+  text-align: center;
+  justify-items: center;
+}
+
+.telao__selo {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  padding: var(--space-1) var(--space-2);
+  border: 2px solid var(--vermelho);
+  color: var(--vermelho);
+  font-family: var(--font-led);
+  font-size: 16px;
+  letter-spacing: 0.06em;
+}
+
+/* ---------- estados: carregando, sem sinal, vazio ---------- */
+
+.tela-estado {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: center;
+  align-content: center;
+  min-height: 280px;
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+  background: repeating-linear-gradient(0deg, transparent 0 3px, color-mix(in oklab, var(--lavanda) 8%, transparent) 3px 4px);
+}
+
+.tela-estado p {
+  margin: 0;
+}
+
+.tela-estado__sinal {
+  color: var(--ciano);
+  font-family: var(--font-led);
+  font-size: clamp(28px, 5vw, 48px);
+  letter-spacing: 0.08em;
+}
+
+.tela-estado--erro .tela-estado__sinal {
+  color: var(--vermelho);
+}
+
+.tela-estado__texto {
+  max-width: 34em;
+  color: var(--texto-suave);
+  font-size: var(--font-size-lead);
+}
+
+.tela-estado__botao {
+  margin-top: var(--space-3);
+}
+
+/* ---------- foto ou "sem foto" ---------- */
+
+.foto-celular {
+  display: block;
+  width: 100%;
+  object-fit: contain;
+  background: var(--noite-1);
+}
+
+.foto-celular--vazia {
+  display: grid;
+  place-items: center;
+  color: var(--texto-suave);
+  font-family: var(--font-led);
+  font-size: 16px;
+}
+
+/* ---------- 5: em destaque ---------- */
+
+.destaque {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.destaque__item {
+  display: grid;
+  gap: var(--space-6);
+  align-items: center;
+}
+
+.destaque__foto {
+  aspect-ratio: 4 / 3;
+  max-height: 380px;
+}
+
+.destaque__info {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+
+.destaque__info p {
+  margin: 0;
+}
+
+.destaque__marca {
+  color: var(--texto-suave);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.destaque__modelo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.destaque__nota {
+  color: var(--nota);
+  font-family: var(--font-led);
+  font-size: clamp(44px, 6vw, 72px);
+  line-height: 1.1;
+}
+
+.destaque__avaliacoes {
+  margin-bottom: var(--space-3) !important;
+  color: var(--texto-suave);
+}
+
+.destaque__controles {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.destaque__seta {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--creme);
+  background: var(--noite-1);
+  color: var(--creme);
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.destaque__seta:hover {
+  border-color: var(--ciano);
+  color: var(--ciano);
+}
+
+.destaque__bolinhas {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.destaque__bolinha {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.destaque__bolinha::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--creme);
+  border-radius: var(--radius-pill);
+}
+
+.destaque__bolinha[aria-pressed="true"]::before {
+  border-color: var(--lima);
+  background: var(--lima);
+}
+
+@media (min-width: 768px) {
+  .destaque__item {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
