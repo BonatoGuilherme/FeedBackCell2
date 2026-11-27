@@ -27,6 +27,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.LongSupplier;
 import java.util.regex.Pattern;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -108,6 +109,11 @@ public class EspecificacoesService {
     private final Map<String, CompletableFuture<Resultado>> emAndamento = new ConcurrentHashMap<>();
     /** Teto de créditos da MobileAPI por dia/mês e pausa depois de 429; os testes trocam. */
     CotaMobileApi cota;
+    /** Créditos que ainda restam hoje e no mês (null = sem teto), para o aviso do front. */
+    public CotaMobileApi.Saldo saldoCreditos() {
+        return cota.saldo();
+    }
+
     /** Relógio do TTL do cache; os testes trocam. */
     LongSupplier relogio = System::currentTimeMillis;
 
@@ -183,6 +189,14 @@ public class EspecificacoesService {
      * escolhe outra sugestão e só falta o modelo 3D dela.
      */
     public Resultado buscar(String marca, String modelo, boolean somente3d) {
+        return buscar(marca, modelo, somente3d, new AtomicInteger());
+    }
+
+    /**
+     * Igual a {@link #buscar(String, String, boolean)}, mas soma em {@code gastos} quantos créditos da
+     * MobileAPI esta chamada reservou. Cache e busca repetida em andamento não gastam nada (0).
+     */
+    public Resultado buscar(String marca, String modelo, boolean somente3d, AtomicInteger gastos) {
         // "Galaxy  S24 " e "galaxy s24" são a mesma busca: a chave não pode gastar cota por espaço ou caixa
         String chave = (somente3d ? "3d" : "full") + "|" + normalizarChave(marca) + "|" + normalizarChave(modelo);
         Resultado emCache = lerCache(chave);
@@ -192,7 +206,7 @@ public class EspecificacoesService {
         CompletableFuture<Resultado> outra = emAndamento.putIfAbsent(chave, minha);
         if (outra != null) return outra.join();
         try {
-            Resultado r = buscarSemCache(marca, modelo, somente3d, chave);
+            Resultado r = buscarSemCache(marca, modelo, somente3d, chave, gastos);
             minha.complete(r);
             return r;
         } catch (RuntimeException e) {
@@ -203,14 +217,23 @@ public class EspecificacoesService {
         }
     }
 
+    /**
+     * Só o que já está no cache da busca completa (nunca consulta nada, não gasta cota); null se não houver.
+     * O core-api usa quando o usuário já gastou a busca do dia.
+     */
+    public Resultado doCache(String marca, String modelo) {
+        return lerCache("full|" + normalizarChave(marca) + "|" + normalizarChave(modelo));
+    }
+
     static String normalizarChave(String texto) {
         return texto == null ? "" : texto.strip().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
     }
 
-    private Resultado buscarSemCache(String marca, String modelo, boolean somente3d, String chave) {
+    private Resultado buscarSemCache(String marca, String modelo, boolean somente3d, String chave,
+                                     AtomicInteger gastos) {
         CompletableFuture<Busca> spec = somente3d
                 ? CompletableFuture.completedFuture(new Busca(null, List.of(), null, false, false))
-                : CompletableFuture.supplyAsync(() -> buscarAparelho(marca, modelo), pool);
+                : CompletableFuture.supplyAsync(() -> buscarAparelho(marca, modelo, gastos), pool);
         CompletableFuture<Busca3d> modelo3d = CompletableFuture.supplyAsync(() -> buscarModelo3d(marca, modelo), pool);
         Busca s = spec.join();
         Busca3d m = modelo3d.join();
@@ -235,7 +258,7 @@ public class EspecificacoesService {
         return n == null || n.isNull() ? "" : n.asText();
     }
 
-    private Busca buscarAparelho(String marca, String modelo) {
+    private Busca buscarAparelho(String marca, String modelo, AtomicInteger gastos) {
         if (chaveMobileApi.isEmpty()) {
             return new Busca(null, List.of(), "Especificações indisponíveis: MOBILEAPI_KEY não configurada.", false, false);
         }
@@ -249,6 +272,7 @@ public class EspecificacoesService {
             LOG.warn("MobileAPI: cota do dia/mês esgotada ou pausada depois de 429; busca sem especificações.");
             return new Busca(null, List.of(), AVISO_LIMITE, true, false);
         }
+        gastos.incrementAndGet();
         try {
             JsonNode dados = http.buscarJson(MOBILEAPI_URL + "?" + ImagensHdService.query(params), auth, TIMEOUT);
             List<JsonNode> lista = new ArrayList<>();
@@ -262,7 +286,7 @@ public class EspecificacoesService {
                     new Opcoes(true, true), MAX_SUGESTOES).stream().map(EspecificacoesService::normalizar).toList();
             // Câmeras e preço do aparelho escolhido (só ele, nunca as sugestões), em paralelo com a foto HD.
             String id = d == null ? null : idDispositivo(d);
-            Extras extras = buscarDetalhes(id, auth);
+            Extras extras = buscarDetalhes(id, auth, gastos);
             Aparelho aparelho = d == null ? null : normalizar(d);
 
             List<Aparelho> todos = new ArrayList<>();
@@ -302,7 +326,7 @@ public class EspecificacoesService {
      * plano Free. Cada chamada respeita o seu prazo ({@link #prazoCameras}, {@link #prazoPreco}) e o teto
      * total {@link #prazoExtras}, contado a partir de agora.
      */
-    private Extras buscarDetalhes(String id, Map<String, String> auth) {
+    private Extras buscarDetalhes(String id, Map<String, String> auth, AtomicInteger gastos) {
         long fim = System.nanoTime() + prazoExtras.toNanos();
         boolean cameras = camerasDetalhadas;
         boolean preco = precoAtivo;
@@ -313,13 +337,13 @@ public class EspecificacoesService {
             JsonNode[] r = new JsonNode[3];
             if (cameras) {
                 long prazo = Math.min(System.nanoTime() + prazoCameras.toNanos(), fim);
-                r[0] = buscarEndpoint(id, "main-camera", auth, prazo);
-                r[1] = buscarEndpoint(id, "selfie-camera", auth, prazo);
+                r[0] = buscarEndpoint(id, "main-camera", auth, prazo, gastos);
+                r[1] = buscarEndpoint(id, "selfie-camera", auth, prazo, gastos);
             }
             if (preco) {
                 // o /misc usa o que sobrou das câmeras, até o seu prazo e o teto total
                 long prazo = Math.min(System.nanoTime() + prazoPreco.toNanos(), fim);
-                r[2] = buscarEndpoint(id, "misc", auth, prazo);
+                r[2] = buscarEndpoint(id, "misc", auth, prazo, gastos);
             }
             return r;
         }, pool);
@@ -351,9 +375,11 @@ public class EspecificacoesService {
      * Resposta de /devices/{id}/{tipo}/ ou null (prazo esgotado, 404 ou falha: sem câmera nova ou sem preço).
      * Um 429 espera o "retry_after" pedido e tenta de novo (até 2 vezes), dentro do prazo.
      */
-    private JsonNode buscarEndpoint(String id, String tipo, Map<String, String> auth, long prazo) {
+    private JsonNode buscarEndpoint(String id, String tipo, Map<String, String> auth, long prazo,
+                                    AtomicInteger gastos) {
         // sem crédito, fica sem a câmera nova ou sem preço (o 429 daqui só pede espaçamento: não pausa tudo)
         if (!cota.reservar()) return null;
+        gastos.incrementAndGet();
         for (int tentativa = 0; System.nanoTime() < prazo; tentativa++) {
             try {
                 return http.buscarJson(MOBILEAPI_DEVICES + id + "/" + tipo + "/", auth, TIMEOUT_CAMERAS);

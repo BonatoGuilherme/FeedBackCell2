@@ -30,6 +30,10 @@ class EventosHttpTest {
     private final List<String> recebidos = new CopyOnWriteArrayList<>();
     private final List<String> tokensRecebidos = new CopyOnWriteArrayList<>();
     private String token = "";
+    private String resposta = RESPOSTA;
+    /** Créditos que cada busca informou ao terminar (o {@code fim} do celularCriado). */
+    private final List<Integer> gastosRecebidos = new CopyOnWriteArrayList<>();
+    private final java.util.function.IntConsumer fim = gastosRecebidos::add;
     private HttpServer servidor;
     private EventosHttp eventos;
 
@@ -40,7 +44,7 @@ class EventosHttpTest {
             tokensRecebidos.add(String.valueOf(troca.getRequestHeaders().getFirst("X-Internal-Token")));
             recebidos.add(new String(troca.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
             int s = status[Math.min(chamada.getAndIncrement(), status.length - 1)];
-            byte[] corpo = (s == 200 ? RESPOSTA : "{}").getBytes(StandardCharsets.UTF_8);
+            byte[] corpo = (s == 200 ? resposta : "{}").getBytes(StandardCharsets.UTF_8);
             troca.sendResponseHeaders(s, corpo.length);
             troca.getResponseBody().write(corpo);
             troca.close();
@@ -59,7 +63,7 @@ class EventosHttpTest {
     @Test
     void enviaOEventoEAplicaAResposta() throws Exception {
         subir(200);
-        eventos.celularCriado(12, "Samsung", "Galaxy S24", false, true);
+        eventos.celularCriado(12, "Samsung", "Galaxy S24", false, true, g -> { });
         verify(aplicador, timeout(5000)).aplicar(RESPOSTA);
         JsonNode e = JSON.readTree(recebidos.get(0));
         assertThat(e.get("idcelular").asLong()).isEqualTo(12);
@@ -73,7 +77,7 @@ class EventosHttpTest {
     void mandaOTokenInternoQuandoConfigurado() throws Exception {
         token = "segredo";
         subir(200);
-        eventos.celularCriado(12, "Samsung", "Galaxy S24", false, true);
+        eventos.celularCriado(12, "Samsung", "Galaxy S24", false, true, g -> { });
         verify(aplicador, timeout(5000)).aplicar(RESPOSTA);
         assertThat(tokensRecebidos).containsExactly("segredo");
     }
@@ -81,7 +85,7 @@ class EventosHttpTest {
     @Test
     void semTokenNaoMandaOHeader() throws Exception {
         subir(200);
-        eventos.celularCriado(12, "Samsung", "Galaxy S24", false, true);
+        eventos.celularCriado(12, "Samsung", "Galaxy S24", false, true, g -> { });
         verify(aplicador, timeout(5000)).aplicar(RESPOSTA);
         assertThat(tokensRecebidos).containsExactly("null");
     }
@@ -89,7 +93,7 @@ class EventosHttpTest {
     @Test
     void repeteUmaVezDepoisDe5xx() throws Exception {
         subir(503, 200);
-        eventos.celularCriado(12, "Samsung", "Galaxy S24", true, true);
+        eventos.celularCriado(12, "Samsung", "Galaxy S24", true, true, g -> { });
         verify(aplicador, timeout(5000)).aplicar(RESPOSTA);
         assertThat(recebidos).hasSize(2);
     }
@@ -97,17 +101,29 @@ class EventosHttpTest {
     @Test
     void naoRepeteNemAplicaRespostaRecusada() throws Exception {
         subir(400);
-        eventos.celularCriado(12, "Samsung", "Galaxy S24", true, true);
+        eventos.celularCriado(12, "Samsung", "Galaxy S24", true, true, fim);
         Thread.sleep(300);
         assertThat(recebidos).hasSize(1);
         verify(aplicador, never()).aplicar(ArgumentMatchers.anyString());
+        assertThat(gastosRecebidos).containsExactly(0);
     }
 
     @Test
     void specsServiceForaDoArNaoQuebraNada() {
         eventos = new EventosHttp(aplicador, JSON, "http://127.0.0.1:1", "");
         eventos.esperaRepeticao = Duration.ZERO;
-        eventos.celularCriado(12, "Samsung", "Galaxy S24", true, true);
+        eventos.celularCriado(12, "Samsung", "Galaxy S24", true, true, fim);
         verify(aplicador, after(1000).never()).aplicar(ArgumentMatchers.anyString());
+        assertThat(gastosRecebidos).containsExactly(0);
+    }
+
+    @Test
+    void avisaNoFimOsCreditosQueOSpecsServiceDisseTerGastado() throws Exception {
+        resposta = "{\"idcelular\":12,\"especificacoes\":null,\"modelo3d\":null,\"creditosGastos\":4}";
+        subir(200);
+        eventos.celularCriado(12, "Samsung", "Galaxy S24", true, true, fim);
+        verify(aplicador, timeout(5000)).aplicar(resposta);
+        for (int i = 0; i < 50 && gastosRecebidos.isEmpty(); i++) Thread.sleep(100);
+        assertThat(gastosRecebidos).containsExactly(4);
     }
 }

@@ -2,11 +2,13 @@ package br.com.feedbackcell.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -56,6 +58,7 @@ class ApiTest {
     @MockitoBean ImagemRepositorio imagens;
     @MockitoBean ComentarioRepositorio comentarios;
     @MockitoBean UsuarioRepositorio usuarios;
+    @MockitoBean br.com.feedbackcell.core.dados.UsoBuscaRepositorio usoBusca;
     @MockitoBean EventosCelular eventos;
 
     private String bearer(long id) {
@@ -190,6 +193,7 @@ class ApiTest {
     void criarCelularSemEspecificacoesPublicaEvento() throws Exception {
         when(celulares.criar(eq("Samsung"), eq("Galaxy S24"), eq(""), eq(3L), isNull(), isNull()))
                 .thenReturn(42L);
+        buscaGasta(0);
         // "preco" ainda pode chegar de um cliente antigo: é ignorado e não volta na resposta
         mvc.perform(post("/celulares").header("Authorization", bearer(3)).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"marca\":\" Samsung \",\"modelo\":\"Galaxy S24\",\"preco\":\"10\"}"))
@@ -198,7 +202,52 @@ class ApiTest {
                         {"mensagem":"Celular criado com sucesso","celular":{"idcelular":42,"marca":"Samsung",
                          "modelo":"Galaxy S24","descricao":"","especificacoes":null,"modelo3d":null,
                          "idusuario":3,"notaMedia":null,"avaliacoes":0}}""", true));
-        verify(eventos).celularCriado(42L, "Samsung", "Galaxy S24", true, true);
+        verify(eventos).celularCriado(eq(42L), eq("Samsung"), eq("Galaxy S24"), eq(true), eq(true), any());
+    }
+
+    /** O fim da busca assíncrona chega com {@code gastos} créditos gastos. */
+    private void buscaGasta(int gastos) {
+        doAnswer(i -> {
+            i.<java.util.function.IntConsumer>getArgument(5).accept(gastos);
+            return null;
+        }).when(eventos).celularCriado(anyLong(), anyString(), anyString(), anyBoolean(), anyBoolean(), any());
+    }
+
+    @Test
+    void buscaDoCadastroQueGastouCreditoContaNoLimiteDoUsuario() throws Exception {
+        when(celulares.criar(anyString(), anyString(), anyString(), anyLong(), any(), any())).thenReturn(43L);
+        buscaGasta(4);
+        mvc.perform(post("/celulares").header("Authorization", bearer(7)).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"marca\":\"Samsung\",\"modelo\":\"Galaxy S24\"}"))
+                .andExpect(status().isCreated());
+        verify(eventos).celularCriado(eq(43L), anyString(), anyString(), eq(true), eq(true), any());
+        verify(usoBusca).registrar(eq(7L), any());
+        verify(usoBusca).somarCreditos(any(), eq(4));
+    }
+
+    @Test
+    void cadastroSemBuscaDisponivelSalvaOCelularSemPedirAFicha() throws Exception {
+        when(usoBusca.buscasNoDia(eq(8L), any())).thenReturn(1);
+        when(celulares.criar(anyString(), anyString(), anyString(), anyLong(), any(), any())).thenReturn(44L);
+        buscaGasta(0);
+        mvc.perform(post("/celulares").header("Authorization", bearer(8)).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"marca\":\"Samsung\",\"modelo\":\"Galaxy S24\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.celular.idcelular").value(44));
+        // sem a vez do dia: só o modelo 3D, que não gasta crédito
+        verify(eventos).celularCriado(eq(44L), anyString(), anyString(), eq(false), eq(true), any());
+        verify(usoBusca, never()).registrar(anyLong(), any());
+    }
+
+    @Test
+    void cadastroSemBuscaDisponivelECom3dNaoPedeNada() throws Exception {
+        when(usoBusca.buscasNoDia(eq(9L), any())).thenReturn(1);
+        when(celulares.criar(anyString(), anyString(), anyString(), anyLong(), any(), any())).thenReturn(45L);
+        mvc.perform(post("/celulares").header("Authorization", bearer(9)).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"marca\":\"Apple\",\"modelo\":\"iPhone 15\","
+                                + "\"modelo3d\":\"0123456789abcdef0123456789abcdef\"}"))
+                .andExpect(status().isCreated());
+        verifyNoInteractions(eventos);
     }
 
     @Test

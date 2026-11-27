@@ -61,7 +61,9 @@ class ProcessadorCelularCriadoTest {
                 "armazenamento":"128 GB, 256 GB","camera":"50 MP","bateria":"4000 mAh","peso":"168 g",\
                 "espessura":"7,6 mm","cores":"Onyx Black, Marble Gray","creditoImagem":null,"creditoImagemUrl":null},\
                 "modelo3d":"%s","ocorridoEm":"T"}""".formatted(UID),
-                valor.replaceFirst("\"ocorridoEm\":\"[^\"]+\"", "\"ocorridoEm\":\"T\""));
+                valor.replaceFirst("\"creditosGastos\":\\d+,", "")
+                        .replaceFirst("\"ocorridoEm\":\"[^\"]+\"", "\"ocorridoEm\":\"T\""));
+        assertTrue(JSON.readTree(valor).get("creditosGastos").asInt() >= 1, valor);
         assertEquals(List.of(), ContratoEspecificacoes.violacoes(JSON.readTree(valor)));
     }
 
@@ -109,6 +111,15 @@ class ProcessadorCelularCriadoTest {
         assertTrue(r.get("especificacoes").isNull());
         assertEquals(UID, r.get("modelo3d").asText());
         assertEquals(2, chamadas("mobileapi"));
+    }
+
+    @Test
+    void informaOsCreditosGastosEZeroSemPrecisarDeEspecificacoes() throws Exception {
+        http.responder(c -> c.url().contains("mobileapi") ? Resposta.ok(MOBILEAPI)
+                : c.url().contains("sketchfab") ? Resposta.ok(SKETCHFAB) : Resposta.ok("{}"));
+        assertTrue(JSON.readTree(publicado(processador("x"), EVENTO)).get("creditosGastos").asInt() >= 1);
+        String so3d = EVENTO.replace("\"precisaEspecificacoes\":true", "\"precisaEspecificacoes\":false");
+        assertEquals(0, JSON.readTree(publicado(processador("x"), so3d)).get("creditosGastos").asInt());
     }
 
     @Test

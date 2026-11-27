@@ -44,14 +44,41 @@ public class CelularesController {
     private final Autenticacao auth;
     private final CorpoJson corpo;
     private final EventosCelular eventos;
+    private final LimiteBuscaEspecificacoes limite;
 
     public CelularesController(CelularRepositorio celulares, ImagemRepositorio imagens, Autenticacao auth,
-                               CorpoJson corpo, EventosCelular eventos) {
+                               CorpoJson corpo, EventosCelular eventos,
+                               LimiteBuscaEspecificacoes limite) {
         this.celulares = celulares;
         this.imagens = imagens;
         this.auth = auth;
         this.corpo = corpo;
         this.eventos = eventos;
+        this.limite = limite;
+    }
+
+    /**
+     * A busca de especificações gasta crédito da MobileAPI, então segue o mesmo limite da busca manual
+     * (por usuário por dia e teto global de créditos). Sem vez, o celular fica como foi preenchido e só
+     * se pede o modelo 3D, que não gasta crédito. Nunca lança: o celular já foi salvo.
+     */
+    private void pedirBusca(Autenticacao.Usuario usuario, long id, Campos c, boolean precisaSpec, boolean precisa3d) {
+        LimiteBuscaEspecificacoes.Reserva reserva = null;
+        if (precisaSpec) {
+            try {
+                reserva = limite.iniciar(usuario);
+            } catch (ErroApi e) {
+                LOG.info("Celular {} salvo sem busca de especificações: {}", id, e.getMessage());
+            } catch (RuntimeException e) {
+                LOG.error("Não foi possível conferir o limite de busca do celular {}: {}", id, e.toString());
+            }
+        }
+        boolean pedirSpec = reserva != null;
+        if (!pedirSpec && !precisa3d) return;
+        LimiteBuscaEspecificacoes.Reserva r = reserva;
+        eventos.celularCriado(id, c.marca, c.modelo, pedirSpec, precisa3d, gastos -> {
+            if (r != null) limite.concluir(r, gastos);
+        });
     }
 
     @GetMapping({"", "/"})
@@ -92,7 +119,8 @@ public class CelularesController {
 
     @PostMapping({"", "/"})
     public ResponseEntity<Map<String, Object>> criar(HttpServletRequest req) {
-        Long idusuario = auth.exigir(req).id();
+        Autenticacao.Usuario usuario = auth.exigir(req);
+        Long idusuario = usuario.id();
         ObjectNode b = Esquemas.validar(Esquemas.CELULAR, corpo.ler(req));
         Campos c = campos(b);
         return Acao.executar("Erro ao criar celular", () -> {
@@ -101,9 +129,7 @@ public class CelularesController {
             String modelo3d = texto(b.get("modelo3d"));
             long id = celulares.criar(c.marca, c.modelo, c.descricao, idusuario, spec, modelo3d);
             // Busca assíncrona (specs-service) do que veio faltando; nunca quebra a resposta.
-            if (spec == null || modelo3d == null) {
-                eventos.celularCriado(id, c.marca, c.modelo, spec == null, modelo3d == null);
-            }
+            if (spec == null || modelo3d == null) pedirBusca(usuario, id, c, spec == null, modelo3d == null);
             Map<String, Object> celular = new LinkedHashMap<>();
             celular.put("idcelular", id);
             celular.put("marca", c.marca);
