@@ -31,13 +31,6 @@ const dela = localFont({
   preload: false,
 });
 
-const geistMono = localFont({
-  src: "./fonts/GeistMono.woff2",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-  preload: false,
-});
-
 export const metadata: Metadata = {
   title: "FeedBackCELL",
   description: "Catálogo de celulares com fichas técnicas, fotos e avaliações",
@@ -58,10 +51,7 @@ export default async function RootLayout({
   // renderização dinâmica, senão o HTML pré-gerado sairia sem o nonce
   await headers();
   return (
-    <html
-      lang="pt-BR"
-      className={`${archivo.variable} ${shoulders.variable} ${dela.variable} ${geistMono.variable}`}
-    >
+    <html lang="pt-BR" className={`${archivo.variable} ${shoulders.variable} ${dela.variable}`}>
       <body>
         {/* conexão antecipada com o Sketchfab: a aba "Modelo 3D" do detalhe abre mais rápido */}
         <link rel="preconnect" href="https://sketchfab.com" />

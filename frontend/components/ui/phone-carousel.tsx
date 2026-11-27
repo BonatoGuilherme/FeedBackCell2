@@ -322,7 +322,7 @@ export function PhoneCarousel({ celulares, indice, direcao, onIr }: Props) {
                   {foto ? (
                     <div className="orb-photo">
                       {/* eslint-disable-next-line @next/next/no-img-element -- imagem servida pela API */}
-                      <img src={foto.url} alt={nome} draggable={false} />
+                      <img src={foto.url} alt={nome} draggable={false} fetchPriority="high" />
                     </div>
                   ) : (
                     <div className="orb-art" role="img" aria-label={nome}>
@@ -432,7 +432,7 @@ export function PhoneCarousel({ celulares, indice, direcao, onIr }: Props) {
                     >
                       {c.imagens[0] ? (
                         // eslint-disable-next-line @next/next/no-img-element -- imagem servida pela API
-                        <img src={c.imagens[0].url} alt="" loading="lazy" draggable={false} />
+                        <img src={c.imagens[0].url} alt="" width={56} height={56} loading="lazy" draggable={false} />
                       ) : (
                         <span className="orb-th-art" aria-hidden="true">
                           <PhoneArt celular={c} />

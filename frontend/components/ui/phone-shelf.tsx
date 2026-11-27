@@ -127,7 +127,7 @@ function PhoneVisual({ celular, src = celular.imagens[0]?.url }: { celular: Celu
     return (
       <span className="phone-visual">
         {/* eslint-disable-next-line @next/next/no-img-element -- imagem servida pela API */}
-        <img src={src} alt="" loading="lazy" className="foto-aparelho size-full object-contain" />
+        <img src={src} alt="" width={200} height={400} loading="lazy" className="foto-aparelho size-full object-contain" />
       </span>
     );
   }
