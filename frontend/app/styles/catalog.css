@@ -20,7 +20,7 @@
 }
 
 .catalog-page .page-heading h1 {
-  font-size: clamp(26px, 2.6vw, 34px);
+  font-size: clamp(44px, 4vw + 16px, 80px);
 }
 
 .catalog-page .page-heading__description {
@@ -31,6 +31,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
+  margin-bottom: 28px;
 }
 
 /* carregando, erro e catálogo vazio ficam com o mesmo respiro da prateleira (mt-7) */
@@ -71,28 +72,27 @@
 
 .filter-chip {
   display: inline-flex;
-  min-height: 35px;
+  min-height: 38px;
   align-items: center;
   justify-content: center;
   padding: 0 13px;
-  border: 1px solid var(--line);
-  border-radius: 99px;
+  border: 2px solid var(--line-strong);
   background: transparent;
-  color: var(--muted);
+  color: var(--foreground);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 700;
   transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
 }
 
 .filter-chip:hover {
-  border-color: var(--line-strong);
-  color: var(--foreground);
+  border-color: var(--cream);
 }
 
 .filter-chip.is-active {
-  border-color: rgb(230 194 122 / 45%);
-  background: var(--accent-soft);
-  color: var(--accent-on-dark);
+  border-color: var(--lime);
+  background: var(--lime);
+  color: var(--ink);
 }
 
 .collection-message,
@@ -103,18 +103,18 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
-  border: 1px solid var(--line);
+  border-left: 6px solid var(--pink);
   border-radius: var(--radius-card);
-  background: var(--surface);
+  background: var(--ink);
   color: var(--muted);
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .loading-indicator {
   width: 18px;
   height: 18px;
-  border: 2px solid var(--line-strong);
-  border-top-color: var(--accent);
+  border: 3px solid var(--line-strong);
+  border-top-color: var(--lime);
   border-radius: 50%;
   animation: spin 750ms linear infinite;
 }
@@ -128,14 +128,17 @@
 .collection-error h2,
 .collection-error h3 {
   margin: 0 0 6px;
-  font-size: 16px;
-  font-weight: 580;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .collection-error p {
   margin: 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.55;
 }
 
@@ -150,25 +153,27 @@
   width: 52px;
   height: 52px;
   place-items: center;
-  border-radius: 16px;
-  background: var(--surface-soft);
-  color: var(--accent-on-dark);
+  background: var(--lime);
+  color: var(--ink);
 }
 
 .collection-empty h2,
 .collection-empty h3 {
   margin: 3px 0 0;
   color: var(--foreground);
-  font-size: 17px;
-  font-weight: 580;
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .collection-empty p {
   max-width: 390px;
   margin: 0;
   color: var(--muted);
-  font-size: 13px;
-  line-height: 1.65;
+  font-size: 15px;
+  line-height: 1.6;
 }
 
 .collection-empty--compact {
@@ -182,7 +187,8 @@
   gap: 18px;
   margin: 30px 0 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .pagination__button {
@@ -191,8 +197,8 @@
 }
 
 /*
- * Fotos do aparelho: ficam sobre "pergaminho" (como um desenho numa tela de pintura).
- * O multiply funde o fundo branco de estúdio das fotos com o tom do papel.
+ * Fotos do aparelho: ficam sobre papel claro e chapado, como um cartaz colado.
+ * O multiply funde o fundo branco de estúdio das fotos com o papel.
  * Vale para qualquer quadro que contenha a foto diretamente.
  */
 .foto-aparelho {
@@ -200,11 +206,7 @@
 }
 
 *:has(> .foto-aparelho) {
-  background:
-    radial-gradient(120% 90% at 50% 28%, #f6ecd6 0%, #e6d3ad 62%, #cdb386 100%);
-  box-shadow:
-    inset 0 0 0 1px rgb(120 84 40 / 25%),
-    inset 0 0 48px rgb(110 72 28 / 35%);
+  background: var(--paper);
 }
 
 @media (max-width: 600px) {

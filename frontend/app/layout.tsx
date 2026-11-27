@@ -3,41 +3,49 @@ import { headers } from "next/headers";
 import localFont from "next/font/local";
 import "./globals.css";
 import AuthLayout from "./components/AuthLayout";
-import { AmbientBackground } from "@/components/ui/ambient-background";
+import { SmoothScroll } from "@/components/ui/smooth-scroll";
 
 // fontes dentro do repositório (app/fonts, subconjunto latin do Google Fonts):
 // o build não depende de baixar nada da internet
-const geistSans = localFont({
-  src: "./fonts/Geist.woff2",
-  variable: "--font-geist-sans",
-  weight: "100 900",
+const archivo = localFont({
+  src: "./fonts/Archivo.woff2",
+  variable: "--font-archivo",
+  weight: "400 700",
   display: "swap",
+});
+
+// condensada dos letreiros: títulos, botões e números
+const shoulders = localFont({
+  src: "./fonts/BigShouldersDisplay.woff2",
+  variable: "--font-shoulders",
+  weight: "700 900",
+  display: "swap",
+});
+
+// Dela Gothic One só com os caracteres japoneses das placas (subconjunto de ~6 KB)
+const dela = localFont({
+  src: "./fonts/DelaGothicOne-letreiro.woff2",
+  variable: "--font-dela",
+  weight: "400",
+  display: "swap",
+  preload: false,
 });
 
 const geistMono = localFont({
   src: "./fonts/GeistMono.woff2",
   variable: "--font-geist-mono",
   weight: "100 900",
-});
-
-// serifa renascentista para títulos e números de destaque
-const cormorant = localFont({
-  src: [
-    { path: "./fonts/CormorantGaramond.woff2", weight: "500 700", style: "normal" },
-    { path: "./fonts/CormorantGaramond-Italic.woff2", weight: "500 700", style: "italic" },
-  ],
-  variable: "--font-cormorant",
-  display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
   title: "FeedBackCELL",
-  description: "Plataforma de feedback e comentários",
+  description: "Catálogo de celulares com fichas técnicas, fotos e avaliações",
   // ícones: app/icon.svg (aba) e app/apple-icon.png (tela inicial do iPhone)
 };
 
 export const viewport: Viewport = {
-  themeColor: "#110c07",
+  themeColor: "#1c1550",
   colorScheme: "dark",
 };
 
@@ -52,14 +60,12 @@ export default async function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable}`}
+      className={`${archivo.variable} ${shoulders.variable} ${dela.variable} ${geistMono.variable}`}
     >
       <body>
-        {/* conexões antecipadas com o Sketchfab: o modelo 3D abre mais rápido */}
+        {/* conexão antecipada com o Sketchfab: a aba "Modelo 3D" do detalhe abre mais rápido */}
         <link rel="preconnect" href="https://sketchfab.com" />
-        <link rel="preconnect" href="https://static.sketchfab.com" crossOrigin="" />
-        <link rel="preconnect" href="https://media.sketchfab.com" crossOrigin="" />
-        <AmbientBackground />
+        <SmoothScroll />
         <AuthLayout>{children}</AuthLayout>
       </body>
     </html>

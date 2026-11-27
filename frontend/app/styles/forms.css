@@ -4,14 +4,13 @@
 .form-field input,
 .form-field textarea {
   width: 100%;
-  min-height: 44px;
+  min-height: 46px;
   padding: 0 var(--space-3);
-  border: 1px solid var(--line);
+  border: 2px solid var(--line-strong);
   border-radius: var(--radius-control);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
+  background: var(--ink);
   color: var(--foreground);
-  font-size: 14px;
+  font-size: 15px;
   transition: border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
 }
 
@@ -24,21 +23,22 @@
 .input:hover,
 .form-field input:hover,
 .form-field textarea:hover {
-  border-color: var(--line-strong);
+  border-color: var(--cream);
 }
 
 .input:focus,
 .form-field input:focus,
 .form-field textarea:focus {
-  border-color: var(--accent);
+  border-color: var(--lime);
   outline: 0;
-  box-shadow: 0 0 0 3px var(--focus-ring);
+  box-shadow: 4px 4px 0 var(--lime);
 }
 
 .input[aria-invalid="true"],
 .form-field input[aria-invalid="true"],
 .form-field textarea[aria-invalid="true"] {
   border-color: var(--error);
+  box-shadow: 4px 4px 0 var(--pink);
 }
 
 .form-field {
@@ -50,7 +50,7 @@
 .form-field label {
   color: var(--foreground);
   font-size: var(--font-size-label);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-bold);
 }
 
 .form-field textarea {
@@ -86,7 +86,7 @@
 .form-alert {
   margin: 0 0 var(--space-4);
   padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--error-line);
+  border-left: 6px solid var(--pink);
   border-radius: var(--radius-control);
   background: var(--error-soft);
   color: var(--error);
@@ -97,25 +97,24 @@
 .search-field {
   display: flex;
   width: min(100%, 480px);
-  min-height: 40px;
+  min-height: 44px;
   align-items: center;
   gap: var(--space-2);
   padding: 0 var(--space-3);
-  border: 1px solid var(--line);
+  border: 2px solid var(--line-strong);
   border-radius: var(--radius-control);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
+  background: var(--ink);
   color: var(--subtle);
   transition: border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
 }
 
 .search-field:hover {
-  border-color: var(--line-strong);
+  border-color: var(--cream);
 }
 
 .search-field:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--focus-ring);
+  border-color: var(--lime);
+  box-shadow: 4px 4px 0 var(--lime);
 }
 
 .search-field input {
@@ -125,7 +124,7 @@
   outline: 0;
   background: transparent;
   color: var(--foreground);
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .search-field input::placeholder {

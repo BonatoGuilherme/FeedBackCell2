@@ -1,28 +1,64 @@
 "use client";
 
 /**
- * Indicadores do painel, calculados a partir do catálogo real:
- * total de celulares, marcas, nota média das avaliações e o cadastro mais recente.
- * Os números contam do zero até o valor quando aparecem.
+ * Painel de embarque da página inicial: os números do catálogo real (total de
+ * celulares, marcas, nota média e avaliações) e os últimos cadastros, cada um
+ * numa plaquinha que "vira" ao aparecer na tela.
+ *
+ * useResumoCatalogo() faz uma única chamada à API e a reaproveita entre o painel
+ * e o outdoor do topo da página.
  */
 
 import { useEffect, useRef, useState } from "react";
-import { animate, useInView, useReducedMotion } from "motion/react";
-import { Layers, Smartphone, Sparkles, Star } from "lucide-react";
+import Link from "next/link";
+import { animate, motion, useInView, useReducedMotion } from "motion/react";
 import { listarCelulares, type Celular } from "@/src/lib/celulares";
-import { TiltCard } from "@/components/ui/tilt-card";
-import { Reveal, RevealItem } from "@/components/ui/reveal";
 
-type Stats = {
-  total: number;
-  marcas: number;
-  /** Média ponderada pelo número de avaliações de cada aparelho (0 se ninguém avaliou). */
-  notaMedia: number;
-  avaliacoes: number;
-  recente: Celular | null;
-};
+type Resumo = { total: number; celulares: Celular[] };
+type EstadoResumo = "carregando" | "pronto" | "erro";
+
+// uma requisição por visita à página, compartilhada pelos componentes da home
+let pedido: Promise<Resumo> | null = null;
+
+function carregarResumo() {
+  pedido ??= listarCelulares(1, 50).then(({ celulares, paginacao }) => ({
+    total: paginacao.totalItems,
+    celulares,
+  }));
+  pedido.catch(() => {
+    pedido = null;
+  });
+  return pedido;
+}
+
+export function useResumoCatalogo() {
+  const [estado, setEstado] = useState<EstadoResumo>("carregando");
+  const [resumo, setResumo] = useState<Resumo | null>(null);
+
+  useEffect(() => {
+    let ativo = true;
+    carregarResumo()
+      .then((r) => {
+        if (!ativo) return;
+        setResumo(r);
+        setEstado("pronto");
+      })
+      .catch(() => {
+        if (ativo) setEstado("erro");
+      });
+    return () => {
+      ativo = false;
+      // a próxima visita à home busca de novo
+      pedido = null;
+    };
+  }, []);
+
+  return { estado, total: resumo?.total ?? 0, celulares: resumo?.celulares ?? [] };
+}
 
 const decimal = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const inteiro = (n: number) => Math.round(n).toLocaleString("pt-BR");
+const nota = (n: number) => decimal.format(n);
 
 function CountUp({ value, format }: { value: number; format: (n: number) => string }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -37,7 +73,7 @@ function CountUp({ value, format }: { value: number; format: (n: number) => stri
       return;
     }
     const controls = animate(0, value, {
-      duration: 1.4,
+      duration: 1.2,
       ease: [0.16, 1, 0.3, 1],
       onUpdate: (n) => {
         el.textContent = format(n);
@@ -49,92 +85,105 @@ function CountUp({ value, format }: { value: number; format: (n: number) => stri
   return <span ref={ref}>{format(0)}</span>;
 }
 
-const inteiro = (n: number) => Math.round(n).toLocaleString("pt-BR");
-const nota = (n: number) => decimal.format(n);
+type Linha = { rotulo: React.ReactNode; valor: React.ReactNode; destaque?: boolean };
+
+function Plaquinha({ valor, destaque, indice }: { valor: React.ReactNode; destaque?: boolean; indice: number }) {
+  return (
+    <motion.b
+      className={destaque ? "flap__value flap__value--go" : "flap__value"}
+      initial={{ opacity: 0, rotateX: 90 }}
+      whileInView={{ opacity: 1, rotateX: 0 }}
+      viewport={{ once: true, margin: "0px 0px -10% 0px" }}
+      transition={{ duration: 0.3, delay: indice * 0.12, ease: [0.5, 0, 0.5, 1] }}
+    >
+      {valor}
+    </motion.b>
+  );
+}
+
+function Painel({ titulo, nota: notaTitulo, linhas }: { titulo: string; nota: string; linhas: Linha[] }) {
+  return (
+    <div>
+      <h3 className="board__title">
+        {titulo} <span>{notaTitulo}</span>
+      </h3>
+      <ul>
+        {linhas.map((l, i) => (
+          <li key={i} className="flap">
+            <span className="min-w-0">{l.rotulo}</span>
+            <Plaquinha valor={l.valor} destaque={l.destaque} indice={i} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export default function HomeStats() {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [erro, setErro] = useState(false);
+  const { estado, total, celulares } = useResumoCatalogo();
 
-  useEffect(() => {
-    const controller = new AbortController();
-    listarCelulares(1, 50, controller.signal)
-      .then(({ celulares, paginacao }) => {
-        let soma = 0;
-        let avaliacoes = 0;
-        for (const c of celulares) {
-          if (c.notaMedia === null) continue;
-          soma += c.notaMedia * c.avaliacoes;
-          avaliacoes += c.avaliacoes;
-        }
-        setStats({
-          total: paginacao.totalItems,
-          marcas: new Set(celulares.map((c) => c.marca.trim().toLowerCase())).size,
-          notaMedia: avaliacoes ? soma / avaliacoes : 0,
-          avaliacoes,
-          recente: celulares[0] ?? null,
-        });
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setErro(true);
-      });
-    return () => controller.abort();
-  }, []);
+  let soma = 0;
+  let avaliacoes = 0;
+  for (const c of celulares) {
+    if (c.notaMedia === null) continue;
+    soma += c.notaMedia * c.avaliacoes;
+    avaliacoes += c.avaliacoes;
+  }
+  const marcas = new Set(celulares.map((c) => c.marca.trim().toLowerCase())).size;
 
-  const tiles = [
+  const pendente = (v: React.ReactNode) =>
+    estado === "carregando" ? <span className="flap__skeleton" aria-label="Carregando" /> : estado === "erro" ? "—" : v;
+
+  const numeros: Linha[] = [
+    { rotulo: "Celulares no catálogo", valor: pendente(<CountUp value={total} format={inteiro} />) },
+    { rotulo: "Marcas diferentes (últimos 50)", valor: pendente(<CountUp value={marcas} format={inteiro} />) },
     {
-      icon: Smartphone,
-      label: "Celulares no catálogo",
-      tone: "ochre",
-      value: stats ? <CountUp value={stats.total} format={inteiro} /> : null,
-      foot: "cadastrados pela comunidade",
+      rotulo: "Nota média, de 1 a 5",
+      valor: pendente(avaliacoes ? <CountUp value={soma / avaliacoes} format={nota} /> : "—"),
     },
+    { rotulo: "Avaliações publicadas", valor: pendente(<CountUp value={avaliacoes} format={inteiro} />) },
     {
-      icon: Layers,
-      label: "Marcas diferentes",
-      tone: "lapis",
-      value: stats ? <CountUp value={stats.marcas} format={inteiro} /> : null,
-      foot: "entre os últimos 50",
-    },
-    {
-      icon: Star,
-      label: "Nota média",
-      tone: "verdigris",
-      value: stats ? (stats.avaliacoes ? <CountUp value={stats.notaMedia} format={nota} /> : "—") : null,
-      foot: stats?.avaliacoes
-        ? `${inteiro(stats.avaliacoes)} ${stats.avaliacoes === 1 ? "avaliação" : "avaliações"}, de 1 a 5`
-        : "nenhuma avaliação ainda",
-      small: stats ? !stats.avaliacoes : false,
-    },
-    {
-      icon: Sparkles,
-      label: "Mais recente",
-      tone: "sienna",
-      value: stats ? (stats.recente ? stats.recente.modelo : "—") : null,
-      foot: stats?.recente ? stats.recente.marca : "nenhum cadastro ainda",
-      small: true,
+      rotulo: estado === "erro" ? "Não foi possível carregar os números" : "Atualizado agora, direto da API",
+      valor: estado === "erro" ? "ERRO" : "AO VIVO",
+      destaque: true,
     },
   ];
 
+  const recentes: Linha[] =
+    estado === "pronto" && celulares.length
+      ? celulares.slice(0, 4).map((c) => ({
+          rotulo: (
+            <Link className="flap__link" href={`/catalogo/${c.idcelular}`}>
+              {c.marca} {c.modelo}
+            </Link>
+          ),
+          valor: c.notaMedia !== null && c.avaliacoes ? nota(c.notaMedia) : "NOVO",
+        }))
+      : [
+          {
+            rotulo:
+              estado === "carregando"
+                ? "Buscando os últimos cadastros…"
+                : estado === "erro"
+                  ? "O catálogo está fora do ar agora"
+                  : "Nenhum celular cadastrado ainda",
+            valor: pendente("—"),
+          },
+        ];
+  recentes.push({
+    rotulo: (
+      <Link className="flap__link" href="/catalogo">
+        Ver o catálogo inteiro
+      </Link>
+    ),
+    valor: "IR",
+    destaque: true,
+  });
+
   return (
-    <section aria-label="Indicadores do catálogo">
-      <Reveal className="stats" stagger={0.08}>
-        {tiles.map(({ icon: Icon, label, tone, value, foot, small }) => (
-          <RevealItem key={label}>
-            <TiltCard className={`stat card stat--${tone}`} max={10}>
-              <span className="stat__icon">
-                <Icon size={17} strokeWidth={1.8} aria-hidden />
-              </span>
-              <p className="stat__label">{label}</p>
-              <p className={small ? "stat__value stat__value--small" : "stat__value"}>
-                {value ?? (erro ? "—" : <span className="stat__skeleton" aria-label="Carregando" />)}
-              </p>
-              <p className="stat__foot">{erro ? "não foi possível carregar" : foot}</p>
-              <span className="stat__bar" aria-hidden />
-            </TiltCard>
-          </RevealItem>
-        ))}
-      </Reveal>
+    <section className="board" aria-label="Números do catálogo">
+      <Painel titulo="Painel do catálogo" nota="números reais" linhas={numeros} />
+      <Painel titulo="Chegaram agora" nota="últimos cadastros" linhas={recentes} />
     </section>
   );
 }

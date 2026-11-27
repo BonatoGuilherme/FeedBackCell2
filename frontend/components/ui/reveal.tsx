@@ -2,13 +2,13 @@
 
 /**
  * Entrada em sequência: os filhos <RevealItem> aparecem um por vez
- * (sobem e giram de leve em 3D) quando entram na tela. Sem desfoque: filtros
+ * (sobem como placas sendo penduradas) quando entram na tela. Sem desfoque: filtros
  * animados deixam a troca de página lenta e borrada.
- * Com prefers-reduced-motion só fazem fade.
+ * Com prefers-reduced-motion só fazem fade (MotionConfig reducedMotion="user").
  */
 
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from "react";
-import { motion, useReducedMotion, type Variants } from "motion/react";
+import { motion, type Variants } from "motion/react";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -55,22 +55,15 @@ type RevealItemProps = {
 } & Omit<ComponentPropsWithoutRef<"div">, "children">;
 
 export function RevealItem({ children, className, as = "div", ...rest }: RevealItemProps) {
-  const reduce = useReducedMotion();
   const Comp = motion[as] as ElementType;
-  const variants: Variants = reduce
-    ? { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.3 } } }
-    : {
-        hidden: { opacity: 0, y: 18, rotateX: -8 },
-        show: {
-          opacity: 1,
-          y: 0,
-          rotateX: 0,
-          transition: { duration: 0.45, ease: EASE },
-        },
-      };
+  // com prefers-reduced-motion o MotionConfig (AuthLayout) tira o deslocamento e fica só o fade
+  const variants: Variants = {
+    hidden: { opacity: 0, y: 40 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE } },
+  };
 
   return (
-    <Comp className={className} variants={variants} style={{ transformPerspective: 900 }} {...rest}>
+    <Comp className={className} variants={variants} {...rest}>
       {children}
     </Comp>
   );

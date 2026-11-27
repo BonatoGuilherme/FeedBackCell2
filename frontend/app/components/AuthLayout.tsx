@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import { MotionConfig } from "motion/react";
 import Navigation from "./Navigation";
 import { useHasSession } from "@/src/lib/useSession";
 import { hrefLogin } from "@/src/lib/rotas";
@@ -28,17 +28,18 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   }, [hasSession, needsSession, pathname, router]);
 
   if (isAuthPage) {
-    return <main>{children}</main>;
+    return (
+      <MotionConfig reducedMotion="user">
+        <main>{children}</main>
+      </MotionConfig>
+    );
   }
 
   if (needsSession && hasSession !== true) {
     return (
       <main className="app-loading-screen">
         <div className="app-loading-screen__card" role="status" aria-live="polite">
-          <span className="app-loading-screen__mark" aria-hidden="true">
-            <Image src="/brand-mark.svg" alt="" width={44} height={44} unoptimized priority />
-          </span>
-          <span className="app-loading-screen__name" aria-hidden="true">
+          <span className="brand-sign brand-sign--lg" aria-hidden="true">
             FeedBack<span>CELL</span>
           </span>
           <span className="app-loading-screen__status">
@@ -50,10 +51,17 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     );
   }
 
+  // reducedMotion="user": com prefers-reduced-motion as animações do motion viram só fade
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       <Navigation />
       <main className="main-content">{children}</main>
-    </>
+      <footer className="app-footer">
+        <div className="app-footer__inner">
+          <span className="app-footer__warn">Projeto de demonstração: não use dados reais.</span>
+          <span>FeedBackCELL · nomes de aparelhos são marcas dos fabricantes</span>
+        </div>
+      </footer>
+    </MotionConfig>
   );
 }

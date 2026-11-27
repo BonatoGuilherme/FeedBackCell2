@@ -1,0 +1,296 @@
+/* Seções da página inicial "Letreiro" abaixo do topo: cartões, linha de metrô, painel de embarque e fechamento. */
+
+/* ---------- seção de cartões (fundo verde-limão) ---------- */
+
+.letreiro-shop {
+  padding: 110px var(--gutter);
+  background: var(--lime);
+  color: var(--ink);
+}
+
+.letreiro-shop .s-head__jp {
+  color: var(--pink);
+}
+
+.letreiro-shop .s-head__meta a {
+  font-weight: var(--font-weight-bold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* foco rosa some no verde-limão: aqui o contorno é tinta escura */
+.letreiro-shop :focus-visible {
+  outline-color: var(--ink);
+}
+
+.letreiro-shop .collection-error,
+.letreiro-shop .collection-empty {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--cream);
+}
+
+/* ---------- linha de metrô ---------- */
+
+.line-sec {
+  overflow: hidden;
+  padding: 110px var(--gutter);
+  background: var(--night-2);
+}
+
+.metro {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  margin: 0 0 64px;
+  padding: 0;
+  list-style: none;
+}
+
+.metro::before {
+  position: absolute;
+  top: 17px;
+  right: 10px;
+  left: 10px;
+  height: 12px;
+  background: var(--pink);
+  content: "";
+}
+
+.metro__st {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.metro__st:last-child {
+  flex: 0 0 auto;
+}
+
+.metro__dot {
+  position: relative;
+  z-index: 1;
+  width: 46px;
+  height: 46px;
+  border: 8px solid var(--ink);
+  border-radius: 50%;
+  background: var(--cream);
+}
+
+.metro__st--train .metro__dot::after {
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: var(--pink);
+  animation: stop 2.8s ease-in-out infinite;
+  content: "";
+}
+
+@keyframes stop {
+  0%,
+  100% {
+    transform: scale(0.5);
+  }
+
+  50% {
+    transform: scale(1);
+  }
+}
+
+.metro__lab {
+  display: block;
+  max-width: 190px;
+  margin-top: 14px;
+}
+
+.metro__lab b {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.metro__lab > span:last-child {
+  display: block;
+  margin-top: 4px;
+  color: #e6e0ff;
+  font-size: 15px;
+}
+
+@media (max-width: 960px) {
+  .metro {
+    flex-direction: column;
+    gap: 34px;
+  }
+
+  .metro::before {
+    top: 20px;
+    right: auto;
+    bottom: 20px;
+    left: 17px;
+    width: 12px;
+    height: auto;
+  }
+
+  .metro__st {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .metro__dot {
+    flex: 0 0 auto;
+  }
+
+  .metro__lab {
+    max-width: none;
+    margin-top: 0;
+  }
+}
+
+/* ---------- painel de embarque ---------- */
+
+.board {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 26px;
+  padding: 22px;
+  background: var(--ink);
+}
+
+.board ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.board__title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 10px;
+  color: var(--lime);
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.board__title span {
+  color: #bdb5e8;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold);
+  text-transform: none;
+}
+
+.flap {
+  display: grid;
+  min-height: 46px;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-top: 2px solid #2a2455;
+  font-size: 15px;
+}
+
+.flap__link {
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--duration) var(--ease);
+}
+
+.flap__link:hover {
+  text-decoration-color: var(--lime);
+}
+
+.flap__value {
+  min-width: 56px;
+  padding: 2px 10px;
+  background: var(--ink-2);
+  color: var(--lime);
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.flap__value--go {
+  background: var(--pink);
+  color: #fff;
+}
+
+.flap__skeleton {
+  display: inline-block;
+  width: 36px;
+  height: 14px;
+  background: var(--fog);
+  animation: pulse-sign 1.2s ease-in-out infinite;
+  vertical-align: middle;
+}
+
+@media (max-width: 960px) {
+  .board {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- fechamento rosa ---------- */
+
+.close-sec {
+  position: relative;
+  overflow: hidden;
+  padding: 110px var(--gutter);
+  background: var(--pink);
+  color: #fff;
+}
+
+.close-sec__title {
+  max-width: 9em;
+  margin: 0 0 36px;
+  font-family: var(--font-display);
+  font-size: clamp(56px, 10vw, 160px);
+  font-weight: 900;
+  line-height: 0.88;
+  text-transform: uppercase;
+}
+
+.close-sec__vjp {
+  position: absolute;
+  top: 60px;
+  right: var(--gutter);
+  padding: 16px 10px;
+  background: var(--ink);
+  color: var(--lime);
+  font-family: var(--font-jp);
+  font-size: clamp(30px, 4vw, 56px);
+  line-height: 1;
+  writing-mode: vertical-rl;
+}
+
+/* rosa: foco em tinta escura para contrastar */
+.close-sec :focus-visible {
+  outline-color: var(--ink);
+}
+
+@media (max-width: 720px) {
+  .close-sec__vjp {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .letreiro-shop,
+  .line-sec,
+  .close-sec {
+    padding-block: 72px;
+  }
+}

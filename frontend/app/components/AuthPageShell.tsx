@@ -1,12 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Camera, Cpu, MessageSquareText } from "lucide-react";
 
-import { PhoneOrbit } from "@/components/ui/phone-orbit";
 import DemoNotice from "./DemoNotice";
 import { caminhoSeguro } from "@/src/lib/rotas";
 
@@ -40,17 +38,12 @@ export default function AuthPageShell({ children, mode, title, subtitle }: AuthP
       <section className="auth-shell__form" aria-labelledby="auth-title">
         <div className="auth-shell__body">
           <div className="w-full max-w-[380px]">
-            <Link href="/" className="auth-logo" aria-label="FeedBackCELL, início">
-              <span className="auth-logo__mark">
-                <Image src="/brand-mark.svg" alt="" width={32} height={32} unoptimized priority />
-              </span>
-              <span className="auth-logo__name">
-                FeedBack<span className="text-accent">CELL</span>
-              </span>
+            <Link href="/" className="brand-sign" aria-label="FeedBackCELL, início">
+              FeedBack<span>CELL</span>
             </Link>
 
             <header className="mt-10 mb-8">
-              <h1 id="auth-title" className="text-h2 font-semibold tracking-[-0.02em] text-foreground sm:text-[26px] sm:leading-[32px]">
+              <h1 id="auth-title" className="auth-title">
                 {title}
               </h1>
               <p className="mt-2 text-body text-muted">{subtitle}</p>
@@ -64,7 +57,7 @@ export default function AuthPageShell({ children, mode, title, subtitle }: AuthP
               {swap.question}{" "}
               <Link
                 href={swapHref}
-                className="rounded-sm font-medium text-accent underline-offset-4 hover:text-accent-hover hover:underline"
+                className="text-link font-semibold"
               >
                 {swap.label}
               </Link>
@@ -80,14 +73,16 @@ export default function AuthPageShell({ children, mode, title, subtitle }: AuthP
       {/* painel da marca: à esquerda no desktop, compacto abaixo do formulário no celular */}
       <aside className="auth-brand" aria-label="Sobre o FeedBackCELL">
         <div className="auth-brand__inner">
-          <p className="auth-brand__eyebrow">Catálogo de celulares</p>
+          <p className="kicker">Catálogo de celulares</p>
           <h2 className="auth-brand__title">Compare celulares com informação de verdade.</h2>
           <p className="auth-brand__lead">
             Especificações, fotos e avaliações de cada modelo reunidas em um só lugar.
           </p>
 
-          <div className="auth-brand__stage">
-            <PhoneOrbit className="auth-brand__orbit" modo="3d" />
+          <div className="auth-brand__signs" aria-hidden>
+            <span className="vsign vsign--1">携帯の仕様と評価</span>
+            <span className="vsign vsign--2">会員受付</span>
+            <span className="vsign vsign--3">口コミ</span>
           </div>
 
           <ul className="auth-brand__features">
