@@ -12,14 +12,18 @@ import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, LayoutGrid, LogOut, Plus } from "lucide-react";
+import { Home, LayoutGrid, LogIn, LogOut, Plus } from "lucide-react";
 import { expireSession } from "@/src/lib/session";
+import { useHasSession } from "@/src/lib/useSession";
+import { hrefLogin, hrefProtegido } from "@/src/lib/rotas";
 import { useSlidePill } from "@/components/ui/use-slide-pill";
 
-const links = [
+type Item = { href: string; label: string; short?: string; icon: typeof Home; exigeConta?: boolean };
+
+const links: Item[] = [
   { href: "/", label: "Início", icon: Home },
   { href: "/catalog", label: "Catálogo", icon: LayoutGrid },
-  { href: "/items/new", label: "Adicionar celular", short: "Adicionar", icon: Plus },
+  { href: "/items/new", label: "Adicionar celular", short: "Adicionar", icon: Plus, exigeConta: true },
 ];
 
 const titles: Record<string, string> = {
@@ -39,6 +43,10 @@ export default function Navigation() {
   const pathname = usePathname();
   const router = useRouter();
   const active = activeHref(pathname);
+  const logado = useHasSession();
+  // visitante: ações que exigem conta levam ao login e voltam para cá depois
+  const destino = (l: Item) => (l.exigeConta ? hrefProtegido(l.href, logado) : l.href);
+  const hrefEntrar = hrefLogin(pathname);
 
   const railRef = useRef<HTMLUListElement>(null);
   const railPill = useRef<HTMLSpanElement>(null);
@@ -49,7 +57,7 @@ export default function Navigation() {
 
   function handleLogout() {
     expireSession();
-    router.replace("/login");
+    router.replace("/");
   }
 
   const title = titles[active ?? ""] ?? "FeedBackCELL";
@@ -65,10 +73,12 @@ export default function Navigation() {
         <nav className="app-rail__nav">
           <ul ref={railRef} className="app-rail__list">
             <span ref={railPill} className="app-pill" aria-hidden />
-            {links.map(({ href, label, icon: Icon }) => (
+            {links.map((l) => {
+              const { href, label, icon: Icon } = l;
+              return (
               <li key={href}>
                 <Link
-                  href={href}
+                  href={destino(l)}
                   data-pill-key={href}
                   className="app-rail__link"
                   aria-current={active === href ? "page" : undefined}
@@ -80,16 +90,27 @@ export default function Navigation() {
                   </span>
                 </Link>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </nav>
 
-        <button type="button" className="app-rail__link app-rail__logout" onClick={handleLogout} aria-label="Sair">
-          <LogOut className="size-[18px]" strokeWidth={1.7} aria-hidden />
-          <span className="app-rail__tip" role="tooltip">
-            Sair
-          </span>
-        </button>
+        {logado === true && (
+          <button type="button" className="app-rail__link app-rail__logout" onClick={handleLogout} aria-label="Sair">
+            <LogOut className="size-[18px]" strokeWidth={1.7} aria-hidden />
+            <span className="app-rail__tip" role="tooltip">
+              Sair
+            </span>
+          </button>
+        )}
+        {logado === false && (
+          <Link href={hrefEntrar} className="app-rail__link app-rail__logout" aria-label="Entrar">
+            <LogIn className="size-[18px]" strokeWidth={1.7} aria-hidden />
+            <span className="app-rail__tip" role="tooltip">
+              Entrar
+            </span>
+          </Link>
+        )}
       </aside>
 
       {/* barra de topo */}
@@ -114,9 +135,16 @@ export default function Navigation() {
             <i aria-hidden />
             Ao vivo
           </span>
-          <button type="button" className="app-topbar__logout" onClick={handleLogout} aria-label="Sair">
-            <LogOut className="size-[17px]" strokeWidth={1.7} aria-hidden />
-          </button>
+          {logado === true && (
+            <button type="button" className="app-topbar__logout" onClick={handleLogout} aria-label="Sair">
+              <LogOut className="size-[17px]" strokeWidth={1.7} aria-hidden />
+            </button>
+          )}
+          {logado === false && (
+            <Link href={hrefEntrar} className="app-topbar__logout" aria-label="Entrar" title="Entrar">
+              <LogIn className="size-[17px]" strokeWidth={1.7} aria-hidden />
+            </Link>
+          )}
         </div>
       </header>
 
@@ -124,10 +152,12 @@ export default function Navigation() {
       <nav className="app-tabs" aria-label="Navegação principal">
         <ul ref={tabsRef} className="app-tabs__list">
           <span ref={tabsPill} className="app-pill" aria-hidden />
-          {links.map(({ href, label, short, icon: Icon }) => (
+          {links.map((l) => {
+            const { href, label, short, icon: Icon } = l;
+            return (
             <li key={href}>
               <Link
-                href={href}
+                href={destino(l)}
                 data-pill-key={href}
                 className="app-tabs__link"
                 aria-current={active === href ? "page" : undefined}
@@ -136,7 +166,8 @@ export default function Navigation() {
                 <span>{short ?? label}</span>
               </Link>
             </li>
-          ))}
+            );
+          })}
         </ul>
       </nav>
     </>

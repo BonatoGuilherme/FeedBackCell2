@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Página de um celular (/catalog/ID): no topo, o carrossel orbital com os
+ * Página de um celular (/catalogo/ID): no topo, o carrossel orbital com os
  * aparelhos do catálogo; embaixo, as especificações completas, a faixa com
  * outros aparelhos da marca e as avaliações da comunidade.
  *
@@ -112,7 +112,7 @@ export default function PhoneDetail() {
   const ir = useCallback(
     (para: number) => {
       const destino = itens?.[para];
-      if (destino) window.history.pushState(null, "", `/catalog/${destino.idcelular}`);
+      if (destino) window.history.pushState(null, "", `/catalogo/${destino.idcelular}`);
     },
     [itens],
   );
@@ -136,7 +136,7 @@ export default function PhoneDetail() {
   return (
     <div className="page-shell phone-page">
       <div className="phone-page__top">
-        <Link className="back-link" href="/catalog">
+        <Link className="back-link" href="/catalogo">
           <ArrowLeft size={15} strokeWidth={1.8} aria-hidden="true" />
           Catálogo
         </Link>
@@ -149,7 +149,7 @@ export default function PhoneDetail() {
           </span>
           <h1>Celular não encontrado</h1>
           <p>Ele pode ter sido removido. Procure outro aparelho no catálogo.</p>
-          <Link className="button button--primary" href="/catalog">
+          <Link className="button button--primary" href="/catalogo">
             Ir para o catálogo
           </Link>
         </div>
@@ -296,6 +296,28 @@ function FaixaAparelhos({ celular, catalogo }: { celular: Celular; catalogo: Cel
   );
 }
 
+/**
+ * Fonte da ficha técnica (campos `creditoFicha`/`creditoFichaUrl` das especificações), em linha
+ * discreta. O crédito da foto (`creditoImagem`) já aparece junto da foto, então não se repete aqui.
+ */
+function CreditosFonte({ especificacoes }: { especificacoes: Celular["especificacoes"] }) {
+  const texto = especificacoes?.creditoFicha;
+  if (!texto) return null;
+  const url = especificacoes?.creditoFichaUrl;
+
+  return (
+    <p className="phone-detail__meta phone-detail__credits">
+      {url ? (
+        <a href={url} target="_blank" rel="noopener noreferrer">
+          {texto}
+        </a>
+      ) : (
+        texto
+      )}
+    </p>
+  );
+}
+
 /** O que fica abaixo do carrossel: especificações completas, outros aparelhos e avaliações. */
 function Ficha({
   celular,
@@ -343,6 +365,8 @@ function Ficha({
           )}
         </section>
       )}
+
+      <CreditosFonte especificacoes={celular.especificacoes} />
 
       <MaisAparelhos celular={celular} catalogo={catalogo} />
 

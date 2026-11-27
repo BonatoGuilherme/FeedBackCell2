@@ -6,6 +6,8 @@
  * `onAlterado` avisa a página para recarregar a média do aparelho.
  */
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { AlertCircle, ChevronLeft, ChevronRight, MessageSquare, RefreshCw, Trash2 } from "lucide-react";
 import {
@@ -15,6 +17,8 @@ import {
   type ListaComentarios,
 } from "@/src/lib/comentarios";
 import { getSessionUserId, getToken } from "@/src/lib/session";
+import { useHasSession } from "@/src/lib/useSession";
+import { hrefLogin } from "@/src/lib/rotas";
 import { Estrelas, NotaCampo, textoAvaliacoes } from "@/components/ui/rating";
 
 /** Tamanho da página; a página do celular busca a primeira junto com o aparelho. */
@@ -114,6 +118,9 @@ export default function PhoneComments({
   const [carregando, setCarregando] = useState(inicial === undefined);
   const [enviando, setEnviando] = useState(false);
   const usuarioId = getSessionUserId();
+  const logado = useHasSession();
+  const pathname = usePathname();
+  const voltar = `${pathname}#comentarios`;
 
   useEffect(() => {
     if (pularBusca.current) {
@@ -207,6 +214,20 @@ export default function PhoneComments({
       <div className="phone-reviews__aside">
         <ResumoNota notaMedia={notaMedia} avaliacoes={avaliacoes} />
 
+        {logado === false ? (
+          <div className="comment-composer comments-empty">
+            <h3>Entre para avaliar</h3>
+            <p>Com uma conta você dá nota e conta o que achou deste celular.</p>
+            <div className="hero__actions">
+              <Link className="button button--primary" href={hrefLogin(voltar)}>
+                Entrar
+              </Link>
+              <Link className="button button--secondary" href={hrefLogin(voltar, "register")}>
+                Criar conta
+              </Link>
+            </div>
+          </div>
+        ) : (
         <form className="form-field comment-composer" onSubmit={enviarComentario} noValidate>
           <NotaCampo valor={nota} onChange={setNota} erro={erroNota} disabled={enviando} />
           <label htmlFor="comment-text">Seu comentário</label>
@@ -238,6 +259,7 @@ export default function PhoneComments({
             </button>
           </div>
         </form>
+        )}
       </div>
 
       <div className="phone-reviews__feed">

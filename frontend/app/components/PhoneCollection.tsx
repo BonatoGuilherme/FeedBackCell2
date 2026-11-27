@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useHasSession } from "@/src/lib/useSession";
+import { hrefProtegido } from "@/src/lib/rotas";
 import AppIcon from "./AppIcon";
 import CatalogSearch from "./CatalogSearch";
 import { lembrarOrdemCelulares, prepararOrdemCelulares } from "./PhoneNavigation";
@@ -73,7 +75,7 @@ function PhoneCard({ celular }: { celular: Celular }) {
       </div>
       {/* o card inteiro abre a página do celular */}
       <Link
-        href={`/catalog/${celular.idcelular}`}
+        href={`/catalogo/${celular.idcelular}`}
         aria-label={`Ver ${celular.marca} ${celular.modelo}`}
         className="absolute inset-0 z-[1] rounded-[22px] outline-none"
       />
@@ -82,6 +84,7 @@ function PhoneCard({ celular }: { celular: Celular }) {
 }
 
 function EmptyState({ onRetry }: { onRetry?: () => void }) {
+  const logado = useHasSession();
   return (
     <div className="collection-empty">
       <span className="collection-empty__icon">
@@ -89,7 +92,7 @@ function EmptyState({ onRetry }: { onRetry?: () => void }) {
       </span>
       <h3>Nenhum celular no catálogo</h3>
       <p>Cadastre o primeiro aparelho para começar a organizar as informações.</p>
-      <Link className="button button--primary" href="/items/new">
+      <Link className="button button--primary" href={hrefProtegido("/items/new", logado)}>
         <AppIcon name="plus" size={18} />
         Cadastrar celular
       </Link>
@@ -104,6 +107,7 @@ function EmptyState({ onRetry }: { onRetry?: () => void }) {
 }
 
 export default function PhoneCollection({ variant }: PhoneCollectionProps) {
+  const logado = useHasSession();
   const isOverview = variant === "overview";
   const limit = isOverview ? 8 : 24;
   const [pagina, setPagina] = useState(1);
@@ -259,7 +263,7 @@ export default function PhoneCollection({ variant }: PhoneCollectionProps) {
             Toque em um aparelho para ver fotos, especificações e avaliações.
           </p>
         </div>
-        <Link className="button button--primary" href="/items/new">
+        <Link className="button button--primary" href={hrefProtegido("/items/new", logado)}>
           <AppIcon name="plus" size={18} />
           Adicionar celular
         </Link>

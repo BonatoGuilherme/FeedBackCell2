@@ -1,9 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { apiFetch, isRecord } from "@/src/lib/http";
 import { saveToken } from "@/src/lib/session";
+import { caminhoSeguro } from "@/src/lib/rotas";
 
 export function useLogin() {
   const [email, setEmail] = useState("");
@@ -12,6 +13,7 @@ export function useLogin() {
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
   const router = useRouter();
+  const next = caminhoSeguro(useSearchParams().get("next"));
 
   const validateEmail = (value: string) => {
     if (!value) {
@@ -47,7 +49,7 @@ export function useLogin() {
       }
 
       saveToken(data.token);
-      router.push("/catalog");
+      router.push(next ?? "/catalogo");
     } catch (error: unknown) {
       setErro(error instanceof Error ? error.message : "Erro inesperado");
     } finally {

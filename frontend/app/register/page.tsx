@@ -1,12 +1,13 @@
 "use client";
 
+import { Suspense } from "react";
 import { Loader2, Lock, Mail, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AuthPageShell from "../components/AuthPageShell";
 import { AuthField, FormAlert } from "../components/AuthField";
 import useRegister from "./useRegister";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const { email, setEmail, senha, setSenha, erro, loading, validations, validateField, handleRegister, nome, setNome } =
     useRegister();
 
@@ -80,5 +81,14 @@ export default function RegisterPage() {
         </Button>
       </form>
     </AuthPageShell>
+  );
+}
+
+// useSearchParams (parâmetro `next`) exige Suspense na página estática
+export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
   );
 }

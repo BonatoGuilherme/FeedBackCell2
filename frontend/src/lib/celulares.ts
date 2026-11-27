@@ -226,6 +226,9 @@ export type AparelhoEspecificacoes = {
   /** Crédito e link da foto em alta resolução (a licença exige atribuição). */
   creditoImagem: string | null;
   creditoImagemUrl: string | null;
+  /** Fonte da ficha técnica (ex.: "Ficha: GSMArena") e o link dela, só http(s). */
+  creditoFicha: string | null;
+  creditoFichaUrl: string | null;
   lancamento: string | null;
   tela: string | null;
   hardware: string | null;
@@ -258,7 +261,7 @@ export type ResultadoEspecificacoes = {
 };
 
 const CAMPOS_APARELHO = [
-  "nome", "fabricante", "imagem", "imagemHd", "creditoImagem", "creditoImagemUrl",
+  "nome", "fabricante", "imagem", "imagemHd", "creditoImagem", "creditoImagemUrl", "creditoFicha", "creditoFichaUrl",
   "lancamento", "tela", "hardware", "armazenamento", "camera", "bateria", "peso",
   "espessura", "cores", "precoLancamento", "precoEstimado",
 ] as const;
@@ -278,6 +281,7 @@ function parseAparelho(value: unknown): AparelhoEspecificacoes | null {
   }
   if (aparelho.imagemHd && !URL_IMAGEM_HD.test(aparelho.imagemHd)) aparelho.imagemHd = null;
   if (aparelho.creditoImagemUrl && !URL_CREDITO.test(aparelho.creditoImagemUrl)) aparelho.creditoImagemUrl = null;
+  if (aparelho.creditoFichaUrl && !/^https?:\/\//i.test(aparelho.creditoFichaUrl)) aparelho.creditoFichaUrl = null;
   return aparelho;
 }
 
