@@ -9,8 +9,6 @@ const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: raiz,
   turbopack: { root: raiz },
-  // View Transitions (components/ui/transicoes.tsx): React ViewTransition no App Router
-  experimental: { viewTransition: true },
   // links antigos; todos temporários (permanent: false)
   async redirects() {
     const comId = [{ type: "query" as const, key: "celular", value: "(?<id>[1-9][0-9]{0,9})" }];
