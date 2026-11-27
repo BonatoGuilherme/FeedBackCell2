@@ -6,6 +6,7 @@ import { MotionConfig } from "motion/react";
 import Navigation from "./Navigation";
 import { useHasSession } from "@/src/lib/useSession";
 import { hrefLogin } from "@/src/lib/rotas";
+import { sessaoExpirou } from "@/src/lib/session";
 
 // telas de entrada: sem menu
 const authPaths = ["/login", "/register"];
@@ -21,7 +22,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     if (needsSession && hasSession === false) {
-      router.replace(hrefLogin(pathname));
+      // token vencido ou 401 de alguma chamada: o login avisa que a sessão expirou
+      router.replace(hrefLogin(pathname, "login", { expirou: sessaoExpirou() }));
     }
   }, [hasSession, needsSession, pathname, router]);
 

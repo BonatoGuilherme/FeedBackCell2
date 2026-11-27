@@ -1,5 +1,6 @@
 import path from "node:path";
 import type { NextConfig } from "next";
+import { CABECALHOS_SEGURANCA } from "./src/lib/csp";
 
 // a raiz do app é esta pasta (há outro lockfile na raiz do repositório)
 const raiz = path.join(__dirname);
@@ -9,6 +10,10 @@ const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: raiz,
   turbopack: { root: raiz },
+  // cabeçalhos simples em toda resposta; a CSP (com nonce) sai do proxy.ts
+  async headers() {
+    return [{ source: "/:path*", headers: CABECALHOS_SEGURANCA }];
+  },
   // links antigos; todos temporários (permanent: false)
   async redirects() {
     const comId = [{ type: "query" as const, key: "celular", value: "(?<id>[1-9][0-9]{0,9})" }];

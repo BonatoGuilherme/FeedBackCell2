@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { AlertCircle, Box, CheckCircle2, Cpu, Info } from "lucide-react";
 import AppIcon from "./AppIcon";
+import { AvisoCreditos, useCreditosBusca, type SaldoBusca } from "./SpecsCredits";
 import {
   buscarEspecificacoes,
   type AparelhoEspecificacoes,
@@ -10,6 +11,7 @@ import {
 } from "@/src/lib/celulares";
 import { PrecoLancamento } from "@/components/ui/preco-lancamento";
 import { getToken } from "@/src/lib/session";
+import { ApiError } from "@/src/lib/http";
 
 const ROTULOS: [keyof AparelhoEspecificacoes, string][] = [
   ["lancamento", "Lançamento"],
@@ -39,6 +41,10 @@ export type SpecsLookup = {
   refinarOuBuscar: (marca: string, modelo: string) => Promise<void>;
   selecionar: (aparelho: AparelhoEspecificacoes, marca: string) => void;
   limpar: () => void;
+  /** Saldo de /celulares/especificacoes/creditos. */
+  saldo: SaldoBusca;
+  /** false depois de um 429 ou quando o saldo diz que a busca de hoje já foi usada. */
+  podeBuscar: boolean;
 };
 
 const lerToken = getToken;
@@ -71,8 +77,15 @@ export function useSpecsLookup(): SpecsLookup {
   // última consulta à API (para refinar localmente) e último texto já tratado
   const ultimaConsulta = useRef<{ marca: string; modelo: string; lista: AparelhoEspecificacoes[] } | null>(null);
   const ultimoTexto = useRef("");
+  const { saldo, atualizar: atualizarSaldo } = useCreditosBusca();
+  const [limiteAtingido, setLimiteAtingido] = useState(false);
+  const podeBuscar = !limiteAtingido && !(saldo.estado === "ok" && !saldo.creditos.usuarioPodeBuscarHoje);
+  const podeBuscarRef = useRef(podeBuscar);
 
   useEffect(() => () => controller.current?.abort(), []);
+  useEffect(() => {
+    podeBuscarRef.current = podeBuscar;
+  }, [podeBuscar]);
 
   const novaRequisicao = () => {
     controller.current?.abort();
@@ -105,11 +118,14 @@ export function useSpecsLookup(): SpecsLookup {
       setAberto(lista.length > 1 || (lista.length === 1 && !r.aparelho));
     } catch (error: unknown) {
       if (atual.signal.aborted) return;
+      // 429: limite diário do usuário; a mensagem do core-api já explica o que fazer
+      if (error instanceof ApiError && error.status === 429) setLimiteAtingido(true);
       setErro(error instanceof Error ? error.message : "Falha ao buscar especificações.");
     } finally {
       if (controller.current === atual) setLoading(false);
+      if (!atual.signal.aborted) atualizarSaldo();
     }
-  }, []);
+  }, [atualizarSaldo]);
 
   // busca só o modelo 3D do aparelho escolhido (não gasta a cota da MobileAPI)
   const carregar3d = useCallback((aparelho: AparelhoEspecificacoes, marca: string) => {
@@ -155,7 +171,8 @@ export function useSpecsLookup(): SpecsLookup {
         return;
       }
     }
-    await buscar(marca, modelo);
+    // sem a busca de hoje, só o filtro local acima funciona
+    if (podeBuscarRef.current) await buscar(marca, modelo);
   }, [buscar, carregar3d]);
 
   const limpar = useCallback(() => {
@@ -166,7 +183,7 @@ export function useSpecsLookup(): SpecsLookup {
     modelo3dDe.current = "";
   }, []);
 
-  return { sugestoes, selecionado, modelo3d, avisos, erro, loading, aberto, setAberto, buscar, refinarOuBuscar, selecionar, limpar };
+  return { sugestoes, selecionado, modelo3d, avisos, erro, loading, aberto, setAberto, buscar, refinarOuBuscar, selecionar, limpar, saldo, podeBuscar };
 }
 
 /**
@@ -238,7 +255,7 @@ export function ModeloAutocomplete({
     } else if (e.key === "Enter") {
       e.preventDefault(); // não envia o formulário
       if (aberto && ativo >= 0 && sugestoes[ativo]) escolher(sugestoes[ativo]);
-      else if (pronto && !loading) void lookup.buscar(marca, modelo);
+      else if (pronto && !loading && lookup.podeBuscar) void lookup.buscar(marca, modelo);
     } else if (e.key === "Escape" && aberto) {
       e.preventDefault();
       lookup.setAberto(false);
@@ -259,6 +276,8 @@ export function ModeloAutocomplete({
   } else if (selecionado) {
     tom = "is-success";
     dica = <><CheckCircle2 size={14} aria-hidden="true" />Aparelho encontrado. Confira a foto e as especificações abaixo.</>;
+  } else if (!lookup.podeBuscar) {
+    dica = "Sem a busca automática, preencha marca, modelo, descrição e fotos à mão e salve normalmente.";
   } else if (pronto) {
     dica = "A busca é automática; escolha o seu aparelho na lista.";
   } else {
@@ -295,7 +314,7 @@ export function ModeloAutocomplete({
           type="button"
           className="absolute right-1 top-1 grid size-9 cursor-pointer place-items-center rounded-lg text-muted transition-colors duration-150 hover:enabled:bg-accent-soft hover:enabled:text-accent disabled:cursor-not-allowed disabled:text-subtle"
           onClick={() => void lookup.buscar(marca, modelo)}
-          disabled={disabled || loading || !pronto}
+          disabled={disabled || loading || !pronto || !lookup.podeBuscar}
           aria-label="Buscar especificações e imagem"
           title="Buscar especificações e imagem"
         >
@@ -342,6 +361,7 @@ export function ModeloAutocomplete({
       <span id={dicaId} className={`modelo-autocomplete__hint ${tom}`} aria-live="polite">
         {dica}
       </span>
+      <AvisoCreditos saldo={lookup.saldo} />
     </div>
   );
 }
@@ -349,7 +369,7 @@ export function ModeloAutocomplete({
 /** Especificações, foto HD e modelo 3D do aparelho escolhido. */
 export function PhoneSpecsResult({ lookup }: { lookup: SpecsLookup }) {
   const [mostrar3d, setMostrar3d] = useState<string | null>(null);
-  const { selecionado: aparelho, modelo3d, loading } = lookup;
+  const { selecionado: aparelho, modelo3d, loading, podeBuscar } = lookup;
 
   if (!aparelho && !modelo3d) {
     return (
@@ -359,10 +379,12 @@ export function PhoneSpecsResult({ lookup }: { lookup: SpecsLookup }) {
         </span>
         <div>
           <p className="m-0 text-sm font-semibold text-foreground">
-            {loading ? "Buscando especificações…" : "Nenhum aparelho escolhido"}
+            {loading ? "Buscando especificações…" : podeBuscar ? "Nenhum aparelho escolhido" : "Busca automática indisponível hoje"}
           </p>
           <p className="mt-0.5 mb-0 text-label text-muted">
-            Escolha o modelo na lista do campo Modelo para trazer tela, câmera, bateria e a foto do aparelho.
+            {podeBuscar
+              ? "Escolha o modelo na lista do campo Modelo para trazer tela, câmera, bateria e a foto do aparelho."
+              : "Você pode salvar o celular mesmo assim: preencha os campos à mão e adicione suas fotos."}
           </p>
         </div>
       </div>
